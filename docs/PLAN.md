@@ -51,7 +51,20 @@ Do zrobienia raz, przed pisaniem kodu.
 
 ---
 
-## Faza 1 — MVP: codzienna nauka [~2–3 tygodnie]
+## Faza 1 — MVP: codzienna nauka [~2–3 tygodnie] ✅ ZROBIONE
+
+> **Stan na 2026-08-12.** Backend, frontend, migracje, seed i testy są w repo.
+> Zrealizowano zakres 1.1–1.4 i 1.7–1.11 w całości. Odstępstwa od planu:
+>
+> - **1.5 Baza startowa:** 430 pozycji w 20 taliach zamiast zakładanych ~800.
+>   Pierwsza partia jest przejrzana ręcznie pod kątem brazylizmów; kolejne
+>   dochodzą tym samym, idempotentnym loaderem bez zmian w kodzie.
+> - **1.6 Deployment:** przygotowany (`Procfile`, `_redirects`, `.env.example`,
+>   instrukcja w README), ale **nie uruchomiony** — wymaga kont Railway
+>   i Cloudflare, do których nie ma dostępu z tego środowiska.
+> - Doszła kolumna `user_item_state.correct_reps` — potrzebna, żeby odblokowywać
+>   kierunek produkcyjny po dwóch poprawnych rozpoznaniach.
+
 
 **Cel fazy:** wieczorem, na telefonie, jednym kliknięciem wchodzę w sesję 25 kart i uczę się portugalskiego z realnym harmonogramem powtórek.
 

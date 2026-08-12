@@ -1,0 +1,149 @@
+@import "tailwindcss";
+
+/* ─────────────────────────────────────────────────────────────
+   Porto — azulejo blue on glazed porcelain.
+   One accent (cobalt) means "interactive". Green and rust are
+   reserved for answer outcomes, amber only for the streak.
+   ───────────────────────────────────────────────────────────── */
+@theme {
+  --color-ground: #e9edf4;
+  --color-surface: #ffffff;
+  --color-surface-2: #edf1f8;
+  --color-surface-3: #dfe6f1;
+  --color-ink: #101828;
+  --color-ink-2: #4b5872;
+  --color-ink-3: #8b96ac;
+  --color-line: #d3dcea;
+  --color-line-strong: #b9c6da;
+
+  --color-accent: #1b4fb0;
+  --color-accent-ink: #ffffff;
+  --color-accent-soft: #dee8fa;
+  --color-accent-line: #a9c2ee;
+
+  --color-good: #0d7355;
+  --color-good-soft: #d6ede4;
+  --color-good-line: #9bd0bc;
+  --color-bad: #ae3a30;
+  --color-bad-soft: #f7dedb;
+  --color-bad-line: #e7b2ac;
+  --color-warm: #c0602a;
+
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-pt: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, "Times New Roman", serif;
+}
+
+/* Dark theme: same roles, lifted accent so it still reads as interactive. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-ground: #080d16;
+    --color-surface: #131c2b;
+    --color-surface-2: #1a2434;
+    --color-surface-3: #232f44;
+    --color-ink: #e9eef7;
+    --color-ink-2: #a2aec4;
+    --color-ink-3: #6d7a91;
+    --color-line: #263248;
+    --color-line-strong: #34425c;
+
+    --color-accent: #7ba4ff;
+    --color-accent-ink: #071120;
+    --color-accent-soft: #17264a;
+    --color-accent-line: #2c4478;
+
+    --color-good: #4fcfa3;
+    --color-good-soft: #103328;
+    --color-good-line: #1e5b48;
+    --color-bad: #ff8b7e;
+    --color-bad-soft: #38191a;
+    --color-bad-line: #613230;
+    --color-warm: #e89055;
+  }
+}
+
+:root[data-theme="dark"] {
+  --color-ground: #080d16;
+  --color-surface: #131c2b;
+  --color-surface-2: #1a2434;
+  --color-surface-3: #232f44;
+  --color-ink: #e9eef7;
+  --color-ink-2: #a2aec4;
+  --color-ink-3: #6d7a91;
+  --color-line: #263248;
+  --color-line-strong: #34425c;
+
+  --color-accent: #7ba4ff;
+  --color-accent-ink: #071120;
+  --color-accent-soft: #17264a;
+  --color-accent-line: #2c4478;
+
+  --color-good: #4fcfa3;
+  --color-good-soft: #103328;
+  --color-good-line: #1e5b48;
+  --color-bad: #ff8b7e;
+  --color-bad-soft: #38191a;
+  --color-bad-line: #613230;
+  --color-warm: #e89055;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-ground);
+  color: var(--color-ink);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
+}
+
+/* Portuguese text is always set in the serif — it separates the material
+   being learned from the interface around it, and renders diacritics
+   (ã, ç, õ) clearly at small sizes. */
+.pt {
+  font-family: var(--font-pt);
+}
+
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Respect the notch and the home indicator. */
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+.safe-bottom {
+  padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+@keyframes flip-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.animate-reveal {
+  animation: flip-in 0.22s ease-out;
+}

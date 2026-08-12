@@ -2,24 +2,96 @@
 
 Prywatna aplikacja webowa (PWA) do codziennej nauki **portugalskiego europejskiego (PT-PT)**.
 
-Codzienna sesja słówek i zwrotów z harmonogramem powtórek (FSRS), siedem trybów ćwiczeń
-(fiszki, testy wyboru, wpisywanie, luki w zdaniach, dopasowywanie par, rozsypanka, dyktando),
-quizy sprawdzające wiedzę oraz wymowa w głosach pt-PT.
+Codzienna sesja słówek i zwrotów z harmonogramem powtórek (FSRS), ćwiczenia w wielu formach,
+quizy i wymowa w głosach pt-PT. Aplikacja jest zamknięta — konto zakłada się kodem zaproszenia.
+
+**Status: faza 1 (MVP) gotowa.** Działa nauka codzienna: fiszki, testy wyboru w obu kierunkach,
+harmonogram FSRS, streak, słownik z 430 pozycjami, PWA instalowalna na telefonie.
 
 ## Dokumentacja
 
 | Dokument | Zawartość |
 |---|---|
-| [`docs/PRD.md`](docs/PRD.md) | Pełna specyfikacja: cele, stack, model danych, endpointy API, 55 funkcjonalności, widoki UI, plan faz, ryzyka |
-| [`docs/PLAN.md`](docs/PLAN.md) | Plan wykonawczy: kolejność prac, zadania per faza, punkty kontrolne, harmonogram |
+| [`docs/PRD.md`](docs/PRD.md) | Pełna specyfikacja: cele, stack, model danych, endpointy, 55 funkcjonalności, plan faz |
+| [`docs/PLAN.md`](docs/PLAN.md) | Plan wykonawczy z zadaniami i punktami kontrolnymi per faza |
+| [`docs/mockup.html`](docs/mockup.html) | Klikalny prototyp interfejsu (otwórz w przeglądarce) |
 
 ## Stack
 
-FastAPI (Python) · PostgreSQL · React + Vite + TypeScript · Tailwind
-Railway (backend) · Cloudflare Pages (frontend) · Cloudflare R2 (audio)
-Google Cloud TTS (głosy pt-PT) · Claude API (generowanie treści)
+| Warstwa | Technologia |
+|---|---|
+| Backend | FastAPI · SQLAlchemy 2.0 · Alembic · PostgreSQL 15+ |
+| Harmonogram powtórek | `fsrs` (py-fsrs 6.x) |
+| Frontend | React 18 · Vite · TypeScript · Tailwind CSS 4 · TanStack Query · Zustand |
+| Hosting | Railway (API + baza) · Cloudflare Pages (frontend) |
 
-## Status
+## Uruchomienie lokalne
 
-Faza planowania — dokumenty gotowe, implementacja przed nami.
-Uruchomienie lokalne i zmienne środowiskowe: patrz Aneks w [`docs/PRD.md`](docs/PRD.md).
+Wymagania: Python 3.11+, Node.js 20+, PostgreSQL 15+.
+
+```bash
+# 1. Baza danych
+createdb porto      # albo: docker run -d -p 5432:5432 -e POSTGRES_PASSWORD=porto -e POSTGRES_DB=porto postgres:16
+
+# 2. Backend
+cd backend
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env          # uzupełnij JWT_SECRET, JWT_REFRESH_SECRET, INVITE_CODE
+alembic upgrade head
+python -m app.seed.seed       # ładuje 20 talii / 430 pozycji PT-PT
+uvicorn app.main:app --reload # http://localhost:8000/docs
+
+# 3. Frontend
+cd ../frontend
+npm install
+cp .env.example .env
+npm run dev                   # http://localhost:5173
+```
+
+> **Uwaga o adresach.** Token odświeżający jest ciasteczkiem `httpOnly`, więc frontend i API
+> muszą być na tym samym hoście (`localhost` z `localhost`, `127.0.0.1` z `127.0.0.1`).
+> Mieszanie jednego z drugim sprawia, że przeglądarka uzna je za różne witryny i nie zapisze
+> ciasteczka — sesja nie przeżyje odświeżenia strony.
+
+## Testy
+
+```bash
+cd backend && .venv/bin/python -m pytest tests/ -q     # 50 testów
+cd frontend && npm run typecheck && npm run build
+```
+
+Testy backendu tworzą i kasują bazę `porto_test` obok bazy deweloperskiej. Adres bazy dla
+testów można nadpisać zmienną `TEST_DATABASE_URL`.
+
+## Struktura
+
+```
+backend/
+  app/
+    models/      # ORM: users, items, decks, user_item_state, reviews, …
+    routers/     # auth, content (items/decks/settings), study
+    services/
+      scheduler.py     # opakowanie FSRS — jedyne miejsce, które zna bibliotekę
+      task_builder.py  # dobór kart, przeplot nowych, wybór trybu, dystraktory
+      stats.py         # dzienne agregaty i streak w strefie użytkownika
+    seed/        # 20 talii PT-PT w JSON + idempotentny loader
+  alembic/       # migracje
+  tests/
+frontend/
+  src/
+    api/         # klient HTTP z cichym odświeżaniem tokenu
+    components/  # TaskRenderer (7 trybów), layout, elementy UI
+    pages/       # Dziś, Nauka, Podsumowanie, Słownik, Talie, Postęp, Ustawienia
+    store/       # auth (kontekst) + sesja nauki (Zustand)
+docs/
+```
+
+## Wdrożenie
+
+**Backend — Railway:** katalog `backend/`, `Procfile` uruchamia migracje przed startem.
+Zmienne: jak w `.env.example`, plus `COOKIE_DOMAIN=.pmakarewicz.com`, `COOKIE_SECURE=true`.
+
+**Frontend — Cloudflare Pages:** katalog `frontend/`, build `npm run build`, output `dist`.
+Zmienna `VITE_API_URL=https://api-porto.pmakarewicz.com`. Plik `public/_redirects` obsługuje
+przekierowanie tras SPA.
