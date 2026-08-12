@@ -1,0 +1,2108 @@
+<title>Porto</title>
+
+<style>
+/* ─────────────────────────────────────────────
+   Tokens — azulejo blue on glazed porcelain
+   Light is the base; dark redefines tokens only.
+   ───────────────────────────────────────────── */
+:root {
+  --ground:      #E9EDF4;
+  --surface:     #FFFFFF;
+  --surface-2:   #EDF1F8;
+  --surface-3:   #DFE6F1;
+  --ink:         #101828;
+  --ink-2:       #4B5872;
+  --ink-3:       #8B96AC;
+  --line:        #D3DCEA;
+  --line-strong: #B9C6DA;
+
+  --accent:      #1B4FB0;
+  --accent-ink:  #FFFFFF;
+  --accent-soft: #DEE8FA;
+  --accent-line: #A9C2EE;
+
+  --good:        #0D7355;
+  --good-soft:   #D6EDE4;
+  --good-line:   #9BD0BC;
+  --bad:         #AE3A30;
+  --bad-soft:    #F7DEDB;
+  --bad-line:    #E7B2AC;
+  --warm:        #C0602A;
+
+  --frame:       #1A2436;
+  --frame-edge:  #313E56;
+
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-pt: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, "Times New Roman", serif;
+
+  --r-sm: 8px;
+  --r-md: 14px;
+  --r-lg: 20px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground:      #080D16;
+    --surface:     #131C2B;
+    --surface-2:   #1A2434;
+    --surface-3:   #232F44;
+    --ink:         #E9EEF7;
+    --ink-2:       #A2AEC4;
+    --ink-3:       #6D7A91;
+    --line:        #263248;
+    --line-strong: #34425C;
+
+    --accent:      #7BA4FF;
+    --accent-ink:  #071120;
+    --accent-soft: #17264A;
+    --accent-line: #2C4478;
+
+    --good:        #4FCFA3;
+    --good-soft:   #103328;
+    --good-line:   #1E5B48;
+    --bad:         #FF8B7E;
+    --bad-soft:    #38191A;
+    --bad-line:    #613230;
+    --warm:        #E89055;
+
+    --frame:       #05090F;
+    --frame-edge:  #1B2536;
+  }
+}
+
+:root[data-theme="dark"] {
+  --ground:      #080D16;
+  --surface:     #131C2B;
+  --surface-2:   #1A2434;
+  --surface-3:   #232F44;
+  --ink:         #E9EEF7;
+  --ink-2:       #A2AEC4;
+  --ink-3:       #6D7A91;
+  --line:        #263248;
+  --line-strong: #34425C;
+
+  --accent:      #7BA4FF;
+  --accent-ink:  #071120;
+  --accent-soft: #17264A;
+  --accent-line: #2C4478;
+
+  --good:        #4FCFA3;
+  --good-soft:   #103328;
+  --good-line:   #1E5B48;
+  --bad:         #FF8B7E;
+  --bad-soft:    #38191A;
+  --bad-line:    #613230;
+  --warm:        #E89055;
+
+  --frame:       #05090F;
+  --frame-edge:  #1B2536;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+p { margin: 0; }
+button { font: inherit; color: inherit; }
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ─────────────────────────────────────────────
+   Page shell
+   ───────────────────────────────────────────── */
+.page { max-width: 1180px; margin: 0 auto; padding: 0 24px 96px; }
+
+.hero {
+  position: relative;
+  padding: 64px 0 56px;
+  overflow: hidden;
+}
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: -40% -20% auto -20%;
+  height: 620px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%231B4FB0' stroke-width='1.1'%3E%3Cpath d='M28 6c7 7 15 15 22 22-7 7-15 15-22 22C21 43 13 35 6 28 13 21 21 13 28 6z'/%3E%3Ccircle cx='28' cy='28' r='6'/%3E%3Cpath d='M0 0h4M52 0h4M0 56h4M52 56h4'/%3E%3C/g%3E%3C/svg%3E");
+  opacity: .07;
+  pointer-events: none;
+  mask-image: linear-gradient(to bottom, #000 0%, transparent 88%);
+}
+.hero__inner { position: relative; display: grid; gap: 40px; grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+@media (max-width: 900px) { .hero__inner { grid-template-columns: minmax(0,1fr); justify-items: center; text-align: left; } }
+
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  font-weight: 650;
+  color: var(--accent);
+  margin-bottom: 14px;
+}
+.hero h1 {
+  font-family: var(--font-pt);
+  font-size: clamp(52px, 9vw, 86px);
+  line-height: .95;
+  letter-spacing: -.02em;
+  font-weight: 400;
+}
+.hero__lead {
+  margin-top: 20px;
+  max-width: 46ch;
+  font-size: 18px;
+  color: var(--ink-2);
+}
+.hero__meta {
+  margin-top: 28px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 13px;
+  color: var(--ink-2);
+}
+.chip b { color: var(--ink); font-weight: 600; }
+
+.hint {
+  margin-top: 26px;
+  padding: 14px 16px;
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  font-size: 14px;
+  color: var(--ink);
+  max-width: 44ch;
+}
+
+section.band { padding-top: 72px; }
+.band__head { max-width: 62ch; margin-bottom: 32px; }
+.band__num {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  letter-spacing: .16em;
+  font-weight: 650;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  display: block;
+  margin-bottom: 10px;
+}
+.band h2 {
+  font-family: var(--font-pt);
+  font-size: clamp(28px, 4vw, 38px);
+  line-height: 1.15;
+  letter-spacing: -.01em;
+  font-weight: 400;
+}
+.band__head p { margin-top: 12px; color: var(--ink-2); }
+
+hr.rule { border: 0; border-top: 1px solid var(--line); margin: 0; }
+
+/* ─────────────────────────────────────────────
+   Phone frame
+   ───────────────────────────────────────────── */
+.phone {
+  width: 390px;
+  height: 800px;
+  flex: none;
+  background: var(--frame);
+  border-radius: 46px;
+  padding: 11px;
+  box-shadow: 0 2px 0 var(--frame-edge) inset, 0 30px 60px -24px rgba(10, 20, 40, .45), 0 0 0 1px var(--frame-edge);
+  position: relative;
+}
+.phone__screen {
+  position: relative;
+  height: 100%;
+  border-radius: 36px;
+  overflow: hidden;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  isolation: isolate;
+}
+.notch {
+  position: absolute;
+  top: 8px; left: 50%; transform: translateX(-50%);
+  width: 108px; height: 26px;
+  background: var(--frame);
+  border-radius: 999px;
+  z-index: 40;
+}
+
+/* app chrome */
+.sysicons { display: inline-flex; align-items: center; gap: 5px; }
+.sysicons svg { height: 10px; width: auto; fill: currentColor; }
+.statusbar {
+  height: 44px;
+  flex: none;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 22px 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.appbar {
+  flex: none;
+  padding: 6px 18px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.appbar__title {
+  font-family: var(--font-pt);
+  font-size: 24px;
+  letter-spacing: -.01em;
+}
+.iconbtn {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  display: grid; place-items: center;
+  cursor: pointer;
+  color: var(--ink-2);
+  padding: 0;
+}
+.iconbtn:hover { border-color: var(--line-strong); color: var(--ink); }
+
+.scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 18px 20px;
+  scrollbar-width: thin;
+}
+.scroll::-webkit-scrollbar { width: 5px; }
+.scroll::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+
+.tabbar {
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+  padding: 8px 6px 16px;
+}
+.tab {
+  border: 0; background: none; cursor: pointer;
+  display: grid; gap: 3px; justify-items: center;
+  font-size: 10.5px; font-weight: 600; letter-spacing: .01em;
+  color: var(--ink-3);
+  padding: 4px 0;
+  border-radius: var(--r-sm);
+}
+.tab svg { width: 21px; height: 21px; stroke-width: 1.7; }
+.tab[aria-current="true"] { color: var(--accent); }
+
+/* screens */
+.screen { display: none; flex: 1; min-height: 0; flex-direction: column; }
+.screen.is-active { display: flex; }
+
+/* ─────────────────────────────────────────────
+   App components
+   ───────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 14px;
+}
+.stack { display: grid; gap: 12px; }
+.row { display: flex; align-items: center; gap: 10px; }
+.spread { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+
+.label {
+  font-size: 10.5px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  font-weight: 650;
+  color: var(--ink-3);
+}
+
+/* Dziś — pierścień postępu */
+.today-hero {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 10px 0 18px;
+}
+.ring { position: relative; width: 176px; height: 176px; }
+.ring svg { transform: rotate(-90deg); }
+.ring__mid {
+  position: absolute; inset: 0;
+  display: grid; place-content: center; justify-items: center; gap: 0;
+  text-align: center;
+}
+.ring__num {
+  font-family: var(--font-pt);
+  font-size: 46px; line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.ring__sub { font-size: 12px; color: var(--ink-3); margin-top: 4px; }
+
+.streak {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 12px; border-radius: 999px;
+  background: color-mix(in srgb, var(--warm) 14%, transparent);
+  color: var(--warm);
+  font-size: 13px; font-weight: 650;
+  border: 1px solid color-mix(in srgb, var(--warm) 32%, transparent);
+}
+
+.queue { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.queue__cell {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+}
+.queue__n { font-size: 26px; font-weight: 680; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.queue__l { font-size: 12px; color: var(--ink-2); margin-top: 2px; }
+
+.btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%;
+  padding: 15px 18px;
+  border-radius: var(--r-md);
+  border: 1px solid transparent;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 16px; font-weight: 650;
+  cursor: pointer;
+  box-shadow: 0 1px 0 rgba(255,255,255,.14) inset;
+}
+.btn:hover { filter: brightness(1.06); }
+.btn--ghost {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--line-strong);
+  font-weight: 600;
+  padding: 12px 16px;
+  font-size: 14.5px;
+}
+.btn--ghost:hover { background: var(--surface-2); filter: none; }
+.btn--sm { padding: 9px 14px; font-size: 13.5px; width: auto; }
+
+.listrow {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+.listrow:hover { border-color: var(--accent-line); background: var(--surface-2); }
+.listrow__pt { font-family: var(--font-pt); font-size: 17px; line-height: 1.25; }
+.listrow__pl { font-size: 12.5px; color: var(--ink-2); }
+.listrow__meta { margin-left: auto; text-align: right; flex: none; }
+
+.pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: .04em;
+  background: var(--surface-3);
+  color: var(--ink-2);
+  border: 1px solid var(--line);
+}
+.pill--a { background: var(--accent-soft); color: var(--accent); border-color: var(--accent-line); }
+.pill--good { background: var(--good-soft); color: var(--good); border-color: var(--good-line); }
+.pill--bad { background: var(--bad-soft); color: var(--bad); border-color: var(--bad-line); }
+
+.search {
+  display: flex; align-items: center; gap: 9px;
+  padding: 10px 13px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  color: var(--ink-3);
+  font-size: 14px;
+}
+.filters { display: flex; gap: 7px; overflow-x: auto; padding-bottom: 2px; }
+.filters::-webkit-scrollbar { display: none; }
+.fchip {
+  flex: none;
+  padding: 6px 12px; border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  font-size: 12.5px; font-weight: 600; color: var(--ink-2);
+  cursor: pointer;
+}
+.fchip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+
+.deckcard {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 13px;
+  background: var(--surface);
+  cursor: pointer;
+  display: grid; gap: 9px;
+  text-align: left;
+}
+.deckcard:hover { border-color: var(--accent-line); }
+.deckcard__name { font-weight: 640; font-size: 14.5px; line-height: 1.3; }
+.bar { height: 5px; border-radius: 3px; background: var(--surface-3); overflow: hidden; display: flex; }
+.bar i { display: block; height: 100%; }
+.bar i.k { background: var(--good); }
+.bar i.d { background: var(--accent); }
+.deckcard__legend { font-size: 11px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+
+/* ── Sesja nauki ───────────────────────────── */
+.studybar {
+  flex: none;
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 18px 10px;
+}
+.progress { flex: 1; height: 7px; border-radius: 4px; background: var(--surface-3); overflow: hidden; }
+.progress i { display: block; height: 100%; background: var(--accent); border-radius: 4px; transition: width .35s ease; }
+.studybar__count { font-size: 12px; font-weight: 640; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.xbtn { border: 0; background: none; cursor: pointer; color: var(--ink-3); font-size: 20px; line-height: 1; padding: 2px 2px; }
+.xbtn:hover { color: var(--ink); }
+
+.task { flex: 1; overflow-y: auto; padding: 6px 18px 16px; display: flex; flex-direction: column; }
+.task__prompt {
+  font-size: 12px; font-weight: 650; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 14px;
+}
+.mode-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 10.5px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--accent); background: var(--accent-soft);
+  border: 1px solid var(--accent-line);
+  padding: 3px 9px; border-radius: 999px;
+  margin-bottom: 14px;
+  align-self: flex-start;
+}
+
+.term {
+  font-family: var(--font-pt);
+  font-size: 38px;
+  line-height: 1.15;
+  letter-spacing: -.01em;
+  text-align: center;
+  margin: 6px 0;
+}
+.term--sm { font-size: 27px; }
+.term__gender { color: var(--ink-3); font-size: .62em; }
+
+.flash {
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface-2);
+  padding: 26px 20px;
+  display: grid; gap: 10px; justify-items: center;
+  text-align: center;
+  min-height: 218px;
+  align-content: center;
+  cursor: pointer;
+}
+.flash:hover { border-color: var(--accent-line); }
+.flash__tap { font-size: 12.5px; color: var(--ink-3); }
+.flash__answer { font-size: 22px; font-weight: 600; }
+.flash__note {
+  font-size: 12.5px; color: var(--ink-2);
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-sm); padding: 8px 11px;
+  text-align: left;
+}
+.flash__ex { font-family: var(--font-pt); font-size: 15px; color: var(--ink-2); }
+
+.ratings { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin-top: 12px; }
+.rating {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: var(--r-sm);
+  padding: 9px 4px;
+  cursor: pointer;
+  display: grid; gap: 1px;
+  font-size: 12.5px; font-weight: 650;
+}
+.rating small { font-size: 10px; font-weight: 500; color: var(--ink-3); }
+.rating:hover { border-color: var(--accent); color: var(--accent); }
+.rating[data-r="1"]:hover { border-color: var(--bad); color: var(--bad); }
+.rating[data-r="4"]:hover { border-color: var(--good); color: var(--good); }
+
+.choices { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 4px; }
+.choice {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: var(--r-md);
+  padding: 16px 12px;
+  min-height: 76px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 560;
+  display: grid; place-items: center; text-align: center;
+  line-height: 1.3;
+}
+.choice.pt { font-family: var(--font-pt); font-size: 17px; }
+.choice:hover:not(.is-locked) { border-color: var(--accent); background: var(--accent-soft); }
+.choice.is-right { border-color: var(--good); background: var(--good-soft); color: var(--good); }
+.choice.is-wrong { border-color: var(--bad); background: var(--bad-soft); color: var(--bad); }
+.choice.is-locked { cursor: default; }
+
+.answerfield {
+  width: 100%;
+  padding: 14px 15px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-pt);
+  font-size: 21px;
+  outline: none;
+}
+.answerfield:focus { border-color: var(--accent); }
+.answerfield::placeholder { color: var(--ink-3); font-family: var(--font-ui); font-size: 15px; }
+
+.diacritics {
+  display: flex; gap: 5px; margin-top: 9px;
+  overflow-x: auto; padding-bottom: 3px;
+}
+.diacritics::-webkit-scrollbar { display: none; }
+.dkey {
+  flex: none;
+  min-width: 33px; height: 38px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  font-family: var(--font-pt);
+  font-size: 18px;
+  cursor: pointer;
+}
+.dkey:hover { background: var(--accent-soft); border-color: var(--accent-line); }
+
+.cloze {
+  font-family: var(--font-pt);
+  font-size: 23px; line-height: 1.6;
+  text-align: center;
+}
+.cloze input {
+  font-family: var(--font-pt);
+  font-size: 22px;
+  width: 130px;
+  border: 0; border-bottom: 2px solid var(--accent);
+  background: transparent; color: var(--ink);
+  text-align: center; outline: none;
+  padding: 0 4px 2px;
+}
+.cloze__pl { font-family: var(--font-ui); font-size: 13.5px; color: var(--ink-3); text-align: center; margin-top: 12px; }
+
+.match { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.mtile {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: var(--r-sm);
+  padding: 12px 8px;
+  font-size: 14px;
+  cursor: pointer;
+  min-height: 50px;
+  display: grid; place-items: center; text-align: center;
+  line-height: 1.25;
+}
+.mtile.pt { font-family: var(--font-pt); font-size: 16px; }
+.mtile[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.mtile.is-done { opacity: .32; border-style: dashed; cursor: default; }
+.mtile.is-miss { border-color: var(--bad); background: var(--bad-soft); }
+
+.bank { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; }
+.brick {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: var(--r-sm);
+  padding: 9px 13px;
+  font-family: var(--font-pt);
+  font-size: 17px;
+  cursor: pointer;
+}
+.brick:hover { border-color: var(--accent-line); background: var(--accent-soft); }
+.brick.is-used { visibility: hidden; }
+.slotline {
+  min-height: 58px;
+  border-bottom: 2px dashed var(--line-strong);
+  display: flex; flex-wrap: wrap; gap: 7px; align-content: flex-start;
+  padding-bottom: 10px;
+  margin-bottom: 18px;
+}
+
+.audiobtn {
+  width: 96px; height: 96px;
+  border-radius: 50%;
+  border: 1px solid var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent);
+  display: grid; place-items: center;
+  cursor: pointer;
+  margin: 0 auto;
+}
+.audiobtn svg { width: 38px; height: 38px; }
+.audiobtn.is-playing { animation: pulse 1s ease-out infinite; }
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 34%, transparent); }
+  100% { box-shadow: 0 0 0 18px transparent; }
+}
+.wave { display: flex; gap: 3px; align-items: flex-end; justify-content: center; height: 26px; margin-top: 14px; }
+.wave i { width: 3px; background: var(--accent-line); border-radius: 2px; display: block; }
+.slowplay { display: block; margin: 12px auto 0; font-size: 12.5px; color: var(--ink-3); background: none; border: 0; cursor: pointer; text-decoration: underline dotted; }
+
+.feedback {
+  flex: none;
+  border-top: 1px solid var(--line);
+  padding: 14px 18px 18px;
+  display: grid; gap: 11px;
+  background: var(--surface-2);
+}
+.feedback.ok { background: var(--good-soft); border-color: var(--good-line); }
+.feedback.no { background: var(--bad-soft); border-color: var(--bad-line); }
+.feedback__head { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+.feedback.ok .feedback__head { color: var(--good); }
+.feedback.no .feedback__head { color: var(--bad); }
+.feedback__body { font-size: 13.5px; color: var(--ink-2); }
+.feedback__body b { font-family: var(--font-pt); font-size: 16px; color: var(--ink); font-weight: 400; }
+.feedback__why { background: none; border: 0; padding: 0; font-size: 12.5px; color: var(--ink-2); text-decoration: underline dotted; cursor: pointer; justify-self: start; }
+
+.spacer { flex: 1; min-height: 8px; }
+
+/* Podsumowanie */
+.summary-hero { display: grid; justify-items: center; gap: 4px; padding: 22px 0 10px; text-align: center; }
+.summary-hero .big { font-family: var(--font-pt); font-size: 62px; line-height: 1; }
+.tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.tile { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-md); padding: 11px 8px; text-align: center; }
+.tile b { display: block; font-size: 19px; font-variant-numeric: tabular-nums; }
+.tile span { font-size: 10.5px; color: var(--ink-3); }
+
+/* Statystyki */
+.heat { display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, 1fr); gap: 3px; overflow-x: auto; padding-bottom: 4px; }
+.heat i { width: 11px; height: 11px; border-radius: 2.5px; background: var(--surface-3); display: block; }
+.heat i[data-l="1"] { background: color-mix(in srgb, var(--accent) 26%, var(--surface-3)); }
+.heat i[data-l="2"] { background: color-mix(in srgb, var(--accent) 52%, var(--surface-3)); }
+.heat i[data-l="3"] { background: color-mix(in srgb, var(--accent) 76%, var(--surface-3)); }
+.heat i[data-l="4"] { background: var(--accent); }
+.forecast { display: flex; align-items: flex-end; gap: 4px; height: 92px; }
+.forecast i { flex: 1; background: var(--accent-soft); border: 1px solid var(--accent-line); border-bottom: 0; border-radius: 3px 3px 0 0; display: block; }
+
+/* Ustawienia */
+.setrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.setrow:last-child { border-bottom: 0; }
+.setrow__l { font-size: 14px; }
+.setrow__d { font-size: 11.5px; color: var(--ink-3); }
+.switch { width: 42px; height: 25px; border-radius: 999px; background: var(--accent); position: relative; flex: none; border: 0; cursor: pointer; }
+.switch::after { content: ""; position: absolute; top: 3px; left: 20px; width: 19px; height: 19px; border-radius: 50%; background: #fff; }
+.switch[aria-checked="false"] { background: var(--line-strong); }
+.switch[aria-checked="false"]::after { left: 3px; }
+.stepper { display: flex; align-items: center; gap: 10px; font-variant-numeric: tabular-nums; }
+.stepper button { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface-2); cursor: pointer; }
+
+/* ─────────────────────────────────────────────
+   Page-side layout blocks
+   ───────────────────────────────────────────── */
+.navmap { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+@media (max-width: 820px) { .navmap { grid-template-columns: repeat(2, 1fr); } }
+.navmap__col { display: grid; gap: 0; align-content: start; }
+.navmap__tab {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 13px 14px;
+  display: grid; gap: 4px;
+}
+.navmap__tab strong { font-size: 15px; }
+.navmap__tab span { font-size: 12.5px; color: var(--ink-2); }
+.navmap__stem { width: 1px; height: 18px; background: var(--line-strong); margin-left: 22px; }
+.navmap__kids { border-left: 1px solid var(--line-strong); margin-left: 22px; padding-left: 14px; display: grid; gap: 8px; }
+.navmap__kid { font-size: 12.5px; color: var(--ink-2); position: relative; }
+.navmap__kid::before { content: ""; position: absolute; left: -14px; top: .7em; width: 9px; height: 1px; background: var(--line-strong); }
+.navmap__kid b { color: var(--ink); font-weight: 600; }
+
+.fullband {
+  margin-top: 20px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  background: var(--surface-2);
+  display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: baseline;
+}
+.fullband__t { font-size: 12.5px; font-weight: 650; }
+.fullband__i { font-size: 12.5px; color: var(--ink-2); }
+
+.modes { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 28px; }
+.mode { display: grid; gap: 14px; align-content: start; }
+.viewport {
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  overflow: hidden;
+  height: 404px;
+  display: flex; flex-direction: column;
+  position: relative;
+  box-shadow: 0 8px 20px -16px rgba(10,20,40,.5);
+}
+.viewport .task { padding: 16px 16px 12px; }
+.viewport .studybar { padding: 12px 16px 6px; }
+.mode__title { font-size: 16px; font-weight: 650; display: flex; align-items: center; gap: 9px; }
+.mode__title code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11.5px; color: var(--ink-3);
+  background: var(--surface-2); border: 1px solid var(--line);
+  padding: 1px 6px; border-radius: 5px;
+}
+.mode__when { font-size: 13.5px; color: var(--ink-2); }
+.mode__when b { color: var(--ink); font-weight: 600; }
+
+.gallery { display: flex; gap: 30px; flex-wrap: wrap; justify-content: center; }
+.mini { display: grid; gap: 12px; justify-items: center; }
+.mini__frame { width: 234px; height: 480px; overflow: hidden; }
+.mini__frame .phone { transform: scale(.6); transform-origin: top left; pointer-events: none; }
+.mini__cap { font-size: 13px; color: var(--ink-2); text-align: center; max-width: 26ch; }
+.mini__cap b { display: block; color: var(--ink); font-size: 14px; font-weight: 650; margin-bottom: 2px; }
+
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; }
+.note {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 18px 20px;
+  display: grid; gap: 8px;
+  align-content: start;
+}
+.note h3 { font-size: 15.5px; font-weight: 650; }
+.note p { font-size: 14px; color: var(--ink-2); }
+
+.footer { margin-top: 80px; padding-top: 26px; border-top: 1px solid var(--line); font-size: 13px; color: var(--ink-3); display: flex; flex-wrap: wrap; gap: 8px 20px; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+}
+</style>
+
+<div class="page">
+
+  <!-- ══════════════ HERO ══════════════ -->
+  <header class="hero">
+    <div class="hero__inner">
+      <div>
+        <div class="eyebrow">Prototyp interfejsu · v1</div>
+        <h1>Porto</h1>
+        <p class="hero__lead">
+          Codzienna nauka portugalskiego europejskiego. Jeden przycisk dziennie, siedem
+          form ćwiczeń, powtórki planowane algorytmem&nbsp;FSRS.
+        </p>
+        <div class="hero__meta">
+          <span class="chip"><b>PT-PT</b> nie brazylijski</span>
+          <span class="chip"><b>390×800</b> mobile-first</span>
+          <span class="chip"><b>2</b> konta, osobny postęp</span>
+        </div>
+        <p class="hint">
+          Telefon obok jest klikalny. Naciśnij <b>„Ucz się"</b>, żeby przejść całą sesję —
+          wszystkie siedem trybów po kolei — albo przeskakuj między zakładkami na dole ekranu.
+        </p>
+      </div>
+
+      <!-- ══════════════ INTERACTIVE PHONE ══════════════ -->
+      <div class="phone" id="device">
+        <div class="notch"></div>
+        <div class="phone__screen">
+
+          <div class="statusbar"><span>21:14</span><span class="sysicons"><svg viewBox="0 0 18 12" aria-hidden="true"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="4.5" y="5.5" width="3" height="6.5" rx="1"/><rect x="9" y="3" width="3" height="9" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></svg><svg viewBox="0 0 26 12" aria-hidden="true"><rect x="0.6" y="0.6" width="21" height="10.8" rx="3" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".5"/><rect x="2.4" y="2.4" width="17.4" height="7.2" rx="1.6"/><path d="M23.4 4.2v3.6a2 2 0 0 0 0-3.6z" opacity=".5"/></svg>100%</span></div>
+
+          <!-- ── DZIŚ ── -->
+          <section class="screen is-active" data-screen="today">
+            <div class="appbar">
+              <div class="appbar__title">Bom dia, Paweł</div>
+              <button class="iconbtn" data-go="settings" aria-label="Ustawienia">
+                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2v.2a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.6 1.7 1.7 0 0 0-1.9.4l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0-1.2-2.9H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1.1 1.7 1.7 0 0 0-.4-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3h.1A1.7 1.7 0 0 0 10 3.1V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.4l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9v.1a1.7 1.7 0 0 0 1.6 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+              </button>
+            </div>
+            <div class="scroll">
+              <div class="today-hero">
+                <div class="ring">
+                  <svg width="176" height="176" viewBox="0 0 176 176">
+                    <circle cx="88" cy="88" r="76" fill="none" stroke="var(--surface-3)" stroke-width="13"/>
+                    <circle cx="88" cy="88" r="76" fill="none" stroke="var(--accent)" stroke-width="13"
+                            stroke-linecap="round" stroke-dasharray="477" stroke-dashoffset="315"/>
+                  </svg>
+                  <div class="ring__mid">
+                    <div class="ring__num">9<span style="font-size:22px;color:var(--ink-3)">/25</span></div>
+                    <div class="ring__sub">kart dzisiaj</div>
+                  </div>
+                </div>
+                <div class="streak">🔥 13 dni z rzędu</div>
+              </div>
+
+              <div class="stack">
+                <div class="queue">
+                  <div class="queue__cell">
+                    <div class="queue__n" style="color:var(--accent)">18</div>
+                    <div class="queue__l">powtórek na dziś</div>
+                  </div>
+                  <div class="queue__cell">
+                    <div class="queue__n">10</div>
+                    <div class="queue__l">nowych pozycji</div>
+                  </div>
+                </div>
+
+                <button class="btn" data-start-study>
+                  Ucz się
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </button>
+
+                <button class="btn btn--ghost" data-go="quiz">Szybki quiz — 10 pytań</button>
+
+                <div style="margin-top:6px">
+                  <div class="label" style="margin-bottom:9px">Ostatnio dodane</div>
+                  <div class="stack" style="gap:8px">
+                    <button class="listrow" data-go="word">
+                      <div>
+                        <div class="listrow__pt">a esplanada</div>
+                        <div class="listrow__pl">ogródek kawiarniany</div>
+                      </div>
+                      <div class="listrow__meta"><span class="pill pill--a">nowe</span></div>
+                    </button>
+                    <button class="listrow" data-go="word">
+                      <div>
+                        <div class="listrow__pt">o pequeno-almoço</div>
+                        <div class="listrow__pl">śniadanie</div>
+                      </div>
+                      <div class="listrow__meta"><span class="pill">za 4 dni</span></div>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ── SŁOWNIK ── -->
+          <section class="screen" data-screen="dict">
+            <div class="appbar">
+              <div class="appbar__title">Słownik</div>
+              <button class="iconbtn" aria-label="Dodaj pozycję">
+                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+              </button>
+            </div>
+            <div class="scroll">
+              <div class="stack">
+                <div class="search">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+                  Szukaj po polsku lub portugalsku
+                </div>
+                <div class="filters">
+                  <button class="fchip" aria-pressed="true">Wszystkie</button>
+                  <button class="fchip" aria-pressed="false">A1</button>
+                  <button class="fchip" aria-pressed="false">A2</button>
+                  <button class="fchip" aria-pressed="false">Zwroty</button>
+                  <button class="fchip" aria-pressed="false">Czasowniki</button>
+                </div>
+
+                <div class="label" style="margin-top:4px">Talie · 20</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">
+                  <button class="deckcard" data-go="deck">
+                    <div class="deckcard__name">🍽 Jedzenie i restauracja</div>
+                    <div class="bar"><i class="k" style="width:46%"></i><i class="d" style="width:18%"></i></div>
+                    <div class="deckcard__legend">42 pozycje · 7 na dziś</div>
+                  </button>
+                  <button class="deckcard" data-go="deck">
+                    <div class="deckcard__name">🚋 Transport i kierunki</div>
+                    <div class="bar"><i class="k" style="width:31%"></i><i class="d" style="width:12%"></i></div>
+                    <div class="deckcard__legend">38 pozycji · 4 na dziś</div>
+                  </button>
+                  <button class="deckcard" data-go="deck">
+                    <div class="deckcard__name">👋 Powitania i uprzejmości</div>
+                    <div class="bar"><i class="k" style="width:78%"></i><i class="d" style="width:6%"></i></div>
+                    <div class="deckcard__legend">34 pozycje · 2 na dziś</div>
+                  </button>
+                  <button class="deckcard" data-go="deck">
+                    <div class="deckcard__name">🏠 Dom i mieszkanie</div>
+                    <div class="bar"><i class="k" style="width:12%"></i><i class="d" style="width:9%"></i></div>
+                    <div class="deckcard__legend">40 pozycji · 5 na dziś</div>
+                  </button>
+                </div>
+
+                <div class="label" style="margin-top:6px">Wszystkie pozycje · 812</div>
+                <div class="stack" style="gap:8px">
+                  <button class="listrow" data-go="word">
+                    <div>
+                      <div class="listrow__pt">o comboio</div>
+                      <div class="listrow__pl">pociąg</div>
+                    </div>
+                    <div class="listrow__meta"><span class="pill pill--good">za 12 dni</span></div>
+                  </button>
+                  <button class="listrow" data-go="word">
+                    <div>
+                      <div class="listrow__pt">a casa de banho</div>
+                      <div class="listrow__pl">łazienka</div>
+                    </div>
+                    <div class="listrow__meta"><span class="pill pill--bad">dziś</span></div>
+                  </button>
+                  <button class="listrow" data-go="word">
+                    <div>
+                      <div class="listrow__pt">se faz favor</div>
+                      <div class="listrow__pl">proszę (prosząc o coś)</div>
+                    </div>
+                    <div class="listrow__meta"><span class="pill">za 3 dni</span></div>
+                  </button>
+                  <button class="listrow" data-go="word">
+                    <div>
+                      <div class="listrow__pt">o telemóvel</div>
+                      <div class="listrow__pl">telefon komórkowy</div>
+                    </div>
+                    <div class="listrow__meta"><span class="pill pill--a">nowe</span></div>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ── SZCZEGÓŁY POZYCJI ── -->
+          <section class="screen" data-screen="word">
+            <div class="appbar">
+              <button class="iconbtn" data-go="dict" aria-label="Wróć">
+                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg>
+              </button>
+              <div class="appbar__title" style="flex:1;font-size:17px">Pozycja</div>
+              <button class="iconbtn" aria-label="Edytuj">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 20h4l10-10-4-4L4 16v4z"/></svg>
+              </button>
+            </div>
+            <div class="scroll">
+              <div class="stack">
+                <div class="card" style="text-align:center;padding:22px 14px">
+                  <div class="term term--sm"><span class="term__gender">o</span> pequeno-almoço</div>
+                  <div style="font-size:16px;color:var(--ink-2);margin-top:4px">śniadanie</div>
+                  <div class="row" style="justify-content:center;gap:8px;margin-top:14px">
+                    <span class="pill">rzeczownik · m</span>
+                    <span class="pill pill--a">A1</span>
+                  </div>
+                  <button class="btn btn--ghost btn--sm" style="margin:16px auto 0" data-play>
+                    ▶ Posłuchaj · pt-PT
+                  </button>
+                  <div style="font-size:11.5px;color:var(--ink-3);margin-top:7px">/pɨˈkenu alˈmosu/</div>
+                </div>
+
+                <div class="card" style="border-color:var(--accent-line);background:var(--accent-soft)">
+                  <div class="label" style="color:var(--accent);margin-bottom:5px">Uwaga</div>
+                  <div style="font-size:13.5px">W Brazylii mówi się <i>café da manhã</i>. W Portugalii to zawsze <i>pequeno-almoço</i> — z łącznikiem.</div>
+                </div>
+
+                <div>
+                  <div class="label" style="margin-bottom:8px">Przykłady</div>
+                  <div class="stack" style="gap:8px">
+                    <div class="card">
+                      <div style="font-family:var(--font-pt);font-size:16px">Tomo o pequeno-almoço às oito.</div>
+                      <div style="font-size:12.5px;color:var(--ink-2);margin-top:3px">Jem śniadanie o ósmej.</div>
+                    </div>
+                    <div class="card">
+                      <div style="font-family:var(--font-pt);font-size:16px">O pequeno-almoço está incluído?</div>
+                      <div style="font-size:12.5px;color:var(--ink-2);margin-top:3px">Czy śniadanie jest wliczone?</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="label" style="margin-bottom:8px">Twoje powtórki</div>
+                  <div class="card">
+                    <div class="spread"><span style="font-size:13.5px;color:var(--ink-2)">Rozpoznawanie PT→PL</span><span class="pill pill--good">za 12 dni</span></div>
+                    <div class="spread" style="margin-top:9px"><span style="font-size:13.5px;color:var(--ink-2)">Produkcja PL→PT</span><span class="pill">za 4 dni</span></div>
+                    <div class="spread" style="margin-top:9px"><span style="font-size:13.5px;color:var(--ink-2)">Powtórzeń · pomyłek</span><span style="font-size:13.5px;font-variant-numeric:tabular-nums">11 · 2</span></div>
+                  </div>
+                </div>
+
+                <div class="row" style="gap:8px">
+                  <button class="btn btn--ghost btn--sm" style="flex:1">Zawieś</button>
+                  <button class="btn btn--ghost btn--sm" style="flex:1">Ucz od zera</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ── TALIA ── -->
+          <section class="screen" data-screen="deck">
+            <div class="appbar">
+              <button class="iconbtn" data-go="dict" aria-label="Wróć">
+                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg>
+              </button>
+              <div class="appbar__title" style="flex:1;font-size:19px">Jedzenie i restauracja</div>
+            </div>
+            <div class="scroll">
+              <div class="stack">
+                <div class="card">
+                  <div class="spread">
+                    <div>
+                      <div style="font-size:13.5px;color:var(--ink-2)">Postęp talii</div>
+                      <div style="font-size:22px;font-weight:680;margin-top:2px">19 / 42</div>
+                    </div>
+                    <span class="pill pill--a">A1–A2</span>
+                  </div>
+                  <div class="bar" style="margin-top:12px;height:7px"><i class="k" style="width:46%"></i><i class="d" style="width:18%"></i></div>
+                  <div class="deckcard__legend" style="margin-top:7px">19 opanowanych · 7 na dziś · 16 nietkniętych</div>
+                </div>
+                <button class="btn" data-start-study>Ucz się z tej talii</button>
+                <div class="stack" style="gap:8px">
+                  <button class="listrow" data-go="word"><div><div class="listrow__pt">a ementa</div><div class="listrow__pl">menu, karta dań</div></div><div class="listrow__meta"><span class="pill pill--good">za 9 dni</span></div></button>
+                  <button class="listrow" data-go="word"><div><div class="listrow__pt">a conta</div><div class="listrow__pl">rachunek</div></div><div class="listrow__meta"><span class="pill pill--bad">dziś</span></div></button>
+                  <button class="listrow" data-go="word"><div><div class="listrow__pt">o pequeno-almoço</div><div class="listrow__pl">śniadanie</div></div><div class="listrow__meta"><span class="pill">za 4 dni</span></div></button>
+                  <button class="listrow" data-go="word"><div><div class="listrow__pt">a bica</div><div class="listrow__pl">espresso (w Lizbonie)</div></div><div class="listrow__meta"><span class="pill pill--a">nowe</span></div></button>
+                  <button class="listrow" data-go="word"><div><div class="listrow__pt">o bacalhau</div><div class="listrow__pl">dorsz solony</div></div><div class="listrow__meta"><span class="pill pill--a">nowe</span></div></button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ── QUIZY ── -->
+          <section class="screen" data-screen="quiz">
+            <div class="appbar"><div class="appbar__title">Quizy</div></div>
+            <div class="scroll">
+              <div class="stack">
+                <div class="card" style="background:var(--accent-soft);border-color:var(--accent-line)">
+                  <div class="label" style="color:var(--accent)">Szybki quiz</div>
+                  <div style="font-size:14px;margin:6px 0 12px;color:var(--ink-2)">10 pytań z tego, czego uczysz się teraz. Bez wpływu na harmonogram powtórek.</div>
+                  <button class="btn" data-quiz-result>Zacznij</button>
+                </div>
+
+                <div class="label">Twoje testy</div>
+                <div class="stack" style="gap:8px">
+                  <button class="listrow" data-quiz-result>
+                    <div>
+                      <div style="font-weight:640;font-size:14.5px">Restauracja — 20 pytań</div>
+                      <div class="listrow__pl">wybór + wpisywanie · limit 5 min</div>
+                    </div>
+                    <div class="listrow__meta"><span class="pill pill--good">87%</span></div>
+                  </button>
+                  <button class="listrow" data-quiz-result>
+                    <div>
+                      <div style="font-weight:640;font-size:14.5px">Czasowniki nieregularne</div>
+                      <div class="listrow__pl">wpisywanie · bez limitu</div>
+                    </div>
+                    <div class="listrow__meta"><span class="pill pill--bad">61%</span></div>
+                  </button>
+                  <button class="listrow" data-quiz-result>
+                    <div>
+                      <div style="font-weight:640;font-size:14.5px">Wszystko A1</div>
+                      <div class="listrow__pl">30 pytań · przekrojowy</div>
+                    </div>
+                    <div class="listrow__meta"><span class="pill">94%</span></div>
+                  </button>
+                </div>
+                <button class="btn btn--ghost">+ Nowy test</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- ── WYNIK QUIZU ── -->
+          <section class="screen" data-screen="quizresult">
+            <div class="appbar">
+              <button class="iconbtn" data-go="quiz" aria-label="Wróć">
+                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg>
+              </button>
+              <div class="appbar__title" style="flex:1;font-size:18px">Wynik</div>
+            </div>
+            <div class="scroll">
+              <div class="summary-hero">
+                <div class="big" style="color:var(--good)">87%</div>
+                <div style="font-size:13.5px;color:var(--ink-2)">Restauracja — 20 pytań · 4:12</div>
+              </div>
+              <div class="stack">
+                <div class="tiles">
+                  <div class="tile"><b style="color:var(--good)">17</b><span>poprawnych</span></div>
+                  <div class="tile"><b style="color:var(--bad)">3</b><span>błędów</span></div>
+                  <div class="tile"><b>+6</b><span>pkt vs poprzednio</span></div>
+                </div>
+                <div class="label" style="margin-top:4px">Do poprawy</div>
+                <div class="stack" style="gap:8px">
+                  <div class="card" style="border-color:var(--bad-line)">
+                    <div class="spread">
+                      <div style="font-family:var(--font-pt);font-size:17px">o talher</div>
+                      <span class="pill pill--bad">błąd</span>
+                    </div>
+                    <div style="font-size:12.5px;color:var(--ink-2);margin-top:4px">sztućce &nbsp;·&nbsp; wpisano: <i>talerz</i></div>
+                  </div>
+                  <div class="card" style="border-color:var(--bad-line)">
+                    <div class="spread">
+                      <div style="font-family:var(--font-pt);font-size:17px">a colher</div>
+                      <span class="pill pill--bad">błąd</span>
+                    </div>
+                    <div style="font-size:12.5px;color:var(--ink-2);margin-top:4px">łyżka &nbsp;·&nbsp; wpisano: <i>widelec</i></div>
+                  </div>
+                  <div class="card" style="border-color:var(--bad-line)">
+                    <div class="spread">
+                      <div style="font-family:var(--font-pt);font-size:17px">levantar a mesa</div>
+                      <span class="pill pill--bad">błąd</span>
+                    </div>
+                    <div style="font-size:12.5px;color:var(--ink-2);margin-top:4px">sprzątnąć ze stołu &nbsp;·&nbsp; brak odpowiedzi</div>
+                  </div>
+                </div>
+                <button class="btn">Dodaj 3 błędy do powtórek</button>
+                <button class="btn btn--ghost" data-go="quiz">Powtórz test</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- ── POSTĘP ── -->
+          <section class="screen" data-screen="stats">
+            <div class="appbar"><div class="appbar__title">Postęp</div></div>
+            <div class="scroll">
+              <div class="stack">
+                <div class="tiles">
+                  <div class="tile"><b style="color:var(--warm)">13</b><span>dni z rzędu</span></div>
+                  <div class="tile"><b>412</b><span>opanowanych</span></div>
+                  <div class="tile"><b>91%</b><span>skuteczność</span></div>
+                </div>
+
+                <div class="card">
+                  <div class="spread" style="margin-bottom:11px">
+                    <div class="label">Aktywność</div>
+                    <div style="font-size:11.5px;color:var(--ink-3)">ostatnie 15 tygodni</div>
+                  </div>
+                  <div class="heat" id="heat"></div>
+                </div>
+
+                <div class="card">
+                  <div class="spread" style="margin-bottom:11px">
+                    <div class="label">Prognoza powtórek</div>
+                    <div style="font-size:11.5px;color:var(--ink-3)">30 dni</div>
+                  </div>
+                  <div class="forecast" id="forecast"></div>
+                  <div style="font-size:11.5px;color:var(--ink-3);margin-top:8px">Najcięższy dzień: czwartek 27.08 — 61 kart</div>
+                </div>
+
+                <div class="label" style="margin-top:4px">Najtrudniejsze słowa</div>
+                <div class="stack" style="gap:8px">
+                  <button class="listrow" data-go="word"><div><div class="listrow__pt">esquisito</div><div class="listrow__pl">dziwny (nie: wyszukany)</div></div><div class="listrow__meta"><span class="pill pill--bad">7 pomyłek</span></div></button>
+                  <button class="listrow" data-go="word"><div><div class="listrow__pt">a bilheteira</div><div class="listrow__pl">kasa biletowa</div></div><div class="listrow__meta"><span class="pill pill--bad">6 pomyłek</span></div></button>
+                  <button class="listrow" data-go="word"><div><div class="listrow__pt">constipado</div><div class="listrow__pl">przeziębiony</div></div><div class="listrow__meta"><span class="pill pill--bad">5 pomyłek</span></div></button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ── USTAWIENIA ── -->
+          <section class="screen" data-screen="settings">
+            <div class="appbar">
+              <button class="iconbtn" data-go="today" aria-label="Wróć">
+                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg>
+              </button>
+              <div class="appbar__title" style="flex:1;font-size:19px">Ustawienia</div>
+            </div>
+            <div class="scroll">
+              <div class="stack">
+                <div>
+                  <div class="label" style="margin-bottom:8px">Nauka</div>
+                  <div class="card">
+                    <div class="setrow">
+                      <div><div class="setrow__l">Cel dzienny</div><div class="setrow__d">kart potrzebnych do streaka</div></div>
+                      <div class="stepper"><button>−</button><b>25</b><button>+</button></div>
+                    </div>
+                    <div class="setrow">
+                      <div><div class="setrow__l">Nowe pozycje dziennie</div><div class="setrow__d">liczone jako słowa, nie karty</div></div>
+                      <div class="stepper"><button>−</button><b>10</b><button>+</button></div>
+                    </div>
+                    <div class="setrow">
+                      <div><div class="setrow__l">Docelowa retencja</div><div class="setrow__d">parametr FSRS — wyżej = częstsze powtórki</div></div>
+                      <div class="stepper"><b>0,90</b></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="label" style="margin-bottom:8px">Tryby ćwiczeń</div>
+                  <div class="card">
+                    <div class="setrow"><div class="setrow__l">Fiszki</div><button class="switch" aria-checked="true" role="switch" aria-label="Fiszki"></button></div>
+                    <div class="setrow"><div class="setrow__l">Test wyboru</div><button class="switch" aria-checked="true" role="switch" aria-label="Test wyboru"></button></div>
+                    <div class="setrow"><div class="setrow__l">Wpisywanie z pamięci</div><button class="switch" aria-checked="true" role="switch" aria-label="Wpisywanie"></button></div>
+                    <div class="setrow"><div class="setrow__l">Luka w zdaniu</div><button class="switch" aria-checked="true" role="switch" aria-label="Luka"></button></div>
+                    <div class="setrow"><div class="setrow__l">Dyktando ze słuchu</div><button class="switch" aria-checked="true" role="switch" aria-label="Dyktando"></button></div>
+                    <div class="setrow"><div class="setrow__l">Tłumaczenie z oceną AI</div><button class="switch" aria-checked="false" role="switch" aria-label="Tłumaczenie AI"></button></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="label" style="margin-bottom:8px">Wymowa</div>
+                  <div class="card">
+                    <div class="setrow">
+                      <div><div class="setrow__l">Głos</div><div class="setrow__d">pt-PT · Neural2-A</div></div>
+                      <button class="btn btn--ghost btn--sm">Zmień</button>
+                    </div>
+                    <div class="setrow">
+                      <div><div class="setrow__l">Tempo</div><div class="setrow__d">0,75× do 1,25×</div></div>
+                      <div class="stepper"><b>1,00×</b></div>
+                    </div>
+                    <div class="setrow">
+                      <div><div class="setrow__l">Brak akcentu to błąd</div><div class="setrow__d">avo zamiast avó</div></div>
+                      <button class="switch" aria-checked="false" role="switch" aria-label="Akcenty"></button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ── SESJA NAUKI ── -->
+          <section class="screen" data-screen="study" data-bare>
+            <div class="studybar">
+              <button class="xbtn" data-go="today" aria-label="Przerwij sesję">✕</button>
+              <div class="progress"><i id="prog" style="width:0%"></i></div>
+              <div class="studybar__count" id="progCount">1/7</div>
+            </div>
+            <div class="task" id="taskBody"></div>
+            <div id="feedbackSlot"></div>
+          </section>
+
+          <!-- ── PODSUMOWANIE ── -->
+          <section class="screen" data-screen="summary" data-bare>
+            <div class="scroll" style="padding-top:20px">
+              <div class="summary-hero">
+                <div style="font-size:38px">🎉</div>
+                <div class="big">86%</div>
+                <div style="font-size:14px;color:var(--ink-2)">Sesja skończona · 24 karty w 8:41</div>
+                <div class="streak" style="margin-top:12px">🔥 14 dni z rzędu</div>
+              </div>
+              <div class="stack">
+                <div class="tiles">
+                  <div class="tile"><b style="color:var(--good)">21</b><span>poprawnych</span></div>
+                  <div class="tile"><b style="color:var(--bad)">3</b><span>pomyłek</span></div>
+                  <div class="tile"><b style="color:var(--accent)">10</b><span>nowych</span></div>
+                </div>
+                <div class="card" style="background:var(--good-soft);border-color:var(--good-line)">
+                  <div style="font-size:13.5px;color:var(--ink)">Cel dzienny osiągnięty. Następne powtórki jutro o poranku — <b>19 kart</b>.</div>
+                </div>
+                <div class="label" style="margin-top:4px">Pomyłki tej sesji</div>
+                <div class="stack" style="gap:8px">
+                  <div class="card">
+                    <div class="spread"><div style="font-family:var(--font-pt);font-size:17px">a casa de banho</div><span class="pill pill--bad">łazienka</span></div>
+                    <div style="font-size:12px;color:var(--ink-3);margin-top:4px">wpisano: <i>a casa de banha</i></div>
+                  </div>
+                  <div class="card">
+                    <div class="spread"><div style="font-family:var(--font-pt);font-size:17px">o talher</div><span class="pill pill--bad">sztućce</span></div>
+                    <div style="font-size:12px;color:var(--ink-3);margin-top:4px">wybrano: <i>talerz</i></div>
+                  </div>
+                </div>
+                <button class="btn" data-start-study>Powtórz pomyłki teraz</button>
+                <button class="btn btn--ghost" data-go="today">Gotowe na dziś</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- ── TABBAR ── -->
+          <nav class="tabbar" id="tabbar">
+            <button class="tab" data-go="today" aria-current="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 10.5L12 4l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>
+              Dziś
+            </button>
+            <button class="tab" data-go="dict" aria-current="false">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 5a2 2 0 0 1 2-2h12v18H6a2 2 0 0 1-2-2z"/><path d="M8 7h7M8 11h7"/></svg>
+              Słownik
+            </button>
+            <button class="tab" data-go="quiz" aria-current="false">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 9a3 3 0 1 1 4 2.8c-.7.3-1 .9-1 1.7v.5"/><circle cx="12" cy="17.5" r="1"/><circle cx="12" cy="12" r="9"/></svg>
+              Quizy
+            </button>
+            <button class="tab" data-go="stats" aria-current="false">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+              Postęp
+            </button>
+          </nav>
+
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══════════════ NAWIGACJA ══════════════ -->
+  <section class="band">
+    <div class="band__head">
+      <span class="band__num">Struktura</span>
+      <h2>Cztery zakładki i nic więcej</h2>
+      <p>
+        Cała nawigacja mieści się w dolnym pasku, w zasięgu kciuka. Nauka i quiz otwierają się
+        pełnoekranowo, bez paska — kiedy odpowiadasz na pytanie, nic nie ma odciągać uwagi.
+      </p>
+    </div>
+
+    <div class="navmap">
+      <div class="navmap__col">
+        <div class="navmap__tab"><strong>Dziś</strong><span>Ekran startowy. Postęp do celu, streak, jeden przycisk.</span></div>
+        <div class="navmap__stem"></div>
+        <div class="navmap__kids">
+          <div class="navmap__kid"><b>Ucz się</b> → sesja pełnoekranowa</div>
+          <div class="navmap__kid"><b>Szybki quiz</b> → 10 pytań</div>
+          <div class="navmap__kid">Ostatnio dodane → pozycja</div>
+          <div class="navmap__kid">⚙ → Ustawienia</div>
+        </div>
+      </div>
+
+      <div class="navmap__col">
+        <div class="navmap__tab"><strong>Słownik</strong><span>Cała baza: 20 talii tematycznych i 812 pozycji.</span></div>
+        <div class="navmap__stem"></div>
+        <div class="navmap__kids">
+          <div class="navmap__kid">Szukaj po PL lub PT</div>
+          <div class="navmap__kid"><b>Talia</b> → ucz się z niej</div>
+          <div class="navmap__kid"><b>Pozycja</b> → odmiana, audio, przykłady, historia</div>
+          <div class="navmap__kid">+ → dodaj własne słowo</div>
+        </div>
+      </div>
+
+      <div class="navmap__col">
+        <div class="navmap__tab"><strong>Quizy</strong><span>Sprawdzian wiedzy niezależny od harmonogramu powtórek.</span></div>
+        <div class="navmap__stem"></div>
+        <div class="navmap__kids">
+          <div class="navmap__kid">Szybki quiz — bez konfiguracji</div>
+          <div class="navmap__kid">Zapisane testy z historią wyników</div>
+          <div class="navmap__kid"><b>Wynik</b> → błędy do powtórek</div>
+        </div>
+      </div>
+
+      <div class="navmap__col">
+        <div class="navmap__tab"><strong>Postęp</strong><span>Czy to działa — widoczne w liczbach.</span></div>
+        <div class="navmap__stem"></div>
+        <div class="navmap__kids">
+          <div class="navmap__kid">Heatmapa aktywności</div>
+          <div class="navmap__kid">Prognoza powtórek na 30 dni</div>
+          <div class="navmap__kid">Najtrudniejsze słowa</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fullband">
+      <span class="fullband__t">Pełny ekran, bez paska:</span>
+      <span class="fullband__i">Sesja nauki</span>
+      <span class="fullband__i">Rozgrywka quizu</span>
+      <span class="fullband__i">Podsumowanie sesji</span>
+      <span class="fullband__i">Wynik quizu</span>
+      <span class="fullband__i">Logowanie</span>
+    </div>
+  </section>
+
+  <!-- ══════════════ LEKCJA ══════════════ -->
+  <section class="band">
+    <div class="band__head">
+      <span class="band__num">Lekcja</span>
+      <h2>Jedna sesja, siedem form tego samego słowa</h2>
+      <p>
+        Lekcja nie ma sztywnej długości — to porcja kart, które algorytm wyznaczył na dziś:
+        powtórki, których termin właśnie minął, plus nowe pozycje wplecione co kilka kart.
+        Forma pytania <b>zmienia się wraz z tym, jak dobrze znasz słowo</b>. Nowe pokazuje się jako
+        fiszka, po kilku dniach wraca jako test wyboru, potem trzeba je wpisać z pamięci,
+        a na końcu rozpoznać wyłącznie ze słuchu.
+      </p>
+    </div>
+
+    <div class="modes">
+
+      <!-- matching -->
+      <div class="mode">
+        <div class="viewport">
+          <div class="studybar">
+            <span class="xbtn" aria-hidden="true">✕</span>
+            <div class="progress"><i style="width:8%"></i></div>
+            <div class="studybar__count">2/24</div>
+          </div>
+          <div class="task">
+            <span class="mode-tag">Rozgrzewka</span>
+            <div style="font-size:12.5px;color:var(--ink-2);margin-bottom:10px">Połącz pary — kolumny są przetasowane.</div>
+            <div class="match">
+              <button class="mtile pt is-done">a chave</button>
+              <button class="mtile is-done">klucz</button>
+              <button class="mtile pt" aria-pressed="true">o comboio</button>
+              <button class="mtile">plaża</button>
+              <button class="mtile pt">a praia</button>
+              <button class="mtile">pociąg</button>
+              <button class="mtile pt">amanhã</button>
+              <button class="mtile">jutro</button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="mode__title">Dopasowywanie par <code>matching</code></div>
+          <p class="mode__when">Pierwsze karty sesji. <b>Rozgrzewka na czas</b> — pięć par, szybkie tapnięcia, wejście w język bez wysiłku.</p>
+        </div>
+      </div>
+
+      <!-- flashcard -->
+      <div class="mode">
+        <div class="viewport">
+          <div class="studybar">
+            <span class="xbtn" aria-hidden="true">✕</span>
+            <div class="progress"><i style="width:20%"></i></div>
+            <div class="studybar__count">5/24</div>
+          </div>
+          <div class="task">
+            <span class="mode-tag">Nowe słowo</span>
+            <div class="flash" style="min-height:150px">
+              <div class="term term--sm"><span class="term__gender">o</span> talher</div>
+              <div class="flash__answer">sztućce</div>
+              <div class="flash__ex">Falta um talher na mesa.</div>
+            </div>
+            <div class="ratings">
+              <div class="rating" data-r="1">Znów<small>1 min</small></div>
+              <div class="rating" data-r="2">Trudne<small>6 min</small></div>
+              <div class="rating" data-r="3">Dobrze<small>1 dzień</small></div>
+              <div class="rating" data-r="4">Łatwe<small>4 dni</small></div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="mode__title">Fiszka <code>flashcard</code></div>
+          <p class="mode__when">Pierwszy kontakt ze słowem i powtórki w środkowej fazie. Oceniasz się sam — <b>przycisk pokazuje, kiedy karta wróci</b>.</p>
+        </div>
+      </div>
+
+      <!-- mcq -->
+      <div class="mode">
+        <div class="viewport">
+          <div class="studybar">
+            <span class="xbtn" aria-hidden="true">✕</span>
+            <div class="progress"><i style="width:33%"></i></div>
+            <div class="studybar__count">8/24</div>
+          </div>
+          <div class="task">
+            <div class="task__prompt">Co to znaczy?</div>
+            <div class="term term--sm" style="margin-bottom:16px">o autocarro</div>
+            <div class="choices">
+              <button class="choice is-locked">pociąg</button>
+              <button class="choice is-right is-locked">autobus</button>
+              <button class="choice is-locked">tramwaj</button>
+              <button class="choice is-locked">samolot</button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="mode__title">Test wyboru <code>mcq</code></div>
+          <p class="mode__when">Faza nauki, oba kierunki. Dystraktory to <b>słowa z tej samej talii i tej samej części mowy</b> — nie da się zgadnąć po wyglądzie.</p>
+        </div>
+      </div>
+
+      <!-- typing -->
+      <div class="mode">
+        <div class="viewport">
+          <div class="studybar">
+            <span class="xbtn" aria-hidden="true">✕</span>
+            <div class="progress"><i style="width:46%"></i></div>
+            <div class="studybar__count">11/24</div>
+          </div>
+          <div class="task">
+            <div class="task__prompt">Napisz po portugalsku</div>
+            <div class="term term--sm" style="font-family:var(--font-ui);font-size:23px;font-weight:600">łazienka</div>
+            <div style="margin-top:18px">
+              <div class="answerfield" style="color:var(--ink)">a casa de banho<span style="opacity:.4">|</span></div>
+              <div class="diacritics">
+                <span class="dkey">á</span><span class="dkey">à</span><span class="dkey">â</span><span class="dkey">ã</span>
+                <span class="dkey">ç</span><span class="dkey">é</span><span class="dkey">ê</span><span class="dkey">í</span>
+                <span class="dkey">ó</span><span class="dkey">ô</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="mode__title">Wpisywanie z pamięci <code>typing</code></div>
+          <p class="mode__when">Karty dobrze opanowane. Pasek nad klawiaturą podaje <b>portugalskie znaki, których nie ma polska klawiatura</b>. Literówka to „prawie dobrze", nie błąd.</p>
+        </div>
+      </div>
+
+      <!-- cloze -->
+      <div class="mode">
+        <div class="viewport">
+          <div class="studybar">
+            <span class="xbtn" aria-hidden="true">✕</span>
+            <div class="progress"><i style="width:58%"></i></div>
+            <div class="studybar__count">14/24</div>
+          </div>
+          <div class="task">
+            <div class="task__prompt">Uzupełnij lukę</div>
+            <div class="cloze" style="margin-top:10px">
+              Pode trazer a <span style="border-bottom:2px solid var(--accent);padding:0 22px">conta</span>,<br>se faz favor?
+            </div>
+            <div class="cloze__pl">Czy może pan przynieść rachunek, proszę?</div>
+            <div class="spacer"></div>
+            <div class="feedback ok" style="border-radius:var(--r-md);border:1px solid var(--good-line)">
+              <div class="feedback__head">✓ Dobrze</div>
+              <div class="feedback__body">Wraca za <b style="font-family:var(--font-ui);font-size:14px">9 dni</b></div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="mode__title">Luka w zdaniu <code>cloze</code></div>
+          <p class="mode__when">Słowo w kontekście, nie w próżni. <b>Uczy, w jakim zdaniu to słowo naprawdę pada</b> — sam rzeczownik <i>conta</i> nie mówi, jak poprosić o rachunek.</p>
+        </div>
+      </div>
+
+      <!-- word bank -->
+      <div class="mode">
+        <div class="viewport">
+          <div class="studybar">
+            <span class="xbtn" aria-hidden="true">✕</span>
+            <div class="progress"><i style="width:71%"></i></div>
+            <div class="studybar__count">17/24</div>
+          </div>
+          <div class="task">
+            <div class="task__prompt">Ułóż zdanie</div>
+            <div style="font-size:16px;font-weight:600;margin-bottom:14px">Nie mam jutro czasu.</div>
+            <div class="slotline">
+              <span class="brick">Não</span><span class="brick">tenho</span><span class="brick">tempo</span>
+            </div>
+            <div class="bank">
+              <span class="brick">amanhã</span><span class="brick">é</span><span class="brick">o</span><span class="brick">estou</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="mode__title">Rozsypanka <code>word_bank</code></div>
+          <p class="mode__when">Tylko dla całych zdań. Trenuje <b>szyk zdania portugalskiego</b> — pozycję przeczenia i zaimków, gdzie polska intuicja myli.</p>
+        </div>
+      </div>
+
+      <!-- listening -->
+      <div class="mode">
+        <div class="viewport" style="height:462px">
+          <div class="studybar">
+            <span class="xbtn" aria-hidden="true">✕</span>
+            <div class="progress"><i style="width:92%"></i></div>
+            <div class="studybar__count">22/24</div>
+          </div>
+          <div class="task">
+            <div class="task__prompt">Co słyszysz?</div>
+            <div style="padding:14px 0 6px">
+              <div class="audiobtn">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+              </div>
+              <div class="wave">
+                <i style="height:30%"></i><i style="height:62%"></i><i style="height:88%"></i><i style="height:44%"></i>
+                <i style="height:74%"></i><i style="height:100%"></i><i style="height:52%"></i><i style="height:80%"></i>
+                <i style="height:36%"></i><i style="height:66%"></i><i style="height:26%"></i>
+              </div>
+              <button class="slowplay">Wolniej · 0,75×</button>
+            </div>
+            <div class="choices" style="margin-top:10px">
+              <button class="choice pt is-locked" style="min-height:50px">a estação</button>
+              <button class="choice pt is-locked" style="min-height:50px">a estrada</button>
+              <button class="choice pt is-locked" style="min-height:50px">o estádio</button>
+              <button class="choice pt is-locked" style="min-height:50px">a esquina</button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="mode__title">Dyktando ze słuchu <code>listening</code></div>
+          <p class="mode__when">Najtrudniejsza forma, dla słów opanowanych. Głos <b>pt-PT, nie brazylijski</b> — portugalski europejski połyka samogłoski, więc słuchu trzeba uczyć się osobno.</p>
+        </div>
+      </div>
+
+      <!-- feedback -->
+      <div class="mode">
+        <div class="viewport" style="justify-content:flex-end">
+          <div class="studybar">
+            <span class="xbtn" aria-hidden="true">✕</span>
+            <div class="progress"><i style="width:46%"></i></div>
+            <div class="studybar__count">11/24</div>
+          </div>
+          <div class="task">
+            <div class="task__prompt">Napisz po portugalsku</div>
+            <div class="term term--sm" style="font-family:var(--font-ui);font-size:22px;font-weight:600">babcia</div>
+            <div class="answerfield" style="margin-top:16px;border-color:var(--bad)">a avo</div>
+          </div>
+          <div class="feedback no">
+            <div class="feedback__head">≈ Prawie</div>
+            <div class="feedback__body">Brakuje akcentu: <b>a avó</b> — bez niego <i>avo</i> znaczy „przodek". Liczy się jako trudne.</div>
+            <button class="feedback__why">Dlaczego źle? →</button>
+          </div>
+        </div>
+        <div>
+          <div class="mode__title">Ocena odpowiedzi</div>
+          <p class="mode__when">Trzy wyniki, nie dwa: dobrze, <b>prawie</b> (literówka lub brakujący akcent) i źle. „Prawie" wraca szybciej niż poprawna odpowiedź, ale nie kasuje postępu jak błąd.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ══════════════ GALERIA ══════════════ -->
+  <section class="band">
+    <div class="band__head">
+      <span class="band__num">Ekrany</span>
+      <h2>Reszta aplikacji na jednym rzucie oka</h2>
+      <p>Te same ekrany są klikalne w telefonie na górze strony.</p>
+    </div>
+    <div class="gallery" id="gallery"></div>
+  </section>
+
+  <!-- ══════════════ NOTATKI ══════════════ -->
+  <section class="band">
+    <div class="band__head">
+      <span class="band__num">Decyzje</span>
+      <h2>Dlaczego tak, a nie inaczej</h2>
+    </div>
+    <div class="grid2">
+      <div class="note">
+        <h3>Serif dla portugalskiego, sans dla interfejsu</h3>
+        <p>Każde portugalskie słowo w aplikacji jest złożone szeryfową antykwą, a cały interfejs — krojem systemowym. Dzięki temu materiał do nauki odróżnia się od chromu jednym spojrzeniem, a diakrytyki (<i>ã</i>, <i>ç</i>, <i>õ</i>) są czytelne przy małym stopniu pisma.</p>
+      </div>
+      <div class="note">
+        <h3>Akcje w dolnej jednej trzeciej</h3>
+        <p>Przycisk „Ucz się", oceny fiszki i przyciski wyboru są tam, gdzie sięga kciuk. Górna część ekranu pokazuje, nie obsługuje.</p>
+      </div>
+      <div class="note">
+        <h3>Kolor niesie znaczenie, nie ozdobę</h3>
+        <p>Kobaltowy błękit azulejo to jedyny akcent i oznacza „to jest interaktywne". Zieleń i rdzawa czerwień są zarezerwowane wyłącznie na wynik odpowiedzi, pomarańcz — tylko na streak.</p>
+      </div>
+      <div class="note">
+        <h3>Sesja nie ma paska nawigacji</h3>
+        <p>Kiedy odpowiadasz, na ekranie jest krzyżyk, pasek postępu i pytanie. Wyjście wymaga świadomego kliknięcia, a postęp zostaje zapisany.</p>
+      </div>
+      <div class="note">
+        <h3>Termin powtórki widać na przycisku</h3>
+        <p>Oceniając fiszkę, widzisz od razu, kiedy karta wróci: „Trudne — 6 min", „Łatwe — 4 dni". Algorytm przestaje być czarną skrzynką.</p>
+      </div>
+      <div class="note">
+        <h3>Dwa kierunki, dwa terminy</h3>
+        <p>Ekran pozycji pokazuje osobno rozpoznawanie (PT→PL) i produkcję (PL→PT). To dwie różne umiejętności i aplikacja planuje je niezależnie.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <span>Porto · mockup interfejsu</span>
+    <span>Treści przykładowe w wariancie europejskim (PT-PT)</span>
+    <span>Specyfikacja: docs/PRD.md · plan budowy: docs/PLAN.md</span>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  const device = document.getElementById("device");
+  const screens = device.querySelectorAll(".screen");
+  const tabbar = document.getElementById("tabbar");
+  const tabs = tabbar.querySelectorAll(".tab");
+
+  /* ── Nawigacja ─────────────────────────── */
+  const tabOf = { today: "today", dict: "dict", word: "dict", deck: "dict", quiz: "quiz", quizresult: "quiz", stats: "stats" };
+
+  function go(name) {
+    screens.forEach(s => s.classList.toggle("is-active", s.dataset.screen === name));
+    const active = device.querySelector('.screen[data-screen="' + name + '"]');
+    const bare = active && active.hasAttribute("data-bare");
+    tabbar.style.display = bare ? "none" : "";
+    tabs.forEach(t => t.setAttribute("aria-current", String(tabOf[name] === t.dataset.go)));
+    const sc = active && active.querySelector(".scroll");
+    if (sc) sc.scrollTop = 0;
+  }
+
+  device.addEventListener("click", e => {
+    const nav = e.target.closest("[data-go]");
+    if (nav) { go(nav.dataset.go); return; }
+    if (e.target.closest("[data-quiz-result]")) { go("quizresult"); return; }
+    if (e.target.closest("[data-start-study]")) { startStudy(); return; }
+
+    const chip = e.target.closest(".fchip");
+    if (chip) {
+      chip.parentElement.querySelectorAll(".fchip").forEach(c => c.setAttribute("aria-pressed", "false"));
+      chip.setAttribute("aria-pressed", "true");
+      return;
+    }
+    const sw = e.target.closest(".switch");
+    if (sw) { sw.setAttribute("aria-checked", sw.getAttribute("aria-checked") === "true" ? "false" : "true"); return; }
+
+    const play = e.target.closest("[data-play]");
+    if (play) {
+      play.textContent = "♪ Odtwarzam…";
+      setTimeout(() => { play.textContent = "▶ Posłuchaj · pt-PT"; }, 1100);
+    }
+  });
+
+  /* ── Dane sesji ────────────────────────── */
+  const tasks = [
+    {
+      mode: "matching", tag: "Rozgrzewka",
+      pairs: [["o comboio", "pociąg"], ["a chave", "klucz"], ["o queijo", "ser"], ["a praia", "plaża"], ["amanhã", "jutro"]]
+    },
+    {
+      mode: "flashcard", tag: "Nowe słowo",
+      pt: "o talher", pl: "sztućce",
+      note: "Uwaga na fałszywego przyjaciela: talerz to <i>o prato</i>.",
+      ex: "Falta um talher na mesa."
+    },
+    {
+      mode: "mcq", tag: "Rozpoznawanie", prompt: "Co to znaczy?",
+      question: "o autocarro", questionPt: true,
+      options: ["pociąg", "autobus", "tramwaj", "samolot"], answer: 1,
+      after: "W Brazylii <i>ônibus</i> — w Portugalii zawsze <i>autocarro</i>."
+    },
+    {
+      mode: "typing", tag: "Produkcja", prompt: "Napisz po portugalsku",
+      question: "łazienka", answer: "a casa de banho",
+      after: "Brazylijskiego <i>banheiro</i> w Portugalii nikt tak nie użyje."
+    },
+    {
+      mode: "cloze", tag: "W kontekście", prompt: "Uzupełnij lukę",
+      before: "Pode trazer a", after_: ", se faz favor?", answer: "conta",
+      pl: "Czy może pan przynieść rachunek, proszę?"
+    },
+    {
+      mode: "bank", tag: "Szyk zdania", prompt: "Ułóż zdanie",
+      question: "Nie mam jutro czasu.",
+      answer: ["Não", "tenho", "tempo", "amanhã"],
+      extra: ["é", "o", "estou"]
+    },
+    {
+      mode: "listening", tag: "Ze słuchu", prompt: "Co słyszysz?",
+      options: ["a estação", "a estrada", "o estádio", "a esquina"], answer: 0,
+      pl: "stacja, dworzec"
+    }
+  ];
+
+  const taskBody = document.getElementById("taskBody");
+  const feedbackSlot = document.getElementById("feedbackSlot");
+  const prog = document.getElementById("prog");
+  const progCount = document.getElementById("progCount");
+  let idx = 0;
+
+  const DIA = ["á", "à", "â", "ã", "ç", "é", "ê", "í", "ó", "ô", "õ", "ú"];
+
+  function startStudy() { idx = 0; go("study"); render(); }
+
+  function setProgress() {
+    prog.style.width = (idx / tasks.length * 100) + "%";
+    progCount.textContent = (idx + 1) + "/" + tasks.length;
+  }
+
+  function next() {
+    idx++;
+    if (idx >= tasks.length) { feedbackSlot.innerHTML = ""; go("summary"); return; }
+    render();
+  }
+
+  function feedback(kind, head, body, delay) {
+    feedbackSlot.innerHTML =
+      '<div class="feedback ' + kind + '">' +
+        '<div class="feedback__head">' + head + "</div>" +
+        '<div class="feedback__body">' + body + "</div>" +
+        '<button class="btn" data-next>Dalej</button>' +
+      "</div>";
+    if (delay) feedbackSlot.querySelector("[data-next]").focus({ preventScroll: true });
+  }
+
+  feedbackSlot.addEventListener("click", e => { if (e.target.closest("[data-next]")) next(); });
+
+  /* Prompt sits high, everything you tap sits low — within thumb reach.
+     SPACER marks where the free vertical space goes in each mode. */
+  const SPACER = '<div class="spacer"></div>';
+  const LIFT = '<div class="spacer" style="flex:.55"></div>';
+
+  function render() {
+    setProgress();
+    feedbackSlot.innerHTML = "";
+    const t = tasks[idx];
+    const tag = '<span class="mode-tag">' + t.tag + "</span>";
+
+    /* ── matching ── */
+    if (t.mode === "matching") {
+      const tiles = [];
+      t.pairs.forEach((p, i) => { tiles.push({ txt: p[0], pt: true, k: i }); tiles.push({ txt: p[1], pt: false, k: i }); });
+      tiles.sort(() => Math.random() - 0.5);
+      taskBody.innerHTML = tag +
+        '<div style="font-size:13.5px;color:var(--ink-2);margin-bottom:12px">Połącz pary — pięć słów, pięć tłumaczeń.</div>' +
+        '<div class="match">' + tiles.map(x =>
+          '<button class="mtile' + (x.pt ? " pt" : "") + '" data-k="' + x.k + '" data-pt="' + x.pt + '" aria-pressed="false">' + x.txt + "</button>"
+        ).join("") + "</div>";
+
+      let sel = null, done = 0;
+      taskBody.querySelectorAll(".mtile").forEach(btn => {
+        btn.addEventListener("click", () => {
+          if (btn.classList.contains("is-done")) return;
+          if (!sel) { sel = btn; btn.setAttribute("aria-pressed", "true"); return; }
+          if (sel === btn) { sel = null; btn.setAttribute("aria-pressed", "false"); return; }
+          if (sel.dataset.pt === btn.dataset.pt) { sel.setAttribute("aria-pressed", "false"); sel = btn; btn.setAttribute("aria-pressed", "true"); return; }
+
+          if (sel.dataset.k === btn.dataset.k) {
+            [sel, btn].forEach(b => { b.classList.add("is-done"); b.setAttribute("aria-pressed", "false"); });
+            done++;
+            if (done === t.pairs.length) feedback("ok", "✓ Pięć par w komplecie", "Rozgrzewka zaliczona.");
+          } else {
+            const a = sel, b = btn;
+            [a, b].forEach(x => x.classList.add("is-miss"));
+            setTimeout(() => [a, b].forEach(x => { x.classList.remove("is-miss"); x.setAttribute("aria-pressed", "false"); }), 420);
+          }
+          sel = null;
+        });
+      });
+      return;
+    }
+
+    /* ── flashcard ── */
+    if (t.mode === "flashcard") {
+      taskBody.innerHTML = tag + SPACER +
+        '<div class="flash" data-flip>' +
+          '<div class="term term--sm">' + t.pt + "</div>" +
+          '<div class="flash__tap">Tapnij, żeby odsłonić</div>' +
+        "</div>" +
+        '<div class="spacer"></div>' +
+        '<div id="flashActions"></div>';
+
+      taskBody.querySelector("[data-flip]").addEventListener("click", function reveal() {
+        this.innerHTML =
+          '<div class="term term--sm">' + t.pt + "</div>" +
+          '<div class="flash__answer">' + t.pl + "</div>" +
+          '<div class="flash__ex">' + t.ex + "</div>" +
+          '<div class="flash__note">' + t.note + "</div>";
+        this.removeEventListener("click", reveal);
+        document.getElementById("flashActions").innerHTML =
+          '<div style="font-size:12px;color:var(--ink-3);text-align:center;margin-bottom:8px">Jak dobrze pamiętałeś?</div>' +
+          '<div class="ratings">' +
+            '<button class="rating" data-r="1">Znów<small>1 min</small></button>' +
+            '<button class="rating" data-r="2">Trudne<small>6 min</small></button>' +
+            '<button class="rating" data-r="3">Dobrze<small>1 dzień</small></button>' +
+            '<button class="rating" data-r="4">Łatwe<small>4 dni</small></button>' +
+          "</div>";
+        document.getElementById("flashActions").querySelectorAll(".rating").forEach(r => {
+          r.addEventListener("click", () => {
+            const when = { 1: "za minutę", 2: "za 6 minut", 3: "jutro", 4: "za 4 dni" }[r.dataset.r];
+            feedback(r.dataset.r === "1" ? "no" : "ok", r.dataset.r === "1" ? "↻ Wróci zaraz" : "✓ Zapisane", "Karta wraca <b style=\"font-family:var(--font-ui);font-size:14px\">" + when + "</b>.");
+          });
+        });
+      });
+      return;
+    }
+
+    /* ── mcq / listening ── */
+    if (t.mode === "mcq" || t.mode === "listening") {
+      const head = t.mode === "listening"
+        ? '<div style="padding:8px 0 4px">' +
+            '<button class="audiobtn" data-audio aria-label="Odtwórz"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>' +
+            '<div class="wave">' + [30,62,88,44,74,100,52,80,36,66,26].map(h => '<i style="height:' + h + '%"></i>').join("") + "</div>" +
+            '<button class="slowplay" data-audio>Wolniej · 0,75×</button>' +
+          "</div>"
+        : '<div class="term term--sm" style="margin:2px 0 14px">' + t.question + "</div>" +
+          '<button class="btn btn--ghost btn--sm" data-audio style="margin:0 auto">\u25B6 Posłuchaj</button>';
+
+      taskBody.innerHTML = tag + LIFT +
+        '<div class="task__prompt">' + t.prompt + "</div>" + head + SPACER +
+        '<div class="choices">' + t.options.map((o, i) =>
+          '<button class="choice' + (t.mode === "listening" ? " pt" : "") + '" data-i="' + i + '">' + o + "</button>"
+        ).join("") + "</div>";
+
+      taskBody.querySelectorAll("[data-audio]").forEach(b => {
+        b.addEventListener("click", () => {
+          const orb = taskBody.querySelector(".audiobtn");
+          if (orb) {
+            orb.classList.add("is-playing");
+            setTimeout(() => orb.classList.remove("is-playing"), 1300);
+            return;
+          }
+          const label = b.textContent;
+          b.textContent = "\u266A Odtwarzam\u2026";
+          setTimeout(() => { b.textContent = label; }, 1100);
+        });
+      });
+
+      taskBody.querySelectorAll(".choice").forEach(c => {
+        c.addEventListener("click", () => {
+          const picked = Number(c.dataset.i);
+          const ok = picked === t.answer;
+          taskBody.querySelectorAll(".choice").forEach((x, i) => {
+            x.classList.add("is-locked");
+            if (i === t.answer) x.classList.add("is-right");
+            else if (i === picked) x.classList.add("is-wrong");
+          });
+          const extra = t.after ? " " + t.after : (t.pl ? " Znaczy: <i>" + t.pl + "</i>." : "");
+          feedback(ok ? "ok" : "no",
+            ok ? "✓ Dobrze" : "✕ Nie tym razem",
+            (ok ? "Wraca za <b style=\"font-family:var(--font-ui);font-size:14px\">6 dni</b>." : "Poprawnie: <b>" + t.options[t.answer] + "</b>.") + extra);
+        });
+      });
+      return;
+    }
+
+    /* ── typing ── */
+    if (t.mode === "typing") {
+      taskBody.innerHTML = tag + LIFT +
+        '<div class="task__prompt">' + t.prompt + "</div>" +
+        '<div style="font-size:24px;font-weight:640;margin-bottom:20px">' + t.question + "</div>" + SPACER +
+        '<input class="answerfield" id="ta" placeholder="wpisz po portugalsku" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">' +
+        '<div class="diacritics" style="margin-bottom:14px">' + DIA.map(d => '<button class="dkey" data-d="' + d + '">' + d + "</button>").join("") + "</div>" +
+        '<button class="btn" data-check>Sprawdź</button>';
+
+      const input = document.getElementById("ta");
+      taskBody.querySelectorAll(".dkey").forEach(k => {
+        k.addEventListener("click", () => {
+          const s = input.selectionStart ?? input.value.length;
+          input.value = input.value.slice(0, s) + k.dataset.d + input.value.slice(input.selectionEnd ?? s);
+          input.focus();
+          input.setSelectionRange(s + 1, s + 1);
+        });
+      });
+
+      const norm = v => v.toLowerCase().trim().replace(/\s+/g, " ");
+      const dia = new RegExp("[" + String.fromCharCode(0x300) + "-" + String.fromCharCode(0x36f) + "]", "g");
+      const strip = v => norm(v).normalize("NFD").replace(dia, "");
+
+      function check() {
+        const v = input.value;
+        if (!v.trim()) { input.focus(); return; }
+        const exact = norm(v) === norm(t.answer);
+        const accent = !exact && strip(v) === strip(t.answer);
+        input.style.borderColor = exact ? "var(--good)" : accent ? "var(--warm)" : "var(--bad)";
+        taskBody.querySelector("[data-check]").remove();
+        if (exact) feedback("ok", "✓ Dokładnie tak", "Wraca za <b style=\"font-family:var(--font-ui);font-size:14px\">11 dni</b>. " + t.after);
+        else if (accent) feedback("no", "≈ Prawie", "Brakuje akcentu — poprawnie: <b>" + t.answer + "</b>. Liczy się jako trudne.");
+        else feedback("no", "✕ Nie tym razem", "Poprawnie: <b>" + t.answer + "</b>. " + t.after);
+      }
+      taskBody.querySelector("[data-check]").addEventListener("click", check);
+      input.addEventListener("keydown", e => { if (e.key === "Enter") check(); });
+      return;
+    }
+
+    /* ── cloze ── */
+    if (t.mode === "cloze") {
+      taskBody.innerHTML = tag + LIFT +
+        '<div class="task__prompt">' + t.prompt + "</div>" +
+        '<div class="cloze" style="margin-top:14px">' + t.before +
+          ' <input id="cz" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">' + t.after_ +
+        "</div>" +
+        '<div class="cloze__pl">' + t.pl + "</div>" + SPACER +
+        '<button class="btn" data-check>Sprawdź</button>';
+
+      const input = document.getElementById("cz");
+      function check() {
+        const ok = input.value.toLowerCase().trim() === t.answer;
+        input.style.borderColor = ok ? "var(--good)" : "var(--bad)";
+        taskBody.querySelector("[data-check]").remove();
+        feedback(ok ? "ok" : "no", ok ? "✓ Dobrze" : "✕ Nie tym razem",
+          ok ? "Wraca za <b style=\"font-family:var(--font-ui);font-size:14px\">9 dni</b>."
+             : "Poprawnie: <b>" + t.answer + "</b> — <i>a conta</i> to rachunek w restauracji.");
+      }
+      taskBody.querySelector("[data-check]").addEventListener("click", check);
+      input.addEventListener("keydown", e => { if (e.key === "Enter") check(); });
+      return;
+    }
+
+    /* ── word bank ── */
+    if (t.mode === "bank") {
+      const bricks = t.answer.concat(t.extra).sort(() => Math.random() - 0.5);
+      taskBody.innerHTML = tag + LIFT +
+        '<div class="task__prompt">' + t.prompt + "</div>" +
+        '<div style="font-size:17px;font-weight:620;margin-bottom:16px">' + t.question + "</div>" + SPACER +
+        '<div class="slotline" id="slot"></div>' +
+        '<div class="bank" id="bank" style="margin-bottom:14px">' + bricks.map((w, i) =>
+          '<button class="brick" data-w="' + w + '" data-i="' + i + '">' + w + "</button>"
+        ).join("") + "</div>" +
+        '<button class="btn" data-check>Sprawdź</button>';
+
+      const slot = document.getElementById("slot");
+      const bank = document.getElementById("bank");
+      const chosen = [];
+
+      bank.addEventListener("click", e => {
+        const b = e.target.closest(".brick");
+        if (!b || b.classList.contains("is-used")) return;
+        b.classList.add("is-used");
+        chosen.push({ w: b.dataset.w, src: b });
+        redraw();
+      });
+
+      function redraw() {
+        slot.innerHTML = "";
+        chosen.forEach((c, i) => {
+          const el = document.createElement("button");
+          el.className = "brick";
+          el.textContent = c.w;
+          el.addEventListener("click", () => { c.src.classList.remove("is-used"); chosen.splice(i, 1); redraw(); });
+          slot.appendChild(el);
+        });
+      }
+
+      taskBody.querySelector("[data-check]").addEventListener("click", () => {
+        const got = chosen.map(c => c.w).join(" ");
+        const want = t.answer.join(" ");
+        const ok = got === want;
+        taskBody.querySelector("[data-check]").remove();
+        feedback(ok ? "ok" : "no", ok ? "✓ Dobry szyk" : "✕ Zły szyk",
+          ok ? "<b>Não tenho tempo amanhã.</b> Przeczenie stoi przed czasownikiem, okolicznik czasu na końcu."
+             : "Poprawnie: <b>Não tenho tempo amanhã.</b> Przeczenie <i>não</i> zawsze przed czasownikiem.");
+      });
+      return;
+    }
+  }
+
+  /* ── Heatmapa i prognoza ───────────────── */
+  const heat = document.getElementById("heat");
+  if (heat) {
+    let html = "";
+    for (let i = 0; i < 105; i++) {
+      const r = Math.random();
+      const lvl = i > 96 ? (r > .6 ? 3 : 2) : r > .82 ? 4 : r > .6 ? 3 : r > .34 ? 2 : r > .16 ? 1 : 0;
+      html += '<i data-l="' + lvl + '"></i>';
+    }
+    heat.innerHTML = html;
+  }
+  const forecast = document.getElementById("forecast");
+  if (forecast) {
+    const hs = [42, 55, 31, 68, 40, 22, 35, 61, 48, 29, 52, 74, 38, 26, 44, 57, 33, 41, 66, 30, 47, 25, 39, 53, 36, 28, 45, 60, 34, 23];
+    forecast.innerHTML = hs.map(h => '<i style="height:' + h + '%"></i>').join("");
+  }
+
+  /* ── Galeria: klony ekranów ────────────── */
+  const gallery = document.getElementById("gallery");
+  const wanted = [
+    ["dict", "Słownik", "Talie tematyczne i pełna baza z wyszukiwaniem po obu językach"],
+    ["word", "Pozycja", "Rodzajnik, wymowa, przykłady i osobne terminy dla obu kierunków"],
+    ["stats", "Postęp", "Heatmapa, prognoza obciążenia i lista słów, które nie chcą wejść"],
+    ["settings", "Ustawienia", "Cel dzienny, aktywne tryby ćwiczeń, głos i tempo wymowy"]
+  ];
+
+  wanted.forEach(([name, title, cap]) => {
+    const src = device.querySelector('.screen[data-screen="' + name + '"]');
+    if (!src) return;
+
+    const phone = document.createElement("div");
+    phone.className = "phone";
+    phone.setAttribute("aria-hidden", "true");
+    phone.innerHTML = '<div class="notch"></div><div class="phone__screen">' +
+      '<div class="statusbar"><span>21:14</span><span class="sysicons"><svg viewBox="0 0 18 12" aria-hidden="true"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="4.5" y="5.5" width="3" height="6.5" rx="1"/><rect x="9" y="3" width="3" height="9" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></svg><svg viewBox="0 0 26 12" aria-hidden="true"><rect x="0.6" y="0.6" width="21" height="10.8" rx="3" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".5"/><rect x="2.4" y="2.4" width="17.4" height="7.2" rx="1.6"/><path d="M23.4 4.2v3.6a2 2 0 0 0 0-3.6z" opacity=".5"/></svg>100%</span></div></div>';
+
+    const shell = phone.querySelector(".phone__screen");
+    const clone = src.cloneNode(true);
+    clone.classList.add("is-active");
+    clone.querySelectorAll("[id]").forEach(n => n.removeAttribute("id"));
+    shell.appendChild(clone);
+    const bar = tabbar.cloneNode(true);
+    bar.removeAttribute("id");
+    shell.appendChild(bar);
+    shell.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-current", String(tabOf[name] === t.dataset.go)));
+
+    const item = document.createElement("div");
+    item.className = "mini";
+    item.innerHTML = '<div class="mini__frame"></div><div class="mini__cap"><b>' + title + "</b>" + cap + "</div>";
+    item.querySelector(".mini__frame").appendChild(phone);
+    gallery.appendChild(item);
+  });
+
+})();
+</script>
