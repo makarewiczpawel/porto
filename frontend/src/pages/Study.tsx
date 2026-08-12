@@ -6,10 +6,19 @@ import type { SessionSummary, StudySession } from "@/api/types";
 import { Feedback, TaskRenderer } from "@/components/TaskRenderer";
 import type { AnswerEvent } from "@/components/TaskRenderer";
 import { Spinner } from "@/components/ui";
+import { useAuth } from "@/store/auth";
 import { useSession } from "@/store/session";
+
+const MODE_LABELS: Partial<Record<string, string>> = {
+  matching: "Rozgrzewka",
+  cloze: "W kontekście",
+  word_bank: "Szyk zdania",
+  typing: "Z pamięci",
+};
 
 export function StudyPage() {
   const navigate = useNavigate();
+  const { settings } = useAuth();
   const {
     session,
     position,
@@ -74,8 +83,20 @@ export function StudyPage() {
 
   function onAnswer(event: AnswerEvent) {
     void answer(
-      { index: 0, rating: event.rating, selected_index: event.selectedIndex },
-      { isCorrect: event.isCorrect, correctAnswer: event.correctAnswer },
+      {
+        index: 0,
+        rating: event.rating,
+        selected_index: event.selectedIndex,
+        user_answer: event.userAnswer,
+        pairs: event.pairs,
+      },
+      {
+        isCorrect: event.isCorrect,
+        correctAnswer: event.correctAnswer,
+        match: event.match,
+        diff: event.diff,
+        summary: event.summary,
+      },
     );
   }
 
@@ -111,9 +132,15 @@ export function StudyPage() {
         {task && (
           <>
             <span className="mb-3 self-start rounded-full border border-accent-line bg-accent-soft px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-[0.08em] text-accent">
-              {task.is_new ? "Nowe słowo" : task.direction === "recognition" ? "Rozpoznawanie" : "Produkcja"}
+              {MODE_LABELS[task.mode] ??
+                (task.is_new ? "Nowe słowo" : task.direction === "recognition" ? "Rozpoznawanie" : "Produkcja")}
             </span>
-            <TaskRenderer task={task} locked={feedback !== null} onAnswer={onAnswer} />
+            <TaskRenderer
+              task={task}
+              locked={feedback !== null}
+              accentStrict={settings?.accent_strict}
+              onAnswer={onAnswer}
+            />
           </>
         )}
 
@@ -123,6 +150,9 @@ export function StudyPage() {
             correctAnswer={feedback.correctAnswer}
             nextDueLabel={feedback.nextDueLabel}
             note={feedback.note}
+            match={feedback.match}
+            diff={feedback.diff}
+            summary={feedback.summary}
             onNext={next}
           />
         )}

@@ -8,6 +8,7 @@ from app.models.content import (
     Example,
     Item,
 )
+from app.models.quiz import Quiz, QuizAnswer, QuizAttempt
 from app.models.study import (
     CARD_STATES,
     DIRECTIONS,
@@ -18,7 +19,7 @@ from app.models.study import (
     StudySession,
     UserItemState,
 )
-from app.models.user import ALL_MODES, PHASE1_MODES, User, UserSettings
+from app.models.user import ALL_MODES, DEFAULT_MODES, PHASE1_MODES, User, UserSettings
 
 __all__ = [
     "ALL_MODES",
@@ -26,6 +27,7 @@ __all__ = [
     "CARD_STATES",
     "CEFR_LEVELS",
     "DIRECTIONS",
+    "DEFAULT_MODES",
     "DailyStat",
     "Deck",
     "DeckItem",
@@ -35,6 +37,9 @@ __all__ = [
     "LEECH_LAPSES",
     "PHASE1_MODES",
     "PRODUCTION_UNLOCK_AT",
+    "Quiz",
+    "QuizAnswer",
+    "QuizAttempt",
     "Review",
     "SOURCES",
     "StudySession",

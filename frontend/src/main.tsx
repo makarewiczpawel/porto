@@ -9,6 +9,7 @@ import { DeckDetailPage, DecksPage } from "@/pages/Decks";
 import { DictionaryPage, ItemDetailPage } from "@/pages/Dictionary";
 import { LoginPage } from "@/pages/Login";
 import { ProgressPage } from "@/pages/Progress";
+import { QuizAttemptPage, QuizResultPage, QuizzesPage } from "@/pages/Quiz";
 import { SettingsPage } from "@/pages/Settings";
 import { StudyPage } from "@/pages/Study";
 import { SummaryPage } from "@/pages/Summary";
@@ -43,12 +44,15 @@ function Shell() {
         <Route path="/slownik/:itemId" element={<ItemDetailPage />} />
         <Route path="/talie" element={<DecksPage />} />
         <Route path="/talie/:deckId" element={<DeckDetailPage />} />
+        <Route path="/quizy" element={<QuizzesPage />} />
         <Route path="/postep" element={<ProgressPage />} />
         <Route path="/ustawienia" element={<SettingsPage />} />
       </Route>
       <Route element={<FullScreenLayout />}>
         <Route path="/nauka" element={<StudyPage />} />
         <Route path="/podsumowanie" element={<SummaryPage />} />
+        <Route path="/quizy/:attemptId" element={<QuizAttemptPage />} />
+        <Route path="/quizy/:attemptId/wynik" element={<QuizResultPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

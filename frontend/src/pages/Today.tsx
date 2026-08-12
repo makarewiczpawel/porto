@@ -138,6 +138,13 @@ export function TodayPage() {
           <Label className="mb-2">Skróty</Label>
           <div className="grid gap-2">
             <Link
+              to="/quizy"
+              className="flex items-center justify-between rounded-2xl border border-line bg-surface px-3.5 py-3 text-[14.5px] font-semibold"
+            >
+              Szybki quiz — sprawdź się
+              <span className="text-ink-3">→</span>
+            </Link>
+            <Link
               to="/talie"
               className="flex items-center justify-between rounded-2xl border border-line bg-surface px-3.5 py-3 text-[14.5px] font-semibold"
             >
