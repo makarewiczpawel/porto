@@ -89,9 +89,32 @@ docs/
 
 ## Wdrożenie
 
-**Backend — Railway:** katalog `backend/`, `Procfile` uruchamia migracje przed startem.
-Zmienne: jak w `.env.example`, plus `COOKIE_DOMAIN=.pmakarewicz.com`, `COOKIE_SECURE=true`.
+**Backend — Railway.** Dodaj PostgreSQL i usługę z tego repo, ustaw **Root Directory: `backend`**.
+`Procfile` odpala migracje i bazę startową przed startem serwera (seed jest idempotentny, więc
+bezpiecznie chodzi przy każdym restarcie). Zmienne:
 
-**Frontend — Cloudflare Pages:** katalog `frontend/`, build `npm run build`, output `dist`.
-Zmienna `VITE_API_URL=https://api-porto.pmakarewicz.com`. Plik `public/_redirects` obsługuje
+```
+DATABASE_URL=${{Postgres.DATABASE_URL}}
+JWT_SECRET=<openssl rand -base64 36>
+JWT_REFRESH_SECRET=<openssl rand -base64 36>
+INVITE_CODE=<własny kod>
+CORS_ORIGINS=https://porto.pmakarewicz.com
+COOKIE_DOMAIN=.pmakarewicz.com
+COOKIE_SECURE=true
+COOKIE_SAMESITE=lax
+```
+
+Po wdrożeniu `GET /api/health` powinien zwrócić `{"status":"ok","db":true}`.
+
+**Frontend — Cloudflare Pages.** Root directory `frontend`, build `npm run build`, output `dist`,
+zmienna `VITE_API_URL=https://api-porto.pmakarewicz.com`. Plik `public/_redirects` obsługuje
 przekierowanie tras SPA.
+
+> Vite wkleja `VITE_API_URL` **w czasie builda**. Zmiana tej zmiennej wymaga ponownego
+> uruchomienia deploya — inaczej w plikach zostanie stary adres.
+
+## CI
+
+`.github/workflows/ci.yml` przy każdym pushu i pull requeście sprawdza:
+testy backendu na prawdziwym Postgresie, zgodność migracji z modelami (`alembic check`),
+załadowanie bazy startowej wraz z jej idempotencją, oraz typy i build frontendu.

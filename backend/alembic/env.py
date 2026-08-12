@@ -15,6 +15,19 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 
 
+def include_object(object_, name, type_, reflected, compare_to) -> bool:
+    """Hide the hand-written trigram indexes from autogenerate.
+
+    `lower(pt) gin_trgm_ops` cannot be expressed in the model metadata in a way
+    autogenerate compares reliably, so those two indexes are created by raw SQL
+    in the initial migration. Without this hook every `alembic revision
+    --autogenerate` (and `alembic check`) would propose dropping them.
+    """
+    if type_ == "index" and name and name.endswith("_trgm"):
+        return False
+    return True
+
+
 def run_migrations_offline() -> None:
     context.configure(
         url=settings.database_url,
@@ -22,6 +35,7 @@ def run_migrations_offline() -> None:
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         compare_type=True,
+        include_object=include_object,
     )
     with context.begin_transaction():
         context.run_migrations()
@@ -34,7 +48,12 @@ def run_migrations_online() -> None:
         poolclass=pool.NullPool,
     )
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata, compare_type=True)
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            compare_type=True,
+            include_object=include_object,
+        )
         with context.begin_transaction():
             context.run_migrations()
 
