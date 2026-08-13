@@ -30,6 +30,7 @@ export interface Example {
   id: string;
   pt: string;
   pl: string;
+  audio_url: string | null;
 }
 
 /** Adresy nagrań, jakie serwer ma gotowe dla tego zadania. */

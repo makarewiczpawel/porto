@@ -24,6 +24,23 @@ from app.services.task_builder import audio_index, deck_counts
 router = APIRouter(prefix="/api", tags=["content"])
 
 
+def _with_audio(db: Session, rows: list[Item], user: User) -> list[ItemOut]:
+    """Pozycje z adresem wymowy, jednym zapytaniem na całą listę.
+
+    Każde miejsce zwracające listę słów musi przejść przez tę funkcję —
+    inaczej gdzieś w aplikacji głośnik po cichu przestaje działać, bo pozycja
+    wygląda na taką bez nagrania. Tak właśnie wyglądał widok talii, zanim to
+    powstało.
+    """
+    recordings = audio_index(db, rows, user.settings.tts_voice, include_slow=False)
+    out = []
+    for row in rows:
+        entry = ItemOut.model_validate(row)
+        entry.audio_url = recordings.get(row.id, {}).get("pt")
+        out.append(entry)
+    return out
+
+
 @router.get("/settings", response_model=SettingsOut)
 def get_settings(user: User = Depends(get_current_user)) -> SettingsOut:
     return SettingsOut.model_validate(user.settings)
@@ -86,13 +103,9 @@ def list_items(
         .unique()
         .all()
     )
-    recordings = audio_index(db, list(rows), user.settings.tts_voice, include_slow=False)
-    out = []
-    for row in rows:
-        entry = ItemOut.model_validate(row)
-        entry.audio_url = recordings.get(row.id, {}).get("pt")
-        out.append(entry)
-    return PageOut(items=out, total=total, page=page, per_page=per_page)
+    return PageOut(
+        items=_with_audio(db, list(rows), user), total=total, page=page, per_page=per_page
+    )
 
 
 @router.get("/items/{item_id}", response_model=ItemDetailOut)
@@ -123,10 +136,13 @@ def get_item(
     )
 
     out = ItemDetailOut.model_validate(item)
-    out.audio_url = audio_index(db, [item], user.settings.tts_voice, include_slow=False).get(
-        item.id, {}
-    ).get("pt")
-    out.examples = [e for e in out.examples]
+    recordings = audio_index(db, [item], user.settings.tts_voice, include_slow=False).get(item.id, {})
+    out.audio_url = recordings.get("pt")
+    # Zdanie przykładowe ma własne nagranie — tego, jak słowo brzmi w zdaniu,
+    # nie da się usłyszeć z wymowy samego hasła.
+    for example in out.examples:
+        if example.pt == (item.examples[0].pt if item.examples else None):
+            example.audio_url = recordings.get("example")
     out.cards = [
         CardStateOut(
             direction=c.direction,
@@ -204,5 +220,5 @@ def get_deck(
     out.due = stats.get("due", 0)
     out.learned = stats.get("learned", 0)
     out.untouched = stats.get("untouched", out.total)
-    out.items = [ItemOut.model_validate(row) for row in rows]
+    out.items = _with_audio(db, list(rows), user)
     return out

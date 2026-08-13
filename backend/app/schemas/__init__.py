@@ -70,6 +70,7 @@ class ExampleOut(ORMModel):
     id: uuid.UUID
     pt: str
     pl: str
+    audio_url: str | None = None
 
 
 class CardStateOut(BaseModel):
