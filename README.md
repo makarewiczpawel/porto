@@ -5,9 +5,9 @@ Prywatna aplikacja webowa (PWA) do codziennej nauki **portugalskiego europejskie
 Codzienna sesja słówek i zwrotów z harmonogramem powtórek (FSRS), ćwiczenia w wielu formach,
 quizy i wymowa w głosach pt-PT. Aplikacja jest zamknięta — konto zakłada się kodem zaproszenia.
 
-**Status: fazy 1, 2 i wymowa z fazy 3 gotowe.** Działa codzienna nauka w siedmiu formach
-ćwiczeń, harmonogram FSRS, streak, quizy z historią wyników, słownik z 430 pozycjami, wymowa
-pt-PT przy każdym portugalskim słowie i PWA instalowalna na telefonie.
+**Status: fazy 1–3 gotowe.** Działa codzienna nauka w siedmiu formach ćwiczeń, harmonogram
+FSRS, streak, quizy z historią wyników, słownik z 430 pozycjami, własne słówka i import listy,
+wymowa pt-PT, praca bez zasięgu i PWA instalowalna na telefonie.
 
 **Tryby ćwiczeń.** Ten sam materiał wraca w coraz trudniejszej formie, zależnie od tego, jak
 dobrze znasz słowo: fiszka → test wyboru → wpisywanie z pamięci → luka w zdaniu. Do tego
@@ -20,6 +20,16 @@ przytrzymanie zwalnia do 0,75×. Nagrania powstają raz, syntezatorem Google w g
 leżą w bazie — odtwarzanie nic nie kosztuje i działa bez zasięgu. Doszedł tryb **ze słuchu**:
 pytaniem jest samo nagranie, bez napisu. Gdy nagrania jeszcze nie ma, aplikacja sięga po głos
 wbudowany w telefon — ale wyłącznie portugalski europejski; brazylijskiego świadomie nie użyje.
+
+**Bez zasięgu.** Sesja pobiera się w całości i od tej chwili nie potrzebuje serwera: pytania,
+odpowiedzi i nagrania leżą na urządzeniu, ocena dzieje się lokalnie. Odpowiedzi czekają w
+kolejce i dosyłają się same, gdy wróci sieć — także po zamknięciu i ponownym otwarciu
+aplikacji. Bezpieczne dzięki idempotencji z fazy 1: ta sama partia wysłana dwa razy nie liczy
+się podwójnie.
+
+**Własne słówka.** Pojedyncze pozycje z formularza albo cała lista wklejona z arkusza. Import
+rozpoznaje przecinki, średniki i tabulatory, sam zgaduje typ pozycji, a wiersz z błędem
+raportuje z numerem zamiast przerywać całość.
 
 **Quizy.** Sprawdzian niezależny od harmonogramu: quiz mierzy, nie uczy, więc domyślnie nie
 przesuwa żadnej karty. Pomyłki można jednym kliknięciem dorzucić do jutrzejszej kolejki.
@@ -74,7 +84,7 @@ npm run dev                   # http://localhost:5173
 ## Testy
 
 ```bash
-cd backend && .venv/bin/python -m pytest tests/ -q     # 120 testów
+cd backend && .venv/bin/python -m pytest tests/ -q     # 142 testy
 cd frontend && npm run typecheck && npm run build
 ```
 
@@ -93,6 +103,7 @@ backend/
       task_builder.py  # dobór kart, przeplot nowych, wybór trybu, dystraktory
       grader.py        # ocena odpowiedzi pisanych: dobrze / prawie / źle
       tts.py           # synteza mowy — jedyne miejsce, które zna Google
+      importer.py      # parser CSV: wybaczający format, raport z numerami wierszy
       stats.py         # dzienne agregaty i streak w strefie użytkownika
     seed/        # 20 talii PT-PT w JSON + idempotentny loader
   scripts/       # synthesize_all.py — nagrywa całą bazę, wznawialnie
@@ -102,8 +113,8 @@ frontend/
   src/
     api/         # klient HTTP z cichym odświeżaniem tokenu
     components/  # TaskRenderer + tryby ćwiczeń, layout, elementy UI
-    pages/       # Dziś, Nauka, Podsumowanie, Słownik, Talie, Quizy, Postęp, Ustawienia
-    store/       # auth (kontekst) + sesja nauki (Zustand)
+    pages/       # Dziś, Nauka, Podsumowanie, Słownik, Dodawanie, Talie, Quizy, Postęp, Ustawienia
+    store/       # auth (kontekst) + sesja nauki (Zustand + localStorage)
 docs/
 ```
 

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { api } from "@/api/client";
-import type { SessionSummary, StudySession } from "@/api/types";
+import type { StudySession } from "@/api/types";
 import { Feedback, TaskRenderer } from "@/components/TaskRenderer";
 import type { AnswerEvent } from "@/components/TaskRenderer";
 import { Spinner } from "@/components/ui";
@@ -25,16 +25,20 @@ export function StudyPage() {
     position,
     feedback,
     error,
+    online,
     begin,
     current,
     answer,
     next,
     flush,
+    finish: closeSession,
   } = useSession();
   const [loading, setLoading] = useState(!session);
   const [finishing, setFinishing] = useState(false);
 
   // Deep link or refresh: pick the open session back up from the server.
+  // Sesja zapisana lokalnie ma pierwszeństwo — jeśli jest, nie pytamy serwera
+  // i ekran działa tak samo bez zasięgu.
   useEffect(() => {
     if (session) return;
     let cancelled = false;
@@ -60,8 +64,9 @@ export function StudyPage() {
   async function finish() {
     if (!session || finishing) return;
     setFinishing(true);
-    await flush();
-    const summary = await api.post<SessionSummary>(`/api/study/sessions/${session.id}/finish`);
+    // Zamknięcie sesji dosyła kolejkę i pyta serwer o podsumowanie; bez
+    // połączenia zwraca wynik policzony na miejscu, a resztę dosyła później.
+    const summary = await closeSession();
     navigate("/podsumowanie", { replace: true, state: summary });
   }
 
@@ -139,9 +144,10 @@ export function StudyPage() {
         </div>
       </div>
 
-      {error && (
-        <div className="mx-4 mb-2 rounded-lg border border-line bg-surface-2 px-3 py-2 text-xs text-ink-2">
-          {error}
+      {(error || !online) && (
+        <div className="mx-4 mb-2 flex items-center gap-2 rounded-lg border border-warm/40 bg-warm/10 px-3 py-2 text-xs text-ink-2">
+          <span aria-hidden="true">✈</span>
+          {error ?? "Brak połączenia — ucz się dalej, postęp zapisuje się na urządzeniu."}
         </div>
       )}
 

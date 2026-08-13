@@ -109,6 +109,65 @@ class ItemDetailOut(ItemOut):
     decks: list[str] = []
 
 
+class ItemCreateIn(BaseModel):
+    pt: str = Field(min_length=1, max_length=200)
+    pl: str = Field(min_length=1, max_length=200)
+    type: Literal["word", "phrase", "sentence"] = "word"
+    article: str | None = Field(default=None, max_length=8)
+    gender: Literal["m", "f", "mf"] | None = None
+    part_of_speech: str | None = Field(default=None, max_length=16)
+    cefr_level: Literal["A1", "A2", "B1", "B2", "C1"] = "A1"
+    notes: str | None = Field(default=None, max_length=500)
+    pt_alt: list[str] = Field(default_factory=list, max_length=5)
+    pl_alt: list[str] = Field(default_factory=list, max_length=5)
+    example_pt: str | None = Field(default=None, max_length=300)
+    example_pl: str | None = Field(default=None, max_length=300)
+    deck_id: uuid.UUID | None = None
+
+
+class ItemPatchIn(BaseModel):
+    pt: str | None = Field(default=None, min_length=1, max_length=200)
+    pl: str | None = Field(default=None, min_length=1, max_length=200)
+    article: str | None = Field(default=None, max_length=8)
+    gender: Literal["m", "f", "mf"] | None = None
+    part_of_speech: str | None = Field(default=None, max_length=16)
+    cefr_level: Literal["A1", "A2", "B1", "B2", "C1"] | None = None
+    notes: str | None = Field(default=None, max_length=500)
+    pt_alt: list[str] | None = Field(default=None, max_length=5)
+    pl_alt: list[str] | None = Field(default=None, max_length=5)
+
+
+class DeckCreateIn(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    description: str | None = Field(default=None, max_length=300)
+    icon: str | None = Field(default=None, max_length=16)
+
+
+class ImportIn(BaseModel):
+    #: Surowy CSV — wklejony tekst albo zawartość pliku.
+    csv: str = Field(min_length=1, max_length=500_000)
+    deck_name: str | None = Field(default=None, max_length=120)
+    deck_id: uuid.UUID | None = None
+    #: Sam podgląd: parsuje i raportuje, ale niczego nie zapisuje.
+    dry_run: bool = False
+
+
+class ImportRowError(BaseModel):
+    line: int
+    reason: str
+    raw: str
+
+
+class ImportOut(BaseModel):
+    created: int
+    updated: int
+    skipped_duplicates: int
+    deck_id: uuid.UUID | None
+    #: Pierwsze wiersze po sparsowaniu — do podglądu przed zatwierdzeniem.
+    preview: list[dict[str, Any]]
+    errors: list[ImportRowError]
+
+
 class PageOut(BaseModel):
     items: list[ItemOut]
     total: int

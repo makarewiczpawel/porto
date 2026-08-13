@@ -14,11 +14,14 @@ export function SummaryPage() {
   const summary = location.state as SessionSummary | null;
 
   useEffect(() => {
-    reset();
+    // Przy wyniku policzonym offline stan sesji MUSI zostać: w kolejce leżą
+    // nieprzesłane odpowiedzi, a `reset()` skasowałby je razem z sesją.
+    // Posprząta `sync()`, gdy połączenie wróci.
+    if (!summary?.offline) reset();
     queryClient.invalidateQueries({ queryKey: ["queue-summary"] });
     queryClient.invalidateQueries({ queryKey: ["active-session"] });
     queryClient.invalidateQueries({ queryKey: ["decks"] });
-  }, [reset, queryClient]);
+  }, [reset, queryClient, summary?.offline]);
 
   useEffect(() => {
     if (!summary) navigate("/", { replace: true });
@@ -35,9 +38,16 @@ export function SummaryPage() {
         <div className="text-4xl">{summary.accuracy >= 80 ? "🎉" : "💪"}</div>
         <div className="pt text-6xl leading-none tnum">{Math.round(summary.accuracy)}%</div>
         <p className="text-sm text-ink-2">
-          Sesja skończona · {summary.completed_count} kart w {minutes}:{String(seconds).padStart(2, "0")}
+          Sesja skończona · {summary.completed_count} kart
+          {summary.offline ? "" : ` w ${minutes}:${String(seconds).padStart(2, "0")}`}
         </p>
-        {summary.streak > 0 && (
+        {summary.offline && (
+          <div className="mt-3 rounded-xl border border-warm/40 bg-warm/10 px-3 py-2 text-[12.5px] text-ink-2">
+            Bez połączenia — wynik policzony na urządzeniu. Odpowiedzi dolecą do serwera same,
+            gdy wróci sieć; seria i statystyki dnia zaktualizują się wtedy.
+          </div>
+        )}
+        {!summary.offline && summary.streak > 0 && (
           <div className="mt-3">
             <Pill tone="warm">🔥 {summary.streak} {summary.streak === 1 ? "dzień" : "dni"} z rzędu</Pill>
           </div>
@@ -51,6 +61,9 @@ export function SummaryPage() {
           <Tile value={summary.new_count} label="nowych" tone="text-accent" />
         </div>
 
+        {/* Cel dzienny i kolejka to liczby serwera — offline byłyby zerami
+            udającymi wynik. */}
+        {!summary.offline && (
         <Card className={summary.goal_met ? "border-good-line bg-good-soft" : "border-line bg-surface-2"}>
           <p className="text-[13.5px]">
             {summary.goal_met ? (
@@ -69,6 +82,7 @@ export function SummaryPage() {
             )}
           </p>
         </Card>
+        )}
 
         {summary.mistakes.length > 0 && (
           <div>

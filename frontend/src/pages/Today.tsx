@@ -20,6 +20,8 @@ export function TodayPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const begin = useSession((s) => s.begin);
+  const unsent = useSession((s) => s.queue.length);
+  const localSession = useSession((s) => s.session);
 
   const summary = useQuery({
     queryKey: ["queue-summary"],
@@ -50,9 +52,16 @@ export function TodayPage() {
 
   if (summary.isLoading) return <Spinner />;
   if (summary.isError || !summary.data) {
+    // Bez sieci kolejki nie da się pobrać, ale sesja pobrana wcześniej leży
+    // w pamięci urządzenia — jedyne, co ma tu sens, to droga z powrotem do niej.
     return (
-      <div className="p-4">
-        <ErrorNote>Nie udało się pobrać dzisiejszej kolejki. Sprawdź połączenie.</ErrorNote>
+      <div className="grid gap-3 p-4">
+        <ErrorNote>
+          {localSession
+            ? "Brak połączenia. Rozpoczęta sesja czeka na urządzeniu."
+            : "Nie udało się pobrać dzisiejszej kolejki. Sprawdź połączenie."}
+        </ErrorNote>
+        {localSession && <Button onClick={() => navigate("/nauka")}>Wróć do sesji</Button>}
       </div>
     );
   }
@@ -69,6 +78,12 @@ export function TodayPage() {
 
   return (
     <div className="px-4 pt-3">
+      {unsent > 0 && (
+        <div className="mb-3 rounded-xl border border-warm/40 bg-warm/10 px-3 py-2 text-[12.5px] text-ink-2">
+          {unsent} {unsent === 1 ? "odpowiedź czeka" : "odpowiedzi czeka"} na wysłanie — dolecą same,
+          gdy wróci połączenie.
+        </div>
+      )}
       <header className="mb-2 flex items-center justify-between gap-3">
         <h1 className="pt text-2xl">{greeting(user?.display_name ?? "")}</h1>
         <Link
