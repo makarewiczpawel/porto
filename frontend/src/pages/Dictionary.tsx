@@ -185,7 +185,7 @@ export function ItemDetailPage() {
                     <div className="pt text-[16px]">{example.pt}</div>
                     <div className="mt-0.5 text-[12.5px] text-ink-2">{example.pl}</div>
                   </div>
-                  <SpeakButton text={example.pt} size="sm" />
+                  <SpeakButton text={example.pt} url={example.audio_url} size="sm" />
                 </div>
               </Card>
             ))}

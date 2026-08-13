@@ -233,3 +233,32 @@ def test_new_accounts_use_the_voice_the_synthesiser_records_in(client, db):
 
     column_default = UserSettings.__table__.c.tts_voice.default.arg
     assert column_default == settings.tts_voice_default
+
+
+def test_every_list_of_words_carries_its_audio(client, registered, db):
+    """Słownik, talia i karta pozycji — wszędzie ten sam głośnik.
+
+    Widok talii przez chwilę był jedynym miejscem, które nie doklejało adresu
+    nagrania: przycisk był, ale milczał albo znikał. Test pilnuje wszystkich
+    trzech dróg naraz, bo pominięcie jednej nie wywołuje żadnego błędu.
+    """
+    deck, items = make_items(db, count=3)
+    item = items[0]
+    provider = FakeProvider()
+    tts.speak(db, item.display_pt, voice=settings.tts_voice_default, provider=provider)
+    tts.speak(db, item.examples[0].pt, voice=settings.tts_voice_default, provider=provider)
+    db.commit()
+
+    listed = next(
+        row for row in client.get("/api/items").json()["items"] if row["id"] == str(item.id)
+    )
+    assert listed["audio_url"], "słownik"
+
+    in_deck = next(
+        row for row in client.get(f"/api/decks/{deck.id}").json()["items"] if row["id"] == str(item.id)
+    )
+    assert in_deck["audio_url"], "widok talii"
+
+    detail = client.get(f"/api/items/{item.id}").json()
+    assert detail["audio_url"], "karta pozycji"
+    assert detail["examples"][0]["audio_url"], "zdanie przykładowe ma własne nagranie"
