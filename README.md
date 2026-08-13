@@ -115,6 +115,9 @@ COOKIE_SECURE=true
 COOKIE_SAMESITE=lax
 ```
 
+Przy generowaniu domeny Railway pyta o port aplikacji — podaj **8080**. Serwer słucha na
+`$PORT`, a gdy hosting nie ustawi tej zmiennej, schodzi właśnie na 8080.
+
 Po wdrożeniu `GET /api/health` powinien zwrócić `{"status":"ok","db":true}`.
 
 **Frontend — Cloudflare Pages.** Root directory `frontend`, build `npm run build`, output `dist`,
