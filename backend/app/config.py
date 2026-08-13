@@ -1,5 +1,6 @@
 from functools import lru_cache
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -34,6 +35,24 @@ class Settings(BaseSettings):
     # if they ever end up on genuinely different sites — and that also requires
     # cookie_secure=true, or browsers drop the cookie silently.
     cookie_samesite: str = "lax"
+
+    @field_validator("database_url")
+    @classmethod
+    def _use_psycopg_driver(cls, value: str) -> str:
+        """Accept the connection string exactly as hosting providers hand it out.
+
+        Railway (and Heroku, and most managed Postgres) expose `postgresql://…`
+        or the legacy `postgres://…`. SQLAlchemy reads that as "use psycopg2",
+        which is not installed, and the app dies on boot with a driver error.
+        Normalising here means the deployment variable can be pasted verbatim.
+        """
+        for prefix in ("postgresql+psycopg://", "postgresql+psycopg2://", "postgresql+asyncpg://"):
+            if value.startswith(prefix):
+                return value
+        for prefix in ("postgresql://", "postgres://"):
+            if value.startswith(prefix):
+                return "postgresql+psycopg://" + value[len(prefix) :]
+        return value
 
     @property
     def cors_origin_list(self) -> list[str]:

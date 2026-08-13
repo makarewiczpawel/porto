@@ -1,1 +1,6 @@
-web: alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+# Migracje i baza startowa odpalają się przed startem serwera.
+# Seed jest idempotentny (klucz: para pt+pl dla pozycji, slug dla talii), więc
+# może chodzić przy każdym restarcie — nic nie duplikuje, kosztuje ~sekundę.
+# Uwaga: przy skalowaniu do więcej niż jednej instancji seed powinien przejść
+# do osobnego zadania, żeby dwa procesy nie wstawiały tych samych wierszy naraz.
+web: alembic upgrade head && python -m app.seed.seed && uvicorn app.main:app --host 0.0.0.0 --port $PORT

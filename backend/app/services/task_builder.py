@@ -12,12 +12,14 @@ from app.models import (
     PRODUCTION_UNLOCK_AT,
     Deck,
     DeckItem,
+    Example,
     Item,
     User,
     UserItemState,
     UserSettings,
 )
 from app.services import scheduler as sched
+from app.services.grader import normalize, strip_accents
 
 # New items are dripped into the queue rather than dumped at the front: after
 # this many reviews, one new card.
@@ -26,6 +28,10 @@ NEW_EVERY = 4
 # form of the question.
 FRAGILE_STABILITY_DAYS = 21
 MCQ_CHOICES = 4
+# A matching round covers this many pairs in one screen.
+MATCHING_PAIRS = 5
+# Extra wrong bricks offered next to the right ones in a word bank.
+WORD_BANK_EXTRA = 3
 
 
 @dataclass
@@ -75,6 +81,33 @@ def pick_mode(state: UserItemState | None, direction: str, enabled: list[str]) -
     if direction == "recognition":
         return first("listening", "flashcard", mcq) if not fragile else first("flashcard", mcq, "listening")
     return first("typing", "cloze", mcq) if not fragile else first("cloze", mcq, "typing")
+
+
+def choose_mode(
+    state: UserItemState | None, direction: str, enabled: list[str], item: Item
+) -> str:
+    """`pick_mode` decides what the card deserves; this checks the item can
+    deliver it and steps down through the remaining modes if not."""
+    remaining = [m for m in enabled if m != "matching"]
+
+    # A whole sentence is worth rebuilding rather than retyping: word order is
+    # the thing being learned there, and it is the only mode that drills it.
+    if (
+        direction == "production"
+        and item.type == "sentence"
+        and "word_bank" in remaining
+        and state is not None
+        and state.state == "review"
+        and supports("word_bank", item)
+    ):
+        return "word_bank"
+
+    while remaining:
+        mode = pick_mode(state, direction, remaining)
+        if supports(mode, item):
+            return mode
+        remaining.remove(mode)
+    return "flashcard"
 
 
 def _distractors(db: Session, item: Item, count: int, deck_ids: list[uuid.UUID] | None) -> list[Item]:
@@ -127,6 +160,114 @@ def _distractors(db: Session, item: Item, count: int, deck_ids: list[uuid.UUID] 
     return chosen
 
 
+
+def _flatten(text: str) -> tuple[str, list[int]]:
+    """Lowercase, accent-free copy of `text` plus a map back to the original
+    character offsets, so a match found on the flattened form can be sliced out
+    of the original with its casing intact."""
+    flat: list[str] = []
+    index_map: list[int] = []
+    for position, char in enumerate(text):
+        bare = strip_accents(char).lower()
+        for piece in bare:
+            flat.append(piece)
+            index_map.append(position)
+    return "".join(flat), index_map
+
+
+def cloze_parts(item: Item, example: Example) -> dict | None:
+    """Cut the item's word out of its example sentence.
+
+    Returns `{before, answer, after}` where `answer` is the word exactly as it
+    appears in the sentence, or None when the sentence does not visibly contain
+    the word (an inflected form, usually) — in that case the item simply does
+    not get a cloze question.
+    """
+    if example.cloze_start is not None and example.cloze_end is not None:
+        start, end = example.cloze_start, example.cloze_end
+        if 0 <= start < end <= len(example.pt):
+            return {
+                "before": example.pt[:start],
+                "answer": example.pt[start:end],
+                "after": example.pt[end:],
+            }
+
+    flat_sentence, index_map = _flatten(example.pt)
+    candidates = [item.pt]
+    # Multi-word entries often appear in full; a single head noun is the
+    # fallback when they do not.
+    if " " in item.pt:
+        candidates.append(item.pt.split()[-1])
+
+    for needle in candidates:
+        flat_needle, _ = _flatten(needle)
+        if not flat_needle:
+            continue
+        position = flat_sentence.find(flat_needle)
+        if position < 0:
+            continue
+        start = index_map[position]
+        end = index_map[position + len(flat_needle) - 1] + 1
+        return {
+            "before": example.pt[:start],
+            "answer": example.pt[start:end],
+            "after": example.pt[end:],
+        }
+    return None
+
+
+def _first_example(item: Item) -> Example | None:
+    return item.examples[0] if item.examples else None
+
+
+def supports(mode: str, item: Item) -> bool:
+    """Whether an item can actually be asked in this form.
+
+    Guards the mode table: a word with no example sentence cannot be a cloze,
+    and only whole sentences can be reassembled from bricks.
+    """
+    if mode == "cloze":
+        example = _first_example(item)
+        return example is not None and cloze_parts(item, example) is not None
+    if mode == "word_bank":
+        text = item.pt if item.type == "sentence" else (_first_example(item).pt if _first_example(item) else "")
+        return len(text.split()) >= 3
+    if mode == "listening":
+        # Audio arrives in phase 3; until then this mode is never feasible.
+        return False
+    return True
+
+
+def _word_bank(db: Session, item: Item) -> dict:
+    """Bricks to rebuild a sentence from, plus a few plausible wrong ones."""
+    if item.type == "sentence":
+        sentence, translation = item.pt, item.pl
+    else:
+        example = _first_example(item)
+        sentence, translation = (example.pt, example.pl) if example else (item.pt, item.pl)
+
+    tokens = sentence.split()
+    pool = (
+        db.execute(
+            select(Example.pt)
+            .where(Example.item_id != item.id)
+            .order_by(func.random())
+            .limit(12)
+        )
+        .scalars()
+        .all()
+    )
+    used = {strip_accents(normalize(t)) for t in tokens}
+    extra: list[str] = []
+    for other in pool:
+        for word in other.split():
+            key = strip_accents(normalize(word))
+            if key and key not in used and len(extra) < WORD_BANK_EXTRA:
+                used.add(key)
+                extra.append(word)
+    return {"question": translation, "tokens": tokens, "extra": extra, "sentence": sentence}
+
+
 def build_task(
     db: Session,
     index: int,
@@ -166,8 +307,55 @@ def build_task(
         payload["back"] = item.pl if direction == "recognition" else item.display_pt
         probe = state or UserItemState(state="new", due=datetime.now(timezone.utc))
         payload["intervals"] = {str(k): v for k, v in sched.preview_intervals(probe, desired_retention).items()}
+    elif mode == "typing":
+        # Always produce Portuguese from Polish — typing the translation of a
+        # word you can already read is not the skill worth drilling.
+        payload["question"] = item.pl
+        payload["expected"] = item.display_pt
+        payload["alternatives"] = list(item.pt_alt or [])
+    elif mode == "cloze":
+        example = _first_example(item)
+        parts = cloze_parts(item, example) if example else None
+        if parts is None:  # pragma: no cover - guarded by supports()
+            payload["question"] = item.pl
+            payload["expected"] = item.display_pt
+            mode = "typing"
+        else:
+            payload["cloze"] = parts
+            payload["expected"] = parts["answer"]
+            payload["alternatives"] = []
+            payload["question"] = example.pl
+    elif mode == "word_bank":
+        payload.update(_word_bank(db, item))
+        payload["expected"] = payload.pop("sentence")
 
     return Task(index=index, item_id=item.id, direction=direction, mode=mode, is_new=is_new, payload=payload)
+
+
+def build_matching_task(
+    db: Session, index: int, states: list[UserItemState]
+) -> Task | None:
+    """One screen covering several cards — the warm-up that opens a session.
+
+    Unlike every other task this one carries a list of items; answering it
+    produces one review per pair.
+    """
+    pairs = []
+    for state in states:
+        item = db.get(Item, state.item_id)
+        if item is None:
+            continue
+        pairs.append({"item_id": str(item.id), "pt": item.display_pt, "pl": item.pl})
+    if len(pairs) < 2:
+        return None
+    return Task(
+        index=index,
+        item_id=uuid.UUID(pairs[0]["item_id"]),
+        direction="recognition",
+        mode="matching",
+        is_new=False,
+        payload={"pairs": pairs, "pt": pairs[0]["pt"], "pl": pairs[0]["pl"]},
+    )
 
 
 def _resolve_decks(db: Session, user: User, deck_ids: list[uuid.UUID] | None) -> list[uuid.UUID] | None:
@@ -321,6 +509,22 @@ def build_session(
     fresh = new_items(db, user, new_cap, resolved_decks)
 
     tasks: list[Task] = []
+
+    # A matching round opens the session: five known pairs, quick taps, a way
+    # into the language before anything is actually demanded.
+    warmup: list[UserItemState] = []
+    if "matching" in enabled:
+        recognition_due = [s for s in states if s.direction == "recognition" and s.state == "review"]
+        if len(recognition_due) >= MATCHING_PAIRS:
+            warmup = recognition_due[:MATCHING_PAIRS]
+            warmup_ids = {(s.item_id, s.direction) for s in warmup}
+            states = [s for s in states if (s.item_id, s.direction) not in warmup_ids]
+            task = build_matching_task(db, 0, warmup)
+            if task is not None:
+                tasks.append(task)
+            else:  # pragma: no cover - only when items vanished mid-build
+                states = warmup + states
+
     for is_new, entry in interleave(states, fresh):
         index = len(tasks)
         if is_new:
@@ -333,7 +537,7 @@ def build_session(
             if item is None:
                 continue
             direction = state.direction
-        mode = pick_mode(state, direction, enabled)
+        mode = choose_mode(state, direction, enabled, item)
         tasks.append(
             build_task(
                 db,
@@ -448,3 +652,59 @@ def deck_counts(db: Session, user: User, now: datetime) -> dict[uuid.UUID, dict]
             "untouched": total - started.get(deck_id, 0),
         }
     return out
+
+
+def build_quiz(
+    db: Session,
+    user: User,
+    *,
+    count: int,
+    deck_ids: list[uuid.UUID] | None = None,
+    level: str | None = None,
+    modes: list[str] | None = None,
+) -> list[Task]:
+    """Questions for a test.
+
+    Unlike a study session this ignores the schedule — a quiz checks what you
+    know, not what is due. It prefers words you have actually started learning,
+    and only falls back to untouched ones when there are not enough.
+    """
+    allowed = [m for m in (modes or ["mcq_pt_pl", "mcq_pl_pt", "typing"]) if m != "matching"]
+    if not allowed:
+        allowed = ["mcq_pt_pl"]
+
+    base = select(Item).where(Item.verified.is_(True))
+    if level:
+        base = base.where(Item.cefr_level == level.upper())
+    if deck_ids:
+        base = base.where(Item.id.in_(select(DeckItem.item_id).where(DeckItem.deck_id.in_(deck_ids))))
+
+    started = select(UserItemState.item_id).where(UserItemState.user_id == user.id)
+    known = list(
+        db.execute(base.where(Item.id.in_(started)).order_by(func.random()).limit(count))
+        .scalars()
+        .unique()
+        .all()
+    )
+    if len(known) < count:
+        filler = (
+            db.execute(
+                base.where(Item.id.not_in([i.id for i in known] or [uuid.uuid4()]))
+                .order_by(func.random())
+                .limit(count - len(known))
+            )
+            .scalars()
+            .unique()
+            .all()
+        )
+        known.extend(filler)
+
+    tasks: list[Task] = []
+    for item in known[:count]:
+        feasible = [m for m in allowed if supports(m, item)] or ["mcq_pt_pl"]
+        mode = random.choice(feasible)
+        direction = "production" if mode in ("mcq_pl_pt", "typing", "word_bank") else "recognition"
+        tasks.append(
+            build_task(db, len(tasks), item, direction, mode, False, deck_ids, None, 0.90)
+        )
+    return tasks

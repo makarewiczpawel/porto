@@ -120,6 +120,14 @@ export interface Task {
   front?: string;
   back?: string;
   intervals?: Record<string, string>;
+  /** typing / cloze / word_bank — needed to grade locally and offline */
+  expected?: string;
+  alternatives?: string[];
+  cloze?: { before: string; answer: string; after: string };
+  tokens?: string[];
+  extra?: string[];
+  /** matching — one question covering several cards */
+  pairs?: { item_id: string; pt: string; pl: string }[];
 }
 
 export interface StudySession {
@@ -130,11 +138,17 @@ export interface StudySession {
   tasks: Task[];
 }
 
+export interface MatchPair {
+  item_id: string;
+  is_correct: boolean;
+}
+
 export interface AnswerPayload {
   index: number;
   rating?: number;
   selected_index?: number;
   user_answer?: string;
+  pairs?: MatchPair[];
   elapsed_ms: number;
 }
 
@@ -145,6 +159,8 @@ export interface AnswerResult {
   correct_answer: string;
   next_due: string;
   next_due_label: string;
+  match?: "exact" | "accent" | "typo" | "wrong" | null;
+  diff?: string | null;
   duplicate: boolean;
 }
 
@@ -173,4 +189,56 @@ export interface SessionSummary {
 
 export interface ApiErrorBody {
   error: { code: string; message: string; details: Record<string, unknown> };
+}
+
+// ── quizy ─────────────────────────────────────────────────────────────────
+export interface Quiz {
+  id: string;
+  name: string;
+  config: {
+    deck_ids?: string[];
+    cefr_level?: string | null;
+    count?: number;
+    modes?: Mode[];
+    time_limit_s?: number | null;
+  };
+  created_at: string;
+  last_score: number | null;
+}
+
+export interface QuizAttempt {
+  id: string;
+  name: string;
+  started_at: string;
+  time_limit_s: number | null;
+  questions: Task[];
+}
+
+export interface QuizMistake {
+  item_id: string;
+  pt: string;
+  pl: string;
+  user_answer: string | null;
+  mode: Mode;
+  skipped: boolean;
+}
+
+export interface QuizResult {
+  attempt_id: string;
+  name: string;
+  score: number;
+  total: number;
+  correct: number;
+  seconds: number;
+  previous_score: number | null;
+  mistakes: QuizMistake[];
+}
+
+export interface QuizHistoryEntry {
+  attempt_id: string;
+  quiz_id: string | null;
+  name: string;
+  score: number;
+  finished_at: string | null;
+  total: number;
 }

@@ -72,8 +72,12 @@ class Review(Base):
     __tablename__ = "reviews"
     __table_args__ = (
         # Answers are sent in batches from a queue that may be retried, so the
-        # same question must not be able to land twice.
-        UniqueConstraint("session_id", "question_index", name="uq_reviews_session_question"),
+        # same question must not be able to land twice. The item is part of the
+        # key because one question can cover several cards: a matching round
+        # scores five pairs under a single question index.
+        UniqueConstraint(
+            "session_id", "question_index", "item_id", "direction", name="uq_reviews_session_question"
+        ),
         Index("ix_reviews_user_time", "user_id", "reviewed_at"),
     )
 

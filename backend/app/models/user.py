@@ -21,6 +21,16 @@ ALL_MODES = [
     "listening",
 ]
 PHASE1_MODES = ["flashcard", "mcq_pt_pl", "mcq_pl_pt"]
+# What a new account starts with. `listening` waits for audio in phase 3.
+DEFAULT_MODES = [
+    "flashcard",
+    "mcq_pt_pl",
+    "mcq_pl_pt",
+    "typing",
+    "cloze",
+    "matching",
+    "word_bank",
+]
 
 
 class User(Base):
@@ -49,7 +59,7 @@ class UserSettings(Base):
     new_per_day: Mapped[int] = mapped_column(Integer, nullable=False, default=10)
     review_limit: Mapped[int] = mapped_column(Integer, nullable=False, default=100)
     desired_retention: Mapped[float] = mapped_column(Numeric(3, 2), nullable=False, default=0.90)
-    enabled_modes: Mapped[list] = mapped_column(JSONB, nullable=False, default=lambda: list(PHASE1_MODES))
+    enabled_modes: Mapped[list] = mapped_column(JSONB, nullable=False, default=lambda: list(DEFAULT_MODES))
     tts_voice: Mapped[str] = mapped_column(String(64), nullable=False, default="pt-PT-Neural2-A")
     tts_speed: Mapped[float] = mapped_column(Numeric(3, 2), nullable=False, default=1.00)
     autoplay_audio: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)

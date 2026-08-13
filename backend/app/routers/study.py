@@ -1,4 +1,5 @@
 import uuid
+from dataclasses import dataclass
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends
@@ -21,6 +22,7 @@ from app.schemas import (
     SessionOut,
     SessionSummaryOut,
 )
+from app.services import grader
 from app.services import scheduler as sched
 from app.services import stats as stats_service
 from app.services.task_builder import build_session, queue_counts
@@ -144,21 +146,105 @@ def active_session(
     )
 
 
-def _grade(task: dict, answer: AnswerIn) -> tuple[bool, int, str]:
-    """Returns (is_correct, fsrs_rating, the correct answer as text)."""
+@dataclass
+class Outcome:
+    """One card scored. Most questions produce exactly one; a matching round
+    produces one per pair."""
+
+    item_id: uuid.UUID
+    direction: str
+    is_correct: bool
+    rating: int
+    user_answer: str | None
+
+
+@dataclass
+class Graded:
+    outcomes: list[Outcome]
+    correct_answer: str
+    match: str | None = None
+    diff: str | None = None
+
+    @property
+    def is_correct(self) -> bool:
+        return all(o.is_correct for o in self.outcomes) if self.outcomes else False
+
+    @property
+    def rating(self) -> int:
+        return min((o.rating for o in self.outcomes), default=sched.GOOD)
+
+
+def _grade(task: dict, answer: AnswerIn, *, accent_strict: bool) -> Graded:
+    """Score an answer against the frozen session payload.
+
+    The client grades locally too, for instant feedback and for offline mode,
+    but this is the version that reaches the database.
+    """
     mode = task["mode"]
+    item_id = uuid.UUID(task["item_id"])
+    direction = task["direction"]
+
+    def one(is_correct: bool, rating: int, user_answer: str | None = None) -> list[Outcome]:
+        return [Outcome(item_id, direction, is_correct, rating, user_answer)]
+
+    if mode == "matching":
+        known = {p["item_id"]: p for p in task.get("pairs", [])}
+        outcomes: list[Outcome] = []
+        for pair in answer.pairs or []:
+            key = str(pair.item_id)
+            if key not in known:
+                raise unprocessable(
+                    "UNKNOWN_PAIR", "Ta para nie należy do tego pytania.", item_id=key
+                )
+            outcomes.append(
+                Outcome(
+                    item_id=pair.item_id,
+                    direction="recognition",
+                    is_correct=pair.is_correct,
+                    rating=sched.rating_from_outcome(pair.is_correct, answer.elapsed_ms),
+                    user_answer=None,
+                )
+            )
+        return Graded(outcomes, correct_answer=task.get("pl", ""))
 
     if mode in ("mcq_pt_pl", "mcq_pl_pt"):
         options = task.get("options", [])
         answer_index = task.get("answer_index")
         correct_text = options[answer_index] if answer_index is not None and options else task["pl"]
+        picked = (
+            options[answer.selected_index]
+            if answer.selected_index is not None and 0 <= answer.selected_index < len(options)
+            else None
+        )
         is_correct = answer.selected_index is not None and answer.selected_index == answer_index
-        return is_correct, sched.rating_from_outcome(is_correct, answer.elapsed_ms), correct_text
+        return Graded(
+            one(is_correct, sched.rating_from_outcome(is_correct, answer.elapsed_ms), picked),
+            correct_answer=correct_text,
+        )
+
+    if mode in ("typing", "cloze", "word_bank"):
+        expected = task.get("expected") or task.get("pt", "")
+        given = answer.user_answer or ""
+        result = grader.grade(
+            given,
+            expected,
+            alternatives=list(task.get("alternatives") or []),
+            accent_strict=accent_strict,
+        )
+        rating = sched.rating_from_outcome(
+            result.is_correct, answer.elapsed_ms, partial=result.partial
+        )
+        return Graded(
+            one(result.is_correct, rating, given),
+            correct_answer=expected,
+            match=result.match.value,
+            diff=grader.diff_hint(given, expected) if not result.is_correct or result.partial else None,
+        )
 
     # flashcard: the user grades themselves
     rating = answer.rating or sched.GOOD
     correct_text = task.get("back") or task.get("pl", "")
-    return rating > sched.AGAIN, rating, correct_text
+    return Graded(one(rating > sched.AGAIN, rating), correct_answer=correct_text)
 
 
 @router.post("/sessions/{session_id}/answers", response_model=AnswersOut)
@@ -173,12 +259,10 @@ def submit_answers(
     now = datetime.now(timezone.utc)
     retention = float(user.settings.desired_retention)
 
-    already = {
-        index: review
-        for index, review in db.execute(
-            select(Review.question_index, Review).where(Review.session_id == session.id)
-        ).all()
-    }
+    # Grouped by question, because one question can cover several cards.
+    already: dict[int, list[Review]] = {}
+    for review in db.execute(select(Review).where(Review.session_id == session.id)).scalars().all():
+        already.setdefault(review.question_index, []).append(review)
 
     results: list[AnswerResultOut] = []
     new_cards = 0
@@ -192,57 +276,61 @@ def submit_answers(
         # The answer queue can be retried after a dropped connection, so the
         # same question must never be scheduled twice.
         if answer.index in already:
-            previous = already[answer.index]
-            state = db.get(
-                UserItemState, (user.id, previous.item_id, previous.direction)
-            )
+            previous = already[answer.index][0]
+            state = db.get(UserItemState, (user.id, previous.item_id, previous.direction))
+            due = state.due if state else now
             results.append(
                 AnswerResultOut(
                     index=answer.index,
-                    is_correct=previous.is_correct,
+                    is_correct=all(r.is_correct for r in already[answer.index]),
                     rating=previous.rating,
-                    correct_answer=task.get("back") or task.get("pl", ""),
-                    next_due=state.due if state else now,
-                    next_due_label=sched.humanize_interval((state.due if state else now) - now),
+                    correct_answer=task.get("expected") or task.get("back") or task.get("pl", ""),
+                    next_due=due,
+                    next_due_label=sched.humanize_interval(due - now),
                     duplicate=True,
                 )
             )
             continue
 
-        item_id = uuid.UUID(task["item_id"])
-        direction = task["direction"]
-        is_correct, rating, correct_text = _grade(task, answer)
+        graded = _grade(task, answer, accent_strict=bool(user.settings.accent_strict))
+        if not graded.outcomes:
+            raise unprocessable("EMPTY_ANSWER", "Odpowiedź nie zawiera nic do zapisania.")
 
-        state = db.get(UserItemState, (user.id, item_id, direction))
-        if state is None:
-            state = UserItemState(
-                user_id=user.id, item_id=item_id, direction=direction, state="new", due=now
+        written: list[Review] = []
+        last_due = now
+        for outcome in graded.outcomes:
+            state = db.get(UserItemState, (user.id, outcome.item_id, outcome.direction))
+            if state is None:
+                state = UserItemState(
+                    user_id=user.id,
+                    item_id=outcome.item_id,
+                    direction=outcome.direction,
+                    state="new",
+                    due=now,
+                )
+                db.add(state)
+                db.flush()
+                new_cards += 1
+
+            sched.review(state, outcome.rating, desired_retention=retention, now=now)
+            last_due = state.due
+
+            review = Review(
+                user_id=user.id,
+                item_id=outcome.item_id,
+                direction=outcome.direction,
+                session_id=session.id,
+                question_index=answer.index,
+                mode=task["mode"],
+                rating=outcome.rating,
+                is_correct=outcome.is_correct,
+                user_answer=outcome.user_answer,
+                elapsed_ms=answer.elapsed_ms,
+                stability_after=state.stability,
             )
-            db.add(state)
-            db.flush()
-            new_cards += 1
+            db.add(review)
+            written.append(review)
 
-        sched.review(state, rating, desired_retention=retention, now=now)
-
-        review = Review(
-            user_id=user.id,
-            item_id=item_id,
-            direction=direction,
-            session_id=session.id,
-            question_index=answer.index,
-            mode=task["mode"],
-            rating=rating,
-            is_correct=is_correct,
-            user_answer=answer.user_answer
-            or (
-                task.get("options", [None] * 99)[answer.selected_index]
-                if answer.selected_index is not None and task.get("options")
-                else None
-            ),
-            elapsed_ms=answer.elapsed_ms,
-            stability_after=state.stability,
-        )
-        db.add(review)
         try:
             db.flush()
         except IntegrityError:
@@ -250,25 +338,32 @@ def submit_answers(
             db.rollback()
             raise conflict("ANSWER_ALREADY_RECORDED", "Ta odpowiedź została już zapisana.")
 
-        session.completed_count += 1
-        if is_correct:
-            session.correct_count += 1
+        # A matching round is one question on screen but several cards in the
+        # log; the session counters follow the cards.
+        session.completed_count += len(written)
+        session.correct_count += sum(1 for o in graded.outcomes if o.is_correct)
         seconds += round(answer.elapsed_ms / 1000)
-        already[answer.index] = review
+        already[answer.index] = written
 
         results.append(
             AnswerResultOut(
                 index=answer.index,
-                is_correct=is_correct,
-                rating=rating,
-                correct_answer=correct_text,
-                next_due=state.due,
-                next_due_label=sched.humanize_interval(state.due - now),
+                is_correct=graded.is_correct,
+                rating=graded.rating,
+                correct_answer=graded.correct_answer,
+                next_due=last_due,
+                next_due_label=sched.humanize_interval(last_due - now),
+                match=graded.match,
+                diff=graded.diff,
             )
         )
 
-    fresh = sum(1 for r in results if not r.duplicate)
-    correct = sum(1 for r in results if r.is_correct and not r.duplicate)
+    fresh = sum(len(already[r.index]) for r in results if not r.duplicate)
+    correct = sum(
+        sum(1 for review in already[r.index] if review.is_correct)
+        for r in results
+        if not r.duplicate
+    )
     if fresh:
         stats_service.record_activity(
             db,
@@ -349,6 +444,54 @@ def abandon_session(
     session = _session_or_404(db, user, session_id)
     if session.finished_at is None:
         session.finished_at = datetime.now(timezone.utc)
+    db.commit()
+
+
+@router.post("/items/{item_id}/suspend", response_model=dict)
+def suspend_item(
+    item_id: uuid.UUID, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+) -> dict:
+    """Take a word out of rotation without losing its history.
+
+    For the word that keeps coming back wrong and poisoning every session —
+    better parked than endlessly failed.
+    """
+    states = (
+        db.execute(
+            select(UserItemState).where(
+                UserItemState.user_id == user.id, UserItemState.item_id == item_id
+            )
+        )
+        .scalars()
+        .all()
+    )
+    if not states:
+        raise not_found("CARD_NOT_FOUND", "Nie uczysz się jeszcze tej pozycji.")
+    for state in states:
+        state.suspended = not state.suspended
+    db.commit()
+    return {"suspended": states[0].suspended}
+
+
+@router.post("/items/{item_id}/reset", status_code=204)
+def reset_item(
+    item_id: uuid.UUID, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+) -> None:
+    """Forget the schedule for this word and learn it from scratch.
+
+    The review log stays — it is append-only history, not state.
+    """
+    states = (
+        db.execute(
+            select(UserItemState).where(
+                UserItemState.user_id == user.id, UserItemState.item_id == item_id
+            )
+        )
+        .scalars()
+        .all()
+    )
+    for state in states:
+        db.delete(state)
     db.commit()
 
 

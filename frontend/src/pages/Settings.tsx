@@ -2,9 +2,20 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 
 import { api } from "@/api/client";
-import type { Settings } from "@/api/types";
+import type { Mode, Settings } from "@/api/types";
 import { Button, Card, Label, Spinner } from "@/components/ui";
 import { useAuth } from "@/store/auth";
+
+/** Every mode the app can ask a question in, with what it actually drills. */
+const MODES: { id: Mode; label: string; hint: string }[] = [
+  { id: "flashcard", label: "Fiszki", hint: "pokaż i oceń się sam" },
+  { id: "mcq_pt_pl", label: "Wybór PT→PL", hint: "rozpoznawanie" },
+  { id: "mcq_pl_pt", label: "Wybór PL→PT", hint: "produkcja z podpowiedzią" },
+  { id: "typing", label: "Wpisywanie z pamięci", hint: "produkcja bez podpowiedzi" },
+  { id: "cloze", label: "Luka w zdaniu", hint: "słowo w kontekście" },
+  { id: "word_bank", label: "Rozsypanka", hint: "szyk zdania" },
+  { id: "matching", label: "Dopasowywanie par", hint: "rozgrzewka na start sesji" },
+];
 
 export function SettingsPage() {
   const { user, logout, refreshMe } = useAuth();
@@ -71,6 +82,80 @@ export function SettingsPage() {
         />
       </Card>
 
+      <Label className="mb-2 mt-5">Tryby ćwiczeń</Label>
+      <Card className="grid gap-0 py-1">
+        {MODES.map((mode, index) => {
+          const on = settings.enabled_modes.includes(mode.id);
+          const last = index === MODES.length - 1;
+          return (
+            <div
+              key={mode.id}
+              className={`flex items-center justify-between gap-3 py-3 ${last ? "" : "border-b border-line"}`}
+            >
+              <div>
+                <div className="text-[14px]">{mode.label}</div>
+                <div className="text-[11.5px] text-ink-3">{mode.hint}</div>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={on}
+                aria-label={mode.label}
+                disabled={on && settings.enabled_modes.length === 1}
+                onClick={() =>
+                  patch({
+                    enabled_modes: on
+                      ? settings.enabled_modes.filter((m) => m !== mode.id)
+                      : [...settings.enabled_modes, mode.id],
+                  })
+                }
+                className={`relative h-[25px] w-[42px] flex-none rounded-full transition disabled:opacity-40 ${
+                  on ? "bg-accent" : "bg-line-strong"
+                }`}
+              >
+                <span
+                  className={`absolute top-[3px] h-[19px] w-[19px] rounded-full bg-white transition-all ${
+                    on ? "left-[20px]" : "left-[3px]"
+                  }`}
+                />
+              </button>
+            </div>
+          );
+        })}
+      </Card>
+      <p className="mt-2 text-[11.5px] text-ink-3">
+        Wyłączony tryb nie zniknie z historii — po prostu nie pojawi się w nowych sesjach.
+        Ostatniego włączonego trybu nie da się wyłączyć.
+      </p>
+
+      <Label className="mb-2 mt-5">Ocena odpowiedzi</Label>
+      <Card>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-[14px]">Brak akcentu to błąd</div>
+            <div className="text-[11.5px] text-ink-3">
+              domyślnie „avo" zamiast „avó" liczy się jako trudne, nie jako pomyłka
+            </div>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={settings.accent_strict}
+            aria-label="Brak akcentu to błąd"
+            onClick={() => patch({ accent_strict: !settings.accent_strict })}
+            className={`relative h-[25px] w-[42px] flex-none rounded-full transition ${
+              settings.accent_strict ? "bg-accent" : "bg-line-strong"
+            }`}
+          >
+            <span
+              className={`absolute top-[3px] h-[19px] w-[19px] rounded-full bg-white transition-all ${
+                settings.accent_strict ? "left-[20px]" : "left-[3px]"
+              }`}
+            />
+          </button>
+        </div>
+      </Card>
+
       <Label className="mb-2 mt-5">Konto</Label>
       <Card className="grid gap-3">
         <div className="flex items-center justify-between gap-3">
@@ -86,7 +171,7 @@ export function SettingsPage() {
       </Card>
 
       <p className="mt-6 text-center text-[11.5px] text-ink-3">
-        Tryby ćwiczeń, wymowa i tryb offline dochodzą w kolejnych fazach.
+        Wymowa i tryb offline dochodzą w fazie 3.
       </p>
     </div>
   );

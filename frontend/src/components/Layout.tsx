@@ -31,6 +31,17 @@ const TABS = [
     ),
   },
   {
+    to: "/quizy",
+    label: "Quizy",
+    icon: (
+      <>
+        <circle cx="12" cy="12" r="9" />
+        <path d="M9 9a3 3 0 1 1 4 2.8c-.7.3-1 .9-1 1.7v.4" />
+        <circle cx="12" cy="17.4" r="0.6" fill="currentColor" />
+      </>
+    ),
+  },
+  {
     to: "/postep",
     label: "Postęp",
     icon: <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />,
@@ -45,7 +56,7 @@ export function AppLayout() {
         <Outlet />
       </main>
       <nav
-        className="safe-bottom fixed inset-x-0 bottom-0 z-20 mx-auto grid max-w-[560px] grid-cols-4 border-t border-line bg-surface pt-2"
+        className="safe-bottom fixed inset-x-0 bottom-0 z-20 mx-auto grid max-w-[560px] grid-cols-5 border-t border-line bg-surface pt-2"
         aria-label="Nawigacja główna"
       >
         {TABS.map((tab) => {

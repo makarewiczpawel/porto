@@ -8,7 +8,7 @@ from app.config import settings
 from app.db import get_db
 from app.deps import auth_rate_limit, get_current_user
 from app.errors import conflict, forbidden, unauthorized
-from app.models import PHASE1_MODES, User, UserSettings
+from app.models import DEFAULT_MODES, User, UserSettings
 from app.schemas import LoginIn, MeOut, RegisterIn, TokenOut
 from app.security import (
     REFRESH,
@@ -60,7 +60,7 @@ def register(body: RegisterIn, response: Response, db: Session = Depends(get_db)
         timezone=body.timezone,
         last_login_at=datetime.now(timezone.utc),
     )
-    user.settings = UserSettings(enabled_modes=list(PHASE1_MODES))
+    user.settings = UserSettings(enabled_modes=list(DEFAULT_MODES))
     db.add(user)
     db.commit()
     db.refresh(user)

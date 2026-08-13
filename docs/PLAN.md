@@ -172,7 +172,20 @@ Do zrobienia raz, przed pisaniem kodu.
 
 ---
 
-## Faza 2 — Tryby ćwiczeń i quizy [~2 tygodnie]
+## Faza 2 — Tryby ćwiczeń i quizy [~2 tygodnie] ✅ ZROBIONE
+
+> **Stan na 2026-08-12.** Zakres 2.1, 2.2 i 2.4 zrealizowany w całości.
+> Odstępstwa:
+>
+> - **2.3 Edycja treści:** dodane tylko zawieszanie i reset pozycji
+>   (`/api/study/items/{id}/suspend|reset`). Ręczne dodawanie pozycji, własne
+>   talie i import CSV zostają na później — nie były potrzebne do trybów ani
+>   quizów, a przesuwały termin całej fazy.
+> - Doszła zmiana w kluczu unikalności `reviews`: obejmuje teraz `item_id`
+>   i `direction`, bo runda dopasowywania par to jedno pytanie, ale pięć kart.
+> - `alembic check` wymagał pominięcia indeksów trigramowych — hook
+>   `include_object` w `alembic/env.py`.
+
 
 **Cel fazy:** ten sam materiał wraca w siedmiu formach, a wiedzę można sprawdzić testem niezależnym od harmonogramu.
 

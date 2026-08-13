@@ -5,8 +5,17 @@ Prywatna aplikacja webowa (PWA) do codziennej nauki **portugalskiego europejskie
 Codzienna sesja słówek i zwrotów z harmonogramem powtórek (FSRS), ćwiczenia w wielu formach,
 quizy i wymowa w głosach pt-PT. Aplikacja jest zamknięta — konto zakłada się kodem zaproszenia.
 
-**Status: faza 1 (MVP) gotowa.** Działa nauka codzienna: fiszki, testy wyboru w obu kierunkach,
-harmonogram FSRS, streak, słownik z 430 pozycjami, PWA instalowalna na telefonie.
+**Status: fazy 1 i 2 gotowe.** Działa codzienna nauka w sześciu formach ćwiczeń, harmonogram
+FSRS, streak, quizy z historią wyników, słownik z 430 pozycjami, PWA instalowalna na telefonie.
+
+**Tryby ćwiczeń.** Ten sam materiał wraca w coraz trudniejszej formie, zależnie od tego, jak
+dobrze znasz słowo: fiszka → test wyboru → wpisywanie z pamięci → luka w zdaniu. Do tego
+dopasowywanie par jako rozgrzewka i rozsypanka słów dla całych zdań. Odpowiedzi pisane mają trzy
+wyniki, nie dwa — literówka i brakujący akcent liczą się jako „prawie", wracają szybciej niż
+poprawna odpowiedź, ale nie kasują postępu jak błąd.
+
+**Quizy.** Sprawdzian niezależny od harmonogramu: quiz mierzy, nie uczy, więc domyślnie nie
+przesuwa żadnej karty. Pomyłki można jednym kliknięciem dorzucić do jutrzejszej kolejki.
 
 ## Dokumentacja
 
@@ -22,6 +31,7 @@ harmonogram FSRS, streak, słownik z 430 pozycjami, PWA instalowalna na telefoni
 |---|---|
 | Backend | FastAPI · SQLAlchemy 2.0 · Alembic · PostgreSQL 15+ |
 | Harmonogram powtórek | `fsrs` (py-fsrs 6.x) |
+| Ocena odpowiedzi | `rapidfuzz` (tolerancja literówek i akcentów) |
 | Frontend | React 18 · Vite · TypeScript · Tailwind CSS 4 · TanStack Query · Zustand |
 | Hosting | Railway (API + baza) · Cloudflare Pages (frontend) |
 
@@ -57,7 +67,7 @@ npm run dev                   # http://localhost:5173
 ## Testy
 
 ```bash
-cd backend && .venv/bin/python -m pytest tests/ -q     # 50 testów
+cd backend && .venv/bin/python -m pytest tests/ -q     # 100 testów
 cd frontend && npm run typecheck && npm run build
 ```
 
@@ -74,6 +84,7 @@ backend/
     services/
       scheduler.py     # opakowanie FSRS — jedyne miejsce, które zna bibliotekę
       task_builder.py  # dobór kart, przeplot nowych, wybór trybu, dystraktory
+      grader.py        # ocena odpowiedzi pisanych: dobrze / prawie / źle
       stats.py         # dzienne agregaty i streak w strefie użytkownika
     seed/        # 20 talii PT-PT w JSON + idempotentny loader
   alembic/       # migracje
@@ -81,17 +92,40 @@ backend/
 frontend/
   src/
     api/         # klient HTTP z cichym odświeżaniem tokenu
-    components/  # TaskRenderer (7 trybów), layout, elementy UI
-    pages/       # Dziś, Nauka, Podsumowanie, Słownik, Talie, Postęp, Ustawienia
+    components/  # TaskRenderer + tryby ćwiczeń, layout, elementy UI
+    pages/       # Dziś, Nauka, Podsumowanie, Słownik, Talie, Quizy, Postęp, Ustawienia
     store/       # auth (kontekst) + sesja nauki (Zustand)
 docs/
 ```
 
 ## Wdrożenie
 
-**Backend — Railway:** katalog `backend/`, `Procfile` uruchamia migracje przed startem.
-Zmienne: jak w `.env.example`, plus `COOKIE_DOMAIN=.pmakarewicz.com`, `COOKIE_SECURE=true`.
+**Backend — Railway.** Dodaj PostgreSQL i usługę z tego repo, ustaw **Root Directory: `backend`**.
+`Procfile` odpala migracje i bazę startową przed startem serwera (seed jest idempotentny, więc
+bezpiecznie chodzi przy każdym restarcie). Zmienne:
 
-**Frontend — Cloudflare Pages:** katalog `frontend/`, build `npm run build`, output `dist`.
-Zmienna `VITE_API_URL=https://api-porto.pmakarewicz.com`. Plik `public/_redirects` obsługuje
+```
+DATABASE_URL=${{Postgres.DATABASE_URL}}
+JWT_SECRET=<openssl rand -base64 36>
+JWT_REFRESH_SECRET=<openssl rand -base64 36>
+INVITE_CODE=<własny kod>
+CORS_ORIGINS=https://porto.pmakarewicz.com
+COOKIE_DOMAIN=.pmakarewicz.com
+COOKIE_SECURE=true
+COOKIE_SAMESITE=lax
+```
+
+Po wdrożeniu `GET /api/health` powinien zwrócić `{"status":"ok","db":true}`.
+
+**Frontend — Cloudflare Pages.** Root directory `frontend`, build `npm run build`, output `dist`,
+zmienna `VITE_API_URL=https://api-porto.pmakarewicz.com`. Plik `public/_redirects` obsługuje
 przekierowanie tras SPA.
+
+> Vite wkleja `VITE_API_URL` **w czasie builda**. Zmiana tej zmiennej wymaga ponownego
+> uruchomienia deploya — inaczej w plikach zostanie stary adres.
+
+## CI
+
+`.github/workflows/ci.yml` przy każdym pushu i pull requeście sprawdza:
+testy backendu na prawdziwym Postgresie, zgodność migracji z modelami (`alembic check`),
+załadowanie bazy startowej wraz z jej idempotencją, oraz typy i build frontendu.

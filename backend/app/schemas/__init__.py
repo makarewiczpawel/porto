@@ -156,11 +156,21 @@ class SessionOut(BaseModel):
     tasks: list[dict[str, Any]]
 
 
+class MatchPairIn(BaseModel):
+    """One pair from a matching round — the client reports whether it was
+    joined correctly on the first try."""
+
+    item_id: uuid.UUID
+    is_correct: bool
+
+
 class AnswerIn(BaseModel):
     index: int = Field(ge=0)
     rating: int | None = Field(default=None, ge=1, le=4)
     selected_index: int | None = Field(default=None, ge=0)
     user_answer: str | None = Field(default=None, max_length=500)
+    #: Only for `matching`, which scores several cards at once.
+    pairs: list[MatchPairIn] | None = Field(default=None, max_length=20)
     elapsed_ms: int = Field(default=0, ge=0, le=600_000)
 
 
@@ -175,6 +185,10 @@ class AnswerResultOut(BaseModel):
     correct_answer: str
     next_due: datetime
     next_due_label: str
+    #: exact | accent | typo | wrong — only for typed answers.
+    match: str | None = None
+    #: Expected answer with the differing characters marked, e.g. `av»ó«`.
+    diff: str | None = None
     duplicate: bool = False
 
 
@@ -203,6 +217,80 @@ class SessionSummaryOut(BaseModel):
     goal: int
     next_due_count: int
     mistakes: list[MistakeOut]
+
+
+# ── quizy ─────────────────────────────────────────────────────────────────
+class QuizCreateIn(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    deck_ids: list[uuid.UUID] | None = None
+    cefr_level: str | None = Field(default=None, max_length=2)
+    count: int = Field(default=10, ge=3, le=100)
+    modes: list[str] | None = None
+    time_limit_s: int | None = Field(default=None, ge=30, le=3600)
+
+
+class QuizOut(ORMModel):
+    id: uuid.UUID
+    name: str
+    config: dict[str, Any]
+    created_at: datetime
+    last_score: float | None = None
+
+
+class QuizQuickIn(BaseModel):
+    count: int = Field(default=10, ge=3, le=50)
+    deck_ids: list[uuid.UUID] | None = None
+    cefr_level: str | None = Field(default=None, max_length=2)
+    modes: list[str] | None = None
+
+
+class QuizAttemptOut(BaseModel):
+    id: uuid.UUID
+    name: str
+    started_at: datetime
+    time_limit_s: int | None
+    #: Questions without the answer key — a quiz is graded server-side only.
+    questions: list[dict[str, Any]]
+
+
+class QuizAnswerIn(BaseModel):
+    index: int = Field(ge=0)
+    selected_index: int | None = Field(default=None, ge=0)
+    user_answer: str | None = Field(default=None, max_length=500)
+    elapsed_ms: int = Field(default=0, ge=0, le=600_000)
+
+
+class QuizAnswersIn(BaseModel):
+    answers: list[QuizAnswerIn] = Field(min_length=1, max_length=100)
+
+
+class QuizMistakeOut(BaseModel):
+    item_id: uuid.UUID
+    pt: str
+    pl: str
+    user_answer: str | None
+    mode: str
+    skipped: bool = False
+
+
+class QuizResultOut(BaseModel):
+    attempt_id: uuid.UUID
+    name: str
+    score: float
+    total: int
+    correct: int
+    seconds: int
+    previous_score: float | None
+    mistakes: list[QuizMistakeOut]
+
+
+class QuizHistoryOut(BaseModel):
+    attempt_id: uuid.UUID
+    quiz_id: uuid.UUID | None
+    name: str
+    score: float
+    finished_at: datetime | None
+    total: int
 
 
 Direction = Literal["recognition", "production"]

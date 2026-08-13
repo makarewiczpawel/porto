@@ -14,6 +14,9 @@ interface Feedback {
   correctAnswer: string;
   nextDueLabel: string;
   note: string | null;
+  match?: string;
+  diff?: string;
+  summary?: string;
 }
 
 interface SessionState {
@@ -79,6 +82,9 @@ export const useSession = create<SessionState>((set, get) => ({
       correctAnswer: localResult?.correctAnswer ?? task.back ?? task.pl,
       nextDueLabel: localResult?.nextDueLabel ?? "",
       note: task.notes,
+      match: localResult?.match,
+      diff: localResult?.diff,
+      summary: localResult?.summary,
     };
 
     set({

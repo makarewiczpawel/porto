@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
-from app.models import Item, User, UserItemState, UserSettings
+from app.models import Example, Item, User, UserItemState, UserSettings
 from app.services import task_builder as tb
 from tests.conftest import make_items
 
@@ -195,3 +195,68 @@ def test_queue_counts_report_due_and_available(db):
     assert counts["due"] == 1
     assert counts["new_available"] == 6
     assert counts["next_due_at"] is not None
+
+
+def test_sentences_in_production_are_rebuilt_not_retyped(db):
+    """Word order is what a sentence teaches — typing it out drills spelling."""
+    user = a_user(db)
+    deck, items = make_items(db, count=3)
+    sentence = Item(
+        pt="Não tenho tempo amanhã",
+        pl="Nie mam jutro czasu",
+        type="sentence",
+        part_of_speech="expr",
+        cefr_level="A2",
+        verified=True,
+    )
+    db.add(sentence)
+    db.commit()
+    state = a_state(db, user, sentence, direction="production", stability=60.0)
+
+    enabled = ["flashcard", "mcq_pl_pt", "typing", "cloze", "word_bank"]
+    assert tb.choose_mode(state, "production", enabled, sentence) == "word_bank"
+    # A single word never becomes a word bank, however mature it is.
+    assert tb.choose_mode(state, "production", enabled, items[0]) != "word_bank"
+
+
+def test_cloze_needs_an_example_that_actually_contains_the_word(db):
+    a_user(db)
+    with_example = Item(pt="conta", pl="rachunek", article="a", part_of_speech="noun", cefr_level="A1", verified=True)
+    db.add(with_example)
+    db.flush()
+    db.add(
+        Example(
+            item_id=with_example.id,
+            pt="Pode trazer a conta, se faz favor?",
+            pl="Czy może pan przynieść rachunek?",
+        )
+    )
+    orphan = Item(pt="bilheteira", pl="kasa biletowa", part_of_speech="noun", cefr_level="A2", verified=True)
+    db.add(orphan)
+    db.flush()
+    db.add(Example(item_id=orphan.id, pt="Onde fica a estação?", pl="Gdzie jest dworzec?"))
+    db.commit()
+    db.refresh(with_example)
+    db.refresh(orphan)
+
+    assert tb.supports("cloze", with_example) is True
+    assert tb.supports("cloze", orphan) is False, "the sentence never mentions the word"
+
+    parts = tb.cloze_parts(with_example, with_example.examples[0])
+    assert parts["answer"] == "conta"
+    assert parts["before"].endswith("a ")
+    assert parts["after"].startswith(",")
+
+
+def test_cloze_finds_the_word_despite_accents_and_case(db):
+    a_user(db)
+    item = Item(pt="almoço", pl="obiad", article="o", part_of_speech="noun", cefr_level="A1", verified=True)
+    db.add(item)
+    db.flush()
+    db.add(Example(item_id=item.id, pt="Almoço é às duas.", pl="Obiad jest o drugiej."))
+    db.commit()
+    db.refresh(item)
+
+    parts = tb.cloze_parts(item, item.examples[0])
+    assert parts is not None
+    assert parts["answer"] == "Almoço", "the sentence's own casing is kept"
