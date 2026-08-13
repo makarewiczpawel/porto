@@ -14,6 +14,7 @@ const MODE_LABELS: Partial<Record<string, string>> = {
   cloze: "W kontekście",
   word_bank: "Szyk zdania",
   typing: "Z pamięci",
+  listening: "Ze słuchu",
 };
 
 export function StudyPage() {
@@ -100,6 +101,22 @@ export function StudyPage() {
     );
   }
 
+  // Wymowa przy informacji zwrotnej. Przy ćwiczeniach z luką słucha się całego
+  // zdania, nie wyrwanego słowa — dopiero w zdaniu słychać, jak ono brzmi.
+  // Samo odtworzenie ma sens tam, gdzie portugalskiego jeszcze nie było na
+  // ekranie; przy rozpoznawaniu byłoby powtórką tego, co już zabrzmiało.
+  const speakOnFeedback =
+    task && task.mode !== "matching"
+      ? task.mode === "cloze" && task.example
+        ? { text: task.example.pt, url: task.audio?.example }
+        : {
+            text: task.pt,
+            url: task.audio?.pt,
+            slowUrl: task.audio?.pt_slow,
+            autoPlay: Boolean(settings?.autoplay_audio) && task.direction === "production",
+          }
+      : undefined;
+
   return (
     <div className="flex min-h-dvh flex-col">
       <div className="safe-top flex items-center gap-3 px-4 pb-2 pt-3">
@@ -139,6 +156,7 @@ export function StudyPage() {
               task={task}
               locked={feedback !== null}
               accentStrict={settings?.accent_strict}
+              autoPlay={settings?.autoplay_audio}
               onAnswer={onAnswer}
             />
           </>
@@ -153,6 +171,7 @@ export function StudyPage() {
             match={feedback.match}
             diff={feedback.diff}
             summary={feedback.summary}
+            speak={speakOnFeedback}
             onNext={next}
           />
         )}

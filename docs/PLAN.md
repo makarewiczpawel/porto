@@ -231,36 +231,63 @@ Do zrobienia raz, przed pisaniem kodu.
 
 ## Faza 3 — Audio i offline [~1,5 tygodnia]
 
+> **Stan na 2026-08-13.** Punkty 3.1–3.4 (wymowa) zrobione; 3.5 (offline) czeka.
+> Odstępstwa od planu:
+>
+> - **Klucz API zamiast konta serwisowego.** Google przyjmuje syntezę przez REST
+>   ze zwykłym kluczem — jedna zmienna `GOOGLE_TTS_API_KEY` zamiast wklejania
+>   całego JSON-a konta serwisowego i nadawania ról. Mniej kroków dla
+>   użytkownika, ten sam efekt, o jedną zależność (`google-cloud-texttospeech`)
+>   mniej.
+> - **Nagrania w bazie zamiast w R2.** ~900 klipów po kilkanaście kilobajtów to
+>   około 10 MB. Osobne konto, klucze S3 i trzecia poddomena kosztowałyby więcej
+>   pracy, niż dają korzyści przy tej skali; przeniesienie do R2 to później
+>   zmiana w jednym pliku. Bajty leżą w `audio_assets`, serwowane spod
+>   `/api/audio/<sha256>.mp3` z rocznym cache.
+> - **Odtwarzanie nagrania nie wymaga tokenu.** `<audio src>` nie potrafi dołożyć
+>   nagłówka autoryzacji, a obejścia psują cache przeglądarki i pamięć offline.
+>   Adres jest skrótem treści, a treść to słownikowe „bom dia" — nie dane konta.
+>   Tworzenie nagrań i podgląd zużycia limitu nadal wymagają zalogowania.
+> - **Brak nocnego prefetchu z 3.2.** Skrypt masowej syntezy pokrywa całą bazę
+>   za jednym razem, więc zadanie cykliczne nie miałoby czego robić. Wróci, gdy
+>   pojawi się generowanie treści przez AI (faza 4).
+> - **Tryb listening ma tylko wariant z czterema opcjami.** Wpisywanie ze słuchu
+>   dokładałoby drugą trudność naraz (rozumienie + ortografia); wpisywanie z
+>   pamięci jest już osobnym trybem.
+> - Doszła tabela `audio_assets` i migracja, która przy okazji naprawia domyślny
+>   głos (`pt-PT-Neural2-A` → `pt-PT-Wavenet-A`; tej pierwszej nazwy Google dla
+>   pt-PT nie oferuje) i włącza tryb „ze słuchu" na istniejących kontach.
+
 **Cel fazy:** słychać portugalski europejski, a brak zasięgu nie przerywa nauki.
 
 ### 3.1 Serwis TTS [~6 h]
-- [ ] Konto serwisowe Google w zmiennej `GOOGLE_APPLICATION_CREDENTIALS_JSON` (cały JSON jako string — Railway nie ma systemu plików do wgrywania kluczy)
-- [ ] `services/tts.py`: `synthesize(text, voice, speed) -> url`, klucz cache `sha256(text|voice|speed)`
-- [ ] Model `audio_assets`; migracja
-- [ ] Upload do R2 przez `boto3` (endpoint S3-kompatybilny), publiczny URL
-- [ ] Licznik znaków miesięcznie + twardy limit `TTS_MONTHLY_CHAR_LIMIT` → `429`
-- [ ] `GET /api/audio`, `POST /api/audio/prefetch`, `GET /api/audio/usage`
+- [x] Klucz API w zmiennej `GOOGLE_TTS_API_KEY` (prościej niż konto serwisowe, patrz notka wyżej)
+- [x] `services/tts.py`: `speak(text, voice, speed)`, klucz cache `sha256(text|voice|speed)`, twarda walidacja `pt-PT`
+- [x] Model `audio_assets`; migracja
+- [x] ~~Upload do R2~~ → bajty w bazie, serwowane spod `/api/audio/<hash>.mp3`
+- [x] Licznik znaków miesięcznie + twardy limit `TTS_MONTHLY_CHAR_LIMIT`
+- [x] `GET /api/audio/<hash>.mp3`, `POST /api/audio/speak`, `GET /api/audio/lookup`, `/voices`, `/usage`
 
 ### 3.2 Masowa synteza [~2 h]
-- [ ] Skrypt `scripts/synthesize_all.py`: cała baza (hasła + zdania przykładowe), z progresem i wznawianiem po przerwaniu
-- [ ] Job nocny: prefetch audio dla pozycji `due` w ciągu najbliższych 24 h
+- [x] Skrypt `scripts/synthesize_all.py`: cała baza, z progresem, `--dry-run`, `--limit` i wznawianiem
+- [ ] ~~Job nocny~~ — niepotrzebny, dopóki baza nie rośnie sama (faza 4)
 
 ### 3.3 Audio na froncie [~4 h]
-- [ ] `AudioButton`: stany (ładowanie / gotowe / błąd), preload w tle, długie przytrzymanie = 0,75×
-- [ ] Fallback Web Speech API z wymuszeniem `lang="pt-PT"`, gdy plik niedostępny
-- [ ] Autoplay przy odsłonięciu odpowiedzi (przełącznik w ustawieniach)
-- [ ] Ustawienia audio: wybór głosu z podglądem, tempo
+- [x] `SpeakButton`: tapnięcie odtwarza, przytrzymanie = 0,75×, znika gdy nie ma czym mówić
+- [x] Fallback Web Speech API z wymuszeniem `pt-PT` (głos brazylijski odrzucany)
+- [x] Autoplay przy odsłonięciu odpowiedzi (przełącznik w ustawieniach)
+- [x] Ustawienia audio: wybór głosu z listy pobranej od Google + stan biblioteki nagrań
 
 ### 3.4 Tryb listening [~3 h]
-- [ ] Zadanie: audio bez tekstu → wpisz lub wybierz z 4 opcji
-- [ ] Włączenie do tabeli doboru trybów (karty o `stability >= 21 dni`)
-- [ ] Wymóg: pozycja bez audio nigdy nie trafia do tego trybu
+- [x] Zadanie: audio bez tekstu → wybór z 4 opcji
+- [x] Włączenie do tabeli doboru trybów (karty o `stability >= 21 dni`)
+- [x] Wymóg: pozycja bez audio nigdy nie trafia do tego trybu
 
 ### 3.5 Offline [~6 h]
 - [ ] Dexie: schemat lokalny (`session`, `answers_queue`)
 - [ ] Zapis sesji przy pobraniu, kolejkowanie odpowiedzi lokalnie
 - [ ] Synchronizacja przy `online` i przy starcie aplikacji, z wykorzystaniem idempotencji z 1.4
-- [ ] Cache plików audio bieżącej sesji w service workerze
+- [x] Cache plików audio w service workerze (CacheFirst, rok)
 - [ ] Wskaźnik „offline — postęp zapisany lokalnie" w interfejsie sesji
 
 ### Definition of Done — Faza 3

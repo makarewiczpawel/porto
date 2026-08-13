@@ -46,6 +46,17 @@ def _public(questions: list[dict]) -> list[dict]:
         }
         if question["mode"] in ("typing", "cloze", "word_bank"):
             clean.pop("pt", None)
+            # Hiding the written form but leaving the recording would be a
+            # hole, not a safeguard — you would just press play and hear the
+            # answer. The example sentence stays: it is a hint, not the key.
+            audio = dict(clean.get("audio") or {})
+            audio.pop("pt", None)
+            audio.pop("pt_slow", None)
+            clean["audio"] = audio
+        if question["mode"] == "listening":
+            # Here it is the other way round: the recording is the question and
+            # the written word would give it away.
+            clean.pop("pt", None)
         out.append(clean)
     return out
 

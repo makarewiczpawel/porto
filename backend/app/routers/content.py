@@ -19,7 +19,7 @@ from app.schemas import (
     SettingsOut,
     SettingsPatch,
 )
-from app.services.task_builder import deck_counts
+from app.services.task_builder import audio_index, deck_counts
 
 router = APIRouter(prefix="/api", tags=["content"])
 
@@ -86,9 +86,13 @@ def list_items(
         .unique()
         .all()
     )
-    return PageOut(
-        items=[ItemOut.model_validate(row) for row in rows], total=total, page=page, per_page=per_page
-    )
+    recordings = audio_index(db, list(rows), user.settings.tts_voice, include_slow=False)
+    out = []
+    for row in rows:
+        entry = ItemOut.model_validate(row)
+        entry.audio_url = recordings.get(row.id, {}).get("pt")
+        out.append(entry)
+    return PageOut(items=out, total=total, page=page, per_page=per_page)
 
 
 @router.get("/items/{item_id}", response_model=ItemDetailOut)
@@ -119,6 +123,9 @@ def get_item(
     )
 
     out = ItemDetailOut.model_validate(item)
+    out.audio_url = audio_index(db, [item], user.settings.tts_voice, include_slow=False).get(
+        item.id, {}
+    ).get("pt")
     out.examples = [e for e in out.examples]
     out.cards = [
         CardStateOut(

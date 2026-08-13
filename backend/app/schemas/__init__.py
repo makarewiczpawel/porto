@@ -97,6 +97,9 @@ class ItemOut(ORMModel):
     notes: str | None
     source: str
     verified: bool
+    # Wypełniane przez router, gdy nagranie istnieje — sam model nie wie nic
+    # o syntezie mowy.
+    audio_url: str | None = None
 
 
 class ItemDetailOut(ItemOut):

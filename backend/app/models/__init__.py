@@ -1,3 +1,4 @@
+from app.models.audio import AudioAsset
 from app.models.base import Base
 from app.models.content import (
     CEFR_LEVELS,
@@ -23,6 +24,7 @@ from app.models.user import ALL_MODES, DEFAULT_MODES, PHASE1_MODES, User, UserSe
 
 __all__ = [
     "ALL_MODES",
+    "AudioAsset",
     "Base",
     "CARD_STATES",
     "CEFR_LEVELS",

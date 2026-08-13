@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 
 import { api } from "@/api/client";
-import type { Mode, Settings } from "@/api/types";
+import type { AudioUsage, Mode, Settings, Voice } from "@/api/types";
 import { Button, Card, Label, Spinner } from "@/components/ui";
 import { useAuth } from "@/store/auth";
 
@@ -15,6 +15,7 @@ const MODES: { id: Mode; label: string; hint: string }[] = [
   { id: "cloze", label: "Luka w zdaniu", hint: "słowo w kontekście" },
   { id: "word_bank", label: "Rozsypanka", hint: "szyk zdania" },
   { id: "matching", label: "Dopasowywanie par", hint: "rozgrzewka na start sesji" },
+  { id: "listening", label: "Ze słuchu", hint: "wymaga nagrania — bez niego pomijany" },
 ];
 
 export function SettingsPage() {
@@ -156,6 +157,9 @@ export function SettingsPage() {
         </div>
       </Card>
 
+      <Label className="mb-2 mt-5">Wymowa</Label>
+      <VoiceSettings settings={settings} patch={patch} />
+
       <Label className="mb-2 mt-5">Konto</Label>
       <Card className="grid gap-3">
         <div className="flex items-center justify-between gap-3">
@@ -170,9 +174,7 @@ export function SettingsPage() {
         </Button>
       </Card>
 
-      <p className="mt-6 text-center text-[11.5px] text-ink-3">
-        Wymowa i tryb offline dochodzą w fazie 3.
-      </p>
+      <p className="mt-6 text-center text-[11.5px] text-ink-3">Tryb offline dochodzi w fazie 3.</p>
     </div>
   );
 }
@@ -229,5 +231,104 @@ function Stepper({
         </button>
       </div>
     </div>
+  );
+}
+
+/**
+ * Wymowa: wybór głosu, tempo, autoodtwarzanie i stan biblioteki nagrań.
+ *
+ * Lista głosów przychodzi prosto od dostawcy, a nie z listy wpisanej na sztywno
+ * w kodzie — dzięki temu nie da się wybrać głosu, którego nie ma, i nie trzeba
+ * aktualizować aplikacji, gdy dojdą nowe.
+ */
+function VoiceSettings({
+  settings,
+  patch,
+}: {
+  settings: Settings;
+  patch: (body: Partial<Settings>) => Promise<void>;
+}) {
+  const voices = useQuery({
+    queryKey: ["tts-voices"],
+    queryFn: () => api.get<{ configured: boolean; voices: Voice[] }>("/api/audio/voices"),
+    staleTime: 60 * 60 * 1000,
+    retry: false,
+  });
+  const usage = useQuery({
+    queryKey: ["tts-usage"],
+    queryFn: () => api.get<AudioUsage>("/api/audio/usage"),
+    retry: false,
+  });
+
+  const available = voices.data?.voices ?? [];
+  const configured = voices.data?.configured ?? false;
+
+  return (
+    <Card className="grid gap-3">
+      {!configured && (
+        <p className="rounded-xl border border-line bg-surface-2 px-3 py-2 text-[12px] text-ink-2">
+          {usage.data && usage.data.clips_stored > 0
+            ? "Brakuje klucza do syntezy mowy, więc nowe nagrania nie powstaną. Te już zapisane działają normalnie."
+            : "Nagrania nie są jeszcze włączone — brakuje klucza do syntezy mowy. Do tego czasu aplikacja czyta portugalski głosem wbudowanym w telefon, o ile ma zainstalowany europejski."}
+        </p>
+      )}
+
+      {available.length > 0 && (
+        <label className="grid gap-1.5">
+          <span className="text-[14px]">Głos</span>
+          <select
+            value={settings.tts_voice}
+            onChange={(event) => void patch({ tts_voice: event.target.value })}
+            className="rounded-xl border border-line-strong bg-surface px-3 py-2.5 text-[14px]"
+          >
+            {available.some((voice) => voice.name === settings.tts_voice) ? null : (
+              <option value={settings.tts_voice}>{settings.tts_voice} (niedostępny)</option>
+            )}
+            {available.map((voice) => (
+              <option key={voice.name} value={voice.name}>
+                {voice.name.replace("pt-PT-", "")}
+                {voice.gender === "female" ? " · kobiecy" : voice.gender === "male" ? " · męski" : ""}
+                {voice.quality === "standard" ? " · podstawowy" : ""}
+              </option>
+            ))}
+          </select>
+          <span className="text-[11.5px] text-ink-3">
+            Zmiana głosu nie kasuje nagrań — nowe powstaną przy następnej syntezie.
+          </span>
+        </label>
+      )}
+
+      <div className="flex items-center justify-between gap-3 border-t border-line pt-3">
+        <div>
+          <div className="text-[14px]">Odtwarzaj automatycznie</div>
+          <div className="text-[11.5px] text-ink-3">wymowa odzywa się, gdy pojawia się portugalski</div>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={settings.autoplay_audio}
+          aria-label="Odtwarzaj automatycznie"
+          onClick={() => void patch({ autoplay_audio: !settings.autoplay_audio })}
+          className={`relative h-[25px] w-[42px] flex-none rounded-full transition ${
+            settings.autoplay_audio ? "bg-accent" : "bg-line-strong"
+          }`}
+        >
+          <span
+            className={`absolute top-[3px] h-[19px] w-[19px] rounded-full bg-white transition-all ${
+              settings.autoplay_audio ? "left-[20px]" : "left-[3px]"
+            }`}
+          />
+        </button>
+      </div>
+
+      {usage.data && (
+        <div className="border-t border-line pt-3 text-[11.5px] text-ink-3">
+          Nagrań w bazie: <b className="text-ink-2">{usage.data.clips_stored}</b> (
+          {(usage.data.bytes_stored / 1_048_576).toFixed(1)} MB). W tym miesiącu zsyntezowano{" "}
+          {usage.data.chars_this_month.toLocaleString("pl")} z {usage.data.monthly_limit.toLocaleString("pl")}{" "}
+          znaków.
+        </div>
+      )}
+    </Card>
   );
 }

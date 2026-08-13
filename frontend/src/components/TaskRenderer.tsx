@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 
 import { diffHint, feedbackLabel, gradeAnswer } from "@/api/grade";
 import type { MatchPair, Task } from "@/api/types";
+import { Listening } from "./modes/Listening";
 import { Matching } from "./modes/Matching";
+import { SpeakButton } from "./SpeakButton";
 import { TypeAnswer } from "./modes/TypeAnswer";
 import { WordBank } from "./modes/WordBank";
 import { Button, cx } from "./ui";
@@ -26,6 +28,8 @@ interface Props {
   task: Task;
   locked: boolean;
   accentStrict?: boolean;
+  /** Czy wymowa ma odezwać się sama, gdy portugalski pojawi się na ekranie. */
+  autoPlay?: boolean;
   /**
    * Study sessions grade on the client for instant feedback; quizzes do not —
    * their payload arrives without the answer key on purpose, so there is
@@ -39,12 +43,35 @@ interface Props {
  * One entry point for every exercise form. Adding a mode is a new branch and a
  * component — the session around it does not change.
  */
-export function TaskRenderer({ task, locked, accentStrict, localGrading = true, onAnswer }: Props) {
-  const shared = { task, locked, accentStrict, localGrading, onAnswer };
+export function TaskRenderer({
+  task,
+  locked,
+  accentStrict,
+  autoPlay,
+  localGrading = true,
+  onAnswer,
+}: Props) {
+  const shared = {
+    task,
+    locked,
+    accentStrict,
+    autoPlay,
+    localGrading,
+    onAnswer,
+  };
   switch (task.mode) {
     case "mcq_pt_pl":
     case "mcq_pl_pt":
       return <MultipleChoice {...shared} />;
+    case "listening":
+      return (
+        <Listening
+          task={task}
+          locked={locked}
+          localGrading={localGrading}
+          onAnswer={onAnswer}
+        />
+      );
     case "typing":
       return <Typing {...shared} />;
     case "cloze":
@@ -73,7 +100,14 @@ export function TaskRenderer({ task, locked, accentStrict, localGrading = true, 
       );
     case "flashcard":
     default:
-      return <Flashcard task={task} locked={locked} onAnswer={onAnswer} />;
+      return (
+        <Flashcard
+          task={task}
+          locked={locked}
+          autoPlay={autoPlay}
+          onAnswer={onAnswer}
+        />
+      );
   }
 }
 
@@ -109,7 +143,7 @@ const RATINGS = [
   { value: 4, label: "Łatwe", tone: "hover:border-good hover:text-good" },
 ];
 
-function Flashcard({ task, locked, onAnswer }: Props) {
+function Flashcard({ task, locked, autoPlay, onAnswer }: Props) {
   const [revealed, setRevealed] = useState(false);
 
   useEffect(() => {
@@ -126,7 +160,11 @@ function Flashcard({ task, locked, onAnswer }: Props) {
       }
       if (revealed && ["1", "2", "3", "4"].includes(event.key)) {
         const rating = Number(event.key);
-        onAnswer({ rating, isCorrect: rating > 1, correctAnswer: task.back ?? task.pl });
+        onAnswer({
+          rating,
+          isCorrect: rating > 1,
+          correctAnswer: task.back ?? task.pl,
+        });
       }
     };
     window.addEventListener("keydown", onKey);
@@ -140,42 +178,92 @@ function Flashcard({ task, locked, onAnswer }: Props) {
   return (
     <>
       <div className="flex flex-1 flex-col justify-center">
-        <button
-          type="button"
-          onClick={() => !revealed && setRevealed(true)}
-          disabled={revealed}
-          className={cx(
-            "grid min-h-[220px] w-full content-center justify-items-center gap-3 rounded-3xl border border-line bg-surface-2 px-5 py-7 text-center",
-            !revealed && "hover:border-accent-line",
-          )}
-        >
-          <div className={cx("text-4xl leading-tight", frontIsPortuguese && "pt")}>{front}</div>
-          {!revealed ? (
-            <div className="text-[13px] text-ink-3">Tapnij, żeby odsłonić</div>
-          ) : (
-            <div className="animate-reveal grid justify-items-center gap-3">
-              <div className={cx("text-2xl font-semibold", !frontIsPortuguese && "pt")}>{back}</div>
-              {task.example && <div className="pt text-[15px] text-ink-2">{task.example.pt}</div>}
-              {task.notes && (
-                <div className="rounded-xl border border-line bg-surface px-3 py-2 text-left text-[13px] text-ink-2">
-                  {task.notes}
+        {/* Głośnik jest rodzeństwem karty, nie jej dzieckiem: przycisk w
+            przycisku to nieprawidłowy HTML, a tapnięcie w wymowę odsłaniałoby
+            przy okazji odpowiedź. Kotwiczy go ten `relative` opinający samą
+            kartę — na całej kolumnie odjechałby nad nią. */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => !revealed && setRevealed(true)}
+            disabled={revealed}
+            className={cx(
+              "grid min-h-[220px] w-full content-center justify-items-center gap-3 rounded-3xl border border-line bg-surface-2 px-5 py-7 text-center",
+              !revealed && "hover:border-accent-line",
+            )}
+          >
+            <div
+              className={cx(
+                "text-4xl leading-tight",
+                frontIsPortuguese && "pt",
+              )}
+            >
+              {front}
+            </div>
+            {!revealed ? (
+              <div className="text-[13px] text-ink-3">
+                Tapnij, żeby odsłonić
+              </div>
+            ) : (
+              <div className="animate-reveal grid justify-items-center gap-3">
+                <div
+                  className={cx(
+                    "text-2xl font-semibold",
+                    !frontIsPortuguese && "pt",
+                  )}
+                >
+                  {back}
                 </div>
+                {task.example && (
+                  <div className="pt text-[15px] text-ink-2">
+                    {task.example.pt}
+                  </div>
+                )}
+                {task.notes && (
+                  <div className="rounded-xl border border-line bg-surface px-3 py-2 text-left text-[13px] text-ink-2">
+                    {task.notes}
+                  </div>
+                )}
+              </div>
+            )}
+          </button>
+
+          {(frontIsPortuguese || revealed) && (
+            <div className="absolute right-3 top-3 grid justify-items-end gap-2">
+              <SpeakButton
+                text={frontIsPortuguese ? front : back}
+                url={task.audio?.pt}
+                slowUrl={task.audio?.pt_slow}
+                autoPlay={autoPlay && (frontIsPortuguese || revealed)}
+              />
+              {revealed && task.example && (
+                <SpeakButton
+                  text={task.example.pt}
+                  url={task.audio?.example}
+                  size="sm"
+                />
               )}
             </div>
           )}
-        </button>
+        </div>
       </div>
 
       {revealed && !locked && (
         <div className="animate-reveal">
-          <div className="mb-2 text-center text-xs text-ink-3">Jak dobrze pamiętałeś?</div>
+          <div className="mb-2 text-center text-xs text-ink-3">
+            Jak dobrze pamiętałeś?
+          </div>
           <div className="grid grid-cols-4 gap-2">
             {RATINGS.map((rating) => (
               <button
                 key={rating.value}
                 type="button"
                 onClick={() =>
-                  onAnswer({ rating: rating.value, isCorrect: rating.value > 1, correctAnswer: back })
+                  onAnswer({
+                    rating: rating.value,
+                    isCorrect: rating.value > 1,
+                    correctAnswer: back,
+                  })
                 }
                 className={cx(
                   "grid gap-0.5 rounded-xl border border-line bg-surface px-1 py-2.5 text-[13px] font-semibold transition",
@@ -196,7 +284,13 @@ function Flashcard({ task, locked, onAnswer }: Props) {
 }
 
 // ── multiple choice ───────────────────────────────────────────────────────
-function MultipleChoice({ task, locked, localGrading = true, onAnswer }: Props) {
+function MultipleChoice({
+  task,
+  locked,
+  autoPlay,
+  localGrading = true,
+  onAnswer,
+}: Props) {
   const [picked, setPicked] = useState<number | null>(null);
   const [correctIndex, setCorrectIndex] = useState<number | null>(null);
 
@@ -213,7 +307,9 @@ function MultipleChoice({ task, locked, localGrading = true, onAnswer }: Props) 
     if (picked !== null || locked) return;
     setPicked(index);
     // In a quiz nothing is revealed between questions.
-    const truth = localGrading ? options.findIndex((option) => option === answerText) : -1;
+    const truth = localGrading
+      ? options.findIndex((option) => option === answerText)
+      : -1;
     setCorrectIndex(localGrading ? truth : null);
     onAnswer({
       selectedIndex: index,
@@ -238,8 +334,25 @@ function MultipleChoice({ task, locked, localGrading = true, onAnswer }: Props) 
         <div className="text-[11px] font-bold uppercase tracking-[0.1em] text-ink-3">
           {questionIsPortuguese ? "Co to znaczy?" : "Jak to powiedzieć?"}
         </div>
-        <div className={cx("mt-3 text-center text-3xl leading-tight", questionIsPortuguese && "pt")}>
-          {task.question}
+        <div className="mt-3 flex items-center justify-center gap-3">
+          <div
+            className={cx(
+              "text-center text-3xl leading-tight",
+              questionIsPortuguese && "pt",
+            )}
+          >
+            {task.question}
+          </div>
+          {/* Tylko gdy pytanie jest po portugalsku. W drugą stronę wymowa
+              odpowiedzi przed jej wybraniem byłaby podpowiedzią. */}
+          {questionIsPortuguese && (
+            <SpeakButton
+              text={task.question ?? task.pt}
+              url={task.audio?.pt}
+              slowUrl={task.audio?.pt_slow}
+              autoPlay={autoPlay}
+            />
+          )}
         </div>
       </div>
 
@@ -258,8 +371,12 @@ function MultipleChoice({ task, locked, localGrading = true, onAnswer }: Props) 
                 !questionIsPortuguese && "pt text-[17px]",
                 isAnswer && "border-good bg-good-soft text-good",
                 isWrongPick && "border-bad bg-bad-soft text-bad",
-                picked === null && "border-line bg-surface hover:border-accent hover:bg-accent-soft",
-                picked !== null && !isAnswer && !isWrongPick && "border-line bg-surface opacity-60",
+                picked === null &&
+                  "border-line bg-surface hover:border-accent hover:bg-accent-soft",
+                picked !== null &&
+                  !isAnswer &&
+                  !isWrongPick &&
+                  "border-line bg-surface opacity-60",
               )}
             >
               {option}
@@ -281,10 +398,14 @@ function Typing({ task, locked, accentStrict, localGrading, onAnswer }: Props) {
           <div className="text-[11px] font-bold uppercase tracking-[0.1em] text-ink-3">
             Napisz po portugalsku
           </div>
-          <p className="mt-3 text-2xl font-semibold">{task.question ?? task.pl}</p>
+          <p className="mt-3 text-2xl font-semibold">
+            {task.question ?? task.pl}
+          </p>
         </>
       }
-      onSubmit={(value) => onAnswer(gradedEvent(value, task, accentStrict, localGrading))}
+      onSubmit={(value) =>
+        onAnswer(gradedEvent(value, task, accentStrict, localGrading))
+      }
     />
   );
 }
@@ -310,27 +431,43 @@ function Cloze({ task, locked, accentStrict, localGrading, onAnswer }: Props) {
       placeholder="brakujące słowo"
       prompt={
         <>
-          <div className="text-[11px] font-bold uppercase tracking-[0.1em] text-ink-3">Uzupełnij lukę</div>
+          <div className="text-[11px] font-bold uppercase tracking-[0.1em] text-ink-3">
+            Uzupełnij lukę
+          </div>
           <p className="pt mt-4 text-center text-[23px] leading-relaxed">
             {cloze.before}
             <span className="mx-1 inline-block min-w-[80px] border-b-2 border-accent align-baseline" />
             {cloze.after}
           </p>
-          {task.question && <p className="mt-3 text-center text-[13.5px] text-ink-3">{task.question}</p>}
+          {task.question && (
+            <p className="mt-3 text-center text-[13.5px] text-ink-3">
+              {task.question}
+            </p>
+          )}
         </>
       }
-      onSubmit={(value) => onAnswer(gradedEvent(value, task, accentStrict, localGrading))}
+      onSubmit={(value) =>
+        onAnswer(gradedEvent(value, task, accentStrict, localGrading))
+      }
     />
   );
 }
 
 // ── word bank ─────────────────────────────────────────────────────────────
-function Sentence({ task, locked, accentStrict, localGrading, onAnswer }: Props) {
+function Sentence({
+  task,
+  locked,
+  accentStrict,
+  localGrading,
+  onAnswer,
+}: Props) {
   return (
     <WordBank
       task={task}
       disabled={locked}
-      onSubmit={(sentence) => onAnswer(gradedEvent(sentence, task, accentStrict, localGrading))}
+      onSubmit={(sentence) =>
+        onAnswer(gradedEvent(sentence, task, accentStrict, localGrading))
+      }
     />
   );
 }
@@ -344,6 +481,7 @@ export function Feedback({
   match,
   diff,
   summary,
+  speak,
   onNext,
 }: {
   isCorrect: boolean;
@@ -353,6 +491,13 @@ export function Feedback({
   match?: string;
   diff?: string;
   summary?: string;
+  /** Wymowa poprawnej odpowiedzi — moment, w którym najbardziej się przydaje. */
+  speak?: {
+    text: string;
+    url?: string | null;
+    slowUrl?: string | null;
+    autoPlay?: boolean;
+  };
   onNext: () => void;
 }) {
   useEffect(() => {
@@ -396,6 +541,16 @@ export function Feedback({
         )}
       >
         {heading}
+        {speak && (
+          <SpeakButton
+            text={speak.text}
+            url={speak.url}
+            slowUrl={speak.slowUrl}
+            size="sm"
+            autoPlay={speak.autoPlay}
+            className="ml-auto"
+          />
+        )}
       </div>
 
       <div className="text-[13.5px] text-ink-2">
@@ -403,8 +558,12 @@ export function Feedback({
           summary
         ) : almost ? (
           <>
-            Poprawnie: <b className="pt text-[16px] font-normal text-ink">{diff ?? correctAnswer}</b>.{" "}
-            {match === "accent" ? "Brakuje akcentu" : "Literówka"} — liczy się jako trudne.
+            Poprawnie:{" "}
+            <b className="pt text-[16px] font-normal text-ink">
+              {diff ?? correctAnswer}
+            </b>
+            . {match === "accent" ? "Brakuje akcentu" : "Literówka"} — liczy się
+            jako trudne.
           </>
         ) : isCorrect ? (
           nextDueLabel ? (
@@ -416,7 +575,11 @@ export function Feedback({
           )
         ) : (
           <>
-            Poprawnie: <b className="pt text-[16px] font-normal text-ink">{correctAnswer}</b>.
+            Poprawnie:{" "}
+            <b className="pt text-[16px] font-normal text-ink">
+              {correctAnswer}
+            </b>
+            .
           </>
         )}
         {note && <div className="mt-1 text-[12.5px] text-ink-3">{note}</div>}

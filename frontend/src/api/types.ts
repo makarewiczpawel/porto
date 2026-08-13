@@ -32,6 +32,16 @@ export interface Example {
   pl: string;
 }
 
+/** Adresy nagrań, jakie serwer ma gotowe dla tego zadania. */
+export interface TaskAudio {
+  /** portugalska strona hasła */
+  pt?: string;
+  /** to samo, wolniej — pod przytrzymanie głośnika */
+  pt_slow?: string;
+  /** zdanie przykładowe */
+  example?: string;
+}
+
 export interface Item {
   id: string;
   type: string;
@@ -48,6 +58,7 @@ export interface Item {
   notes: string | null;
   source: string;
   verified: boolean;
+  audio_url: string | null;
 }
 
 export interface CardState {
@@ -127,7 +138,9 @@ export interface Task {
   tokens?: string[];
   extra?: string[];
   /** matching — one question covering several cards */
-  pairs?: { item_id: string; pt: string; pl: string }[];
+  pairs?: { item_id: string; pt: string; pl: string; audio?: string | null }[];
+  /** wymowa — puste, dopóki nagranie nie powstanie */
+  audio?: TaskAudio;
 }
 
 export interface StudySession {
@@ -241,4 +254,19 @@ export interface QuizHistoryEntry {
   score: number;
   finished_at: string | null;
   total: number;
+}
+
+export interface Voice {
+  name: string;
+  gender: string | null;
+  quality: string;
+}
+
+export interface AudioUsage {
+  configured: boolean;
+  chars_this_month: number;
+  monthly_limit: number;
+  remaining: number;
+  clips_stored: number;
+  bytes_stored: number;
 }
