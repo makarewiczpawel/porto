@@ -1,10 +1,11 @@
-import { StrictMode } from "react";
+import { StrictMode, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import { AppLayout, FullScreenLayout } from "@/components/Layout";
 import { Spinner } from "@/components/ui";
+import { AddItemPage } from "@/pages/AddItem";
 import { DeckDetailPage, DecksPage } from "@/pages/Decks";
 import { DictionaryPage, ItemDetailPage } from "@/pages/Dictionary";
 import { LoginPage } from "@/pages/Login";
@@ -15,6 +16,7 @@ import { StudyPage } from "@/pages/Study";
 import { SummaryPage } from "@/pages/Summary";
 import { TodayPage } from "@/pages/Today";
 import { AuthProvider, useAuth } from "@/store/auth";
+import { watchConnection } from "@/store/session";
 import "./index.css";
 
 const queryClient = new QueryClient({
@@ -25,6 +27,10 @@ const queryClient = new QueryClient({
 
 function Shell() {
   const { user, ready } = useAuth();
+
+  // Dosyłanie zaległych odpowiedzi żyje poza ekranem sesji: użytkownik może
+  // zamknąć aplikację w metrze i otworzyć ją następnego dnia w domu.
+  useEffect(() => watchConnection(), []);
 
   if (!ready) {
     return (
@@ -41,6 +47,7 @@ function Shell() {
       <Route element={<AppLayout />}>
         <Route path="/" element={<TodayPage />} />
         <Route path="/slownik" element={<DictionaryPage />} />
+        <Route path="/slownik/dodaj" element={<AddItemPage />} />
         <Route path="/slownik/:itemId" element={<ItemDetailPage />} />
         <Route path="/talie" element={<DecksPage />} />
         <Route path="/talie/:deckId" element={<DeckDetailPage />} />

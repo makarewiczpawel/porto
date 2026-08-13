@@ -1,24 +1,34 @@
+import re
+import unicodedata
 import uuid
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, or_, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
 from app.db import get_db
 from app.deps import get_current_user
-from app.errors import not_found
-from app.models import Deck, DeckItem, Item, User, UserItemState
+from app.errors import conflict, forbidden, not_found
+from app.models import Deck, DeckItem, Example, Item, User, UserItemState
 from app.schemas import (
     CardStateOut,
+    DeckCreateIn,
     DeckDetailOut,
     DeckOut,
+    ImportIn,
+    ImportOut,
+    ImportRowError,
+    ItemCreateIn,
     ItemDetailOut,
     ItemOut,
+    ItemPatchIn,
     PageOut,
     SettingsOut,
     SettingsPatch,
 )
+from app.services import importer
 from app.services.task_builder import audio_index, deck_counts
 
 router = APIRouter(prefix="/api", tags=["content"])
@@ -222,3 +232,287 @@ def get_deck(
     out.untouched = stats.get("untouched", out.total)
     out.items = _with_audio(db, list(rows), user)
     return out
+
+
+# ── własne pozycje i talie ────────────────────────────────────────────────
+def _slugify(name: str, user_id: uuid.UUID) -> str:
+    """Slug talii bierze kawałek identyfikatora właściciela.
+
+    Dwie osoby mogą nazwać swoją talię „Praca" i obie mają do tego prawo, a
+    `slug` jest unikalny w całej bazie.
+    """
+    base = re.sub(r"[^a-z0-9]+", "-", unicodedata.normalize("NFKD", name.lower())
+                  .encode("ascii", "ignore").decode()).strip("-")
+    return f"{base or 'talia'}-{user_id.hex[:6]}"
+
+
+def _split_article(pt: str, article: str | None) -> tuple[str, str | None]:
+    """Rodzajnik trzymamy w osobnej kolumnie, ale ludzie piszą go w słowie.
+
+    Bez tego „a esplanada" z rodzajnikiem „a" wyświetla się jako
+    „a a esplanada". Doklejamy go z powrotem przy wyświetlaniu, więc tutaj musi
+    zniknąć z samego hasła.
+    """
+    text = pt.strip()
+    lowered = text.lower()
+    if article:
+        prefix = f"{article.strip().lower()} "
+        if lowered.startswith(prefix):
+            return text[len(prefix):].strip(), article.strip()
+        return text, article.strip()
+    for candidate in ("a", "o", "as", "os", "um", "uma"):
+        if lowered.startswith(f"{candidate} "):
+            return text[len(candidate) + 1:].strip(), candidate
+    return text, None
+
+
+DEFAULT_DECK_NAME = "Moje słówka"
+
+
+def _default_deck(db: Session, user: User) -> Deck:
+    """Prywatna talia, do której trafia wszystko dodane bez wskazania miejsca.
+
+    Kolejka nauki dobiera nowe pozycje przez talie — słowo poza jakąkolwiek
+    talią istniałoby w słowniku, ale nigdy nie pojawiłoby się w sesji. Zamiast
+    zmuszać do zakładania talii przed dodaniem pierwszego słowa, zakładamy ją
+    po cichu przy pierwszej potrzebie.
+    """
+    slug = f"moje-{user.id.hex[:6]}"
+    deck = db.execute(select(Deck).where(Deck.slug == slug)).scalar_one_or_none()
+    if deck is None:
+        deck = Deck(
+            slug=slug,
+            name=DEFAULT_DECK_NAME,
+            description="Pozycje dodane ręcznie i zaimportowane.",
+            icon="✍️",
+            is_shared=False,
+            owner_id=user.id,
+            position=100,
+        )
+        db.add(deck)
+        db.flush()
+    return deck
+
+
+def _own_deck_or_404(db: Session, user: User, deck_id: uuid.UUID) -> Deck:
+    deck = db.get(Deck, deck_id)
+    if deck is None or (deck.owner_id != user.id and not deck.is_shared):
+        raise not_found("DECK_NOT_FOUND", "Nie ma takiej talii.")
+    return deck
+
+
+@router.post("/decks", response_model=DeckOut, status_code=201)
+def create_deck(
+    body: DeckCreateIn, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+) -> DeckOut:
+    deck = Deck(
+        slug=_slugify(body.name, user.id),
+        name=body.name.strip(),
+        description=body.description,
+        icon=body.icon,
+        is_shared=False,
+        owner_id=user.id,
+        # Własne talie idą po wbudowanych, których pozycje kończą się na 20.
+        position=100,
+    )
+    db.add(deck)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise conflict("DECK_EXISTS", "Masz już talię o tej nazwie.") from None
+    db.refresh(deck)
+    return DeckOut.model_validate(deck)
+
+
+@router.post("/items", response_model=ItemDetailOut, status_code=201)
+def create_item(
+    body: ItemCreateIn, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+) -> ItemDetailOut:
+    pt, article = _split_article(body.pt, body.article)
+    pl = body.pl.strip()
+    existing = db.execute(select(Item).where(Item.pt == pt, Item.pl == pl)).scalar_one_or_none()
+    if existing is not None:
+        raise conflict(
+            "ITEM_EXISTS",
+            "Taka pozycja już jest w słowniku.",
+            item_id=str(existing.id),
+        )
+
+    item = Item(
+        pt=pt,
+        pl=pl,
+        type=body.type,
+        article=article,
+        gender=body.gender,
+        part_of_speech=body.part_of_speech,
+        cefr_level=body.cefr_level,
+        notes=body.notes,
+        pt_alt=body.pt_alt or None,
+        pl_alt=body.pl_alt or None,
+        source="user",
+        # Własne pozycje są zaufane od razu — dodał je człowiek, który się
+        # uczy, a nie generator treści.
+        verified=True,
+        created_by=user.id,
+    )
+    db.add(item)
+    db.flush()
+
+    if body.example_pt and body.example_pl:
+        db.add(
+            Example(
+                item_id=item.id,
+                pt=body.example_pt.strip(),
+                pl=body.example_pl.strip(),
+                source="user",
+            )
+        )
+
+    deck = (
+        _own_deck_or_404(db, user, body.deck_id) if body.deck_id is not None else _default_deck(db, user)
+    )
+    position = db.execute(
+        select(func.coalesce(func.max(DeckItem.position), -1)).where(DeckItem.deck_id == deck.id)
+    ).scalar_one()
+    db.add(DeckItem(deck_id=deck.id, item_id=item.id, position=position + 1))
+
+    db.commit()
+    db.refresh(item)
+    return get_item(item.id, user, db)
+
+
+@router.patch("/items/{item_id}", response_model=ItemDetailOut)
+def patch_item(
+    item_id: uuid.UUID,
+    body: ItemPatchIn,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> ItemDetailOut:
+    item = db.get(Item, item_id)
+    if item is None:
+        raise not_found("ITEM_NOT_FOUND", "Nie ma takiej pozycji.")
+    if item.source == "seed":
+        # Baza startowa jest wspólna dla obu kont i wraca przy każdym wdrożeniu
+        # — edycja i tak zostałaby nadpisana, więc lepiej powiedzieć to wprost.
+        raise forbidden(
+            "ITEM_READONLY",
+            "Pozycji z bazy startowej nie da się zmienić. Zawieś ją albo dodaj własną wersję.",
+        )
+
+    for field, value in body.model_dump(exclude_unset=True).items():
+        setattr(item, field, value.strip() if isinstance(value, str) else value)
+    db.commit()
+    return get_item(item_id, user, db)
+
+
+@router.delete("/items/{item_id}", status_code=204)
+def delete_item(
+    item_id: uuid.UUID, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+) -> None:
+    item = db.get(Item, item_id)
+    if item is None:
+        raise not_found("ITEM_NOT_FOUND", "Nie ma takiej pozycji.")
+    if item.source == "seed":
+        raise forbidden(
+            "ITEM_READONLY",
+            "Pozycji z bazy startowej nie da się skasować. Zawieś ją w szczegółach pozycji.",
+        )
+    # Kasowanie zabiera ze sobą historię powtórek obu kont — stąd ograniczenie
+    # do pozycji dodanych ręcznie.
+    db.delete(item)
+    db.commit()
+
+
+@router.post("/items/import", response_model=ImportOut)
+def import_items(
+    body: ImportIn, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+) -> ImportOut:
+    parsed = importer.parse(body.csv)
+    errors = [
+        ImportRowError(line=problem.line, reason=problem.reason, raw=problem.raw)
+        for problem in parsed.problems
+    ]
+    preview = [row.as_dict() for row in parsed.rows[:10]]
+
+    if body.dry_run:
+        return ImportOut(
+            created=0,
+            updated=0,
+            skipped_duplicates=0,
+            deck_id=None,
+            preview=preview,
+            errors=errors,
+        )
+
+    deck: Deck
+    if body.deck_id is not None:
+        deck = _own_deck_or_404(db, user, body.deck_id)
+    elif body.deck_name:
+        deck = Deck(
+            slug=_slugify(body.deck_name, user.id),
+            name=body.deck_name.strip(),
+            is_shared=False,
+            owner_id=user.id,
+            position=100,
+        )
+        db.add(deck)
+        try:
+            db.flush()
+        except IntegrityError:
+            db.rollback()
+            raise conflict("DECK_EXISTS", "Masz już talię o tej nazwie.") from None
+    else:
+        deck = _default_deck(db, user)
+
+    position = (
+        db.execute(
+            select(func.coalesce(func.max(DeckItem.position), -1)).where(DeckItem.deck_id == deck.id)
+        ).scalar_one()
+        + 1
+    )
+
+    created = skipped = 0
+    for row in parsed.rows:
+        pt, article = _split_article(row.pt, row.article)
+        item = db.execute(select(Item).where(Item.pt == pt, Item.pl == row.pl)).scalar_one_or_none()
+        if item is None:
+            item = Item(
+                pt=pt,
+                pl=row.pl,
+                type=row.type,
+                cefr_level=row.cefr_level,
+                part_of_speech=row.part_of_speech,
+                article=article,
+                gender=row.gender,
+                notes=row.notes,
+                source="import",
+                verified=True,
+                created_by=user.id,
+            )
+            db.add(item)
+            db.flush()
+            if row.example_pt and row.example_pl:
+                db.add(Example(item_id=item.id, pt=row.example_pt, pl=row.example_pl, source="import"))
+            created += 1
+        else:
+            # Pozycja już istnieje — nie nadpisujemy jej treścią z pliku, bo
+            # mogła zostać poprawiona ręcznie. Dopięcie do talii i tak ma sens.
+            skipped += 1
+
+        linked = db.execute(
+            select(DeckItem).where(DeckItem.deck_id == deck.id, DeckItem.item_id == item.id)
+        ).scalar_one_or_none()
+        if linked is None:
+            db.add(DeckItem(deck_id=deck.id, item_id=item.id, position=position))
+            position += 1
+
+    db.commit()
+    return ImportOut(
+        created=created,
+        updated=0,
+        skipped_duplicates=skipped,
+        deck_id=deck.id,
+        preview=preview,
+        errors=errors,
+    )

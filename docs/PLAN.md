@@ -177,10 +177,14 @@ Do zrobienia raz, przed pisaniem kodu.
 > **Stan na 2026-08-12.** Zakres 2.1, 2.2 i 2.4 zrealizowany w całości.
 > Odstępstwa:
 >
-> - **2.3 Edycja treści:** dodane tylko zawieszanie i reset pozycji
->   (`/api/study/items/{id}/suspend|reset`). Ręczne dodawanie pozycji, własne
->   talie i import CSV zostają na później — nie były potrzebne do trybów ani
->   quizów, a przesuwały termin całej fazy.
+> - **2.3 Edycja treści:** początkowo dodane tylko zawieszanie i reset pozycji.
+>   **Nadrobione 2026-08-13**: dodawanie pozycji, edycja i kasowanie własnych,
+>   własne talie oraz import listy z podglądem. Odstępstwa: pozycji z bazy
+>   startowej nie da się zmienić ani skasować (wracają przy każdym wdrożeniu,
+>   więc edycja i tak by przepadła — zostaje zawieszenie albo własna wersja),
+>   a eksport czeka na fazę 5, gdzie i tak był zaplanowany. Doszła prywatna
+>   talia „Moje słówka": kolejka nauki dobiera nowe pozycje przez talie, więc
+>   słowo dodane bez wskazania talii nigdy by się w sesji nie pojawiło.
 > - Doszła zmiana w kluczu unikalności `reviews`: obejmuje teraz `item_id`
 >   i `direction`, bo runda dopasowywania par to jedno pytanie, ale pięć kart.
 > - `alembic check` wymagał pominięcia indeksów trigramowych — hook
@@ -206,10 +210,11 @@ Do zrobienia raz, przed pisaniem kodu.
 - [ ] Ustawienie „aktywne tryby" w `/settings` (F03)
 
 ### 2.3 Edycja treści [~5 h]
-- [ ] `POST/PATCH/DELETE /api/items`, `POST /api/items/{id}/examples`
-- [ ] `/items/new` — formularz minimalny (pt + pl) z opcjonalnymi polami gramatycznymi
-- [ ] Tworzenie i edycja własnych talii, dopinanie/odpinanie pozycji
-- [ ] `POST /api/study/items/{id}/suspend` i `/reset` + przyciski w widoku pozycji
+- [x] `POST/PATCH/DELETE /api/items` (pozycje własne; startowe tylko do odczytu), zdanie przykładowe przy tworzeniu
+- [x] `/slownik/dodaj` — formularz minimalny (pt + pl) z polami opcjonalnymi
+- [x] Tworzenie własnych talii i dopinanie do nich pozycji
+- [x] `POST /api/study/items/{id}/suspend` i `/reset` + przyciski w widoku pozycji
+- [x] Doszło: `POST /api/items/import` — CSV z podglądem i raportem błędów (z 5.2, potrzebne razem z ręcznym dodawaniem)
 
 ### 2.4 Moduł quizów [~10 h]
 - [ ] Modele `quizzes`, `quiz_attempts`, `quiz_answers`; migracja
@@ -257,6 +262,17 @@ Do zrobienia raz, przed pisaniem kodu.
 > - Doszła tabela `audio_assets` i migracja, która przy okazji naprawia domyślny
 >   głos (`pt-PT-Neural2-A` → `pt-PT-Wavenet-A`; tej pierwszej nazwy Google dla
 >   pt-PT nie oferuje) i włącza tryb „ze słuchu" na istniejących kontach.
+>
+> **Offline (3.5), stan na 2026-08-13.** Zrobione, z jednym odstępstwem:
+> zamiast Dexie stan sesji trzyma `localStorage` przez middleware `persist`
+> Zustanda. Cała sesja to kilkadziesiąt kilobajtów JSON-a — biblioteka i
+> asynchroniczne API kosztowałyby więcej, niż dają. Doszło też coś, czego plan
+> nie przewidywał: **logowanie offline**. Po restarcie aplikacji bez zasięgu
+> token trzeba odświeżyć przez serwer, więc użytkownik lądował na ekranie
+> logowania, którego bez sieci nie da się przejść — rozpoczęta sesja była
+> nieosiągalna mimo że leżała na urządzeniu. Teraz przy braku sieci wpuszcza
+> zapisany profil; żadnego tokenu to nie zapisuje, więc bez połączenia i tak
+> nic poza lokalną sesją nie zadziała.
 
 **Cel fazy:** słychać portugalski europejski, a brak zasięgu nie przerywa nauki.
 
@@ -284,11 +300,12 @@ Do zrobienia raz, przed pisaniem kodu.
 - [x] Wymóg: pozycja bez audio nigdy nie trafia do tego trybu
 
 ### 3.5 Offline [~6 h]
-- [ ] Dexie: schemat lokalny (`session`, `answers_queue`)
-- [ ] Zapis sesji przy pobraniu, kolejkowanie odpowiedzi lokalnie
-- [ ] Synchronizacja przy `online` i przy starcie aplikacji, z wykorzystaniem idempotencji z 1.4
+- [x] ~~Dexie~~ → `localStorage` przez `persist` Zustanda (sesja + kolejka odpowiedzi)
+- [x] Zapis sesji przy pobraniu, kolejkowanie odpowiedzi lokalnie
+- [x] Synchronizacja przy `online`, przy powrocie do karty i przy starcie aplikacji, na idempotencji z 1.4
 - [x] Cache plików audio w service workerze (CacheFirst, rok)
-- [ ] Wskaźnik „offline — postęp zapisany lokalnie" w interfejsie sesji
+- [x] Wskaźnik „offline — postęp zapisany lokalnie" w sesji i na ekranie Dziś
+- [x] Doszło: wejście do aplikacji bez sieci na zapisanym profilu; podsumowanie liczone lokalnie
 
 ### Definition of Done — Faza 3
 - [ ] Każda zweryfikowana pozycja i każde zdanie przykładowe ma audio pt-PT
@@ -337,8 +354,9 @@ Do zrobienia raz, przed pisaniem kodu.
 - [ ] `/stats`: kafelki (streak, opanowane, retencja, czas), `ActivityHeatmap`, `ForecastChart`, lista trudnych słów z akcjami (zawieś / zresetuj / edytuj)
 
 ### 5.2 Import i eksport [~4 h]
-- [ ] `POST /api/items/import` — CSV (`pt,pl,type,level,pos,notes`), limit 2000 wierszy, raport `{created, skipped_duplicates, errors[]}` z numerami wierszy
-- [ ] Interfejs importu: wklejenie tekstu lub plik, podgląd pierwszych 10 wierszy przed zatwierdzeniem
+- [x] `POST /api/items/import` — zrobione razem z 2.3. Format wybaczający: separator wykrywany (`,` `;` tab), nagłówek opcjonalny, kolumny po zawartości a nie po pozycji; limit 2000 wierszy, raport z numerami wierszy
+- [x] Interfejs importu: wklejenie tekstu, podgląd przed zatwierdzeniem
+- [ ] Wgranie pliku (na razie tylko wklejenie treści)
 - [ ] Eksport całej bazy do CSV/JSON
 
 ### 5.3 Uzupełnienia [~5 h]

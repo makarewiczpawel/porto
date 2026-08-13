@@ -199,6 +199,8 @@ export interface SessionSummary {
   goal: number;
   next_due_count: number;
   mistakes: Mistake[];
+  /** Policzone lokalnie, bo serwer był nieosiągalny — część pól jest nieznana. */
+  offline?: boolean;
 }
 
 export interface ApiErrorBody {
@@ -270,4 +272,22 @@ export interface AudioUsage {
   remaining: number;
   clips_stored: number;
   bytes_stored: number;
+}
+
+export interface ImportRow {
+  line: number;
+  pt: string;
+  pl: string;
+  type: string;
+  cefr_level: string;
+  notes: string | null;
+}
+
+export interface ImportResult {
+  created: number;
+  updated: number;
+  skipped_duplicates: number;
+  deck_id: string | null;
+  preview: ImportRow[];
+  errors: { line: number; reason: string; raw: string }[];
 }

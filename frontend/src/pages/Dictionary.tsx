@@ -31,7 +31,15 @@ export function DictionaryPage() {
 
   return (
     <div className="px-4 pt-4">
-      <h1 className="pt mb-3 text-2xl">Słownik</h1>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h1 className="pt text-2xl">Słownik</h1>
+        <Link
+          to="/slownik/dodaj"
+          className="rounded-full border border-accent-line bg-accent-soft px-3 py-1.5 text-[13px] font-semibold text-accent"
+        >
+          + Dodaj
+        </Link>
+      </div>
 
       <div className="grid gap-2.5">
         <div className="flex items-center gap-2 rounded-xl border border-line bg-surface-2 px-3.5 py-2.5">

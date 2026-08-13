@@ -29,6 +29,9 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
+        // Bez tego wejście na /nauka po zamknięciu aplikacji w trybie offline
+        // kończy się błędem przeglądarki zamiast wznowieniem sesji.
+        navigateFallback: "index.html",
         navigateFallbackDenylist: [/^\/api/],
         runtimeCaching: [
           {
