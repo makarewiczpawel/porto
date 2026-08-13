@@ -19,6 +19,7 @@ from app.models import (
     UserSettings,
 )
 from app.services import scheduler as sched
+from app.services import tts
 from app.services.grader import normalize, strip_accents
 
 # New items are dripped into the queue rather than dumped at the front: after
@@ -32,6 +33,9 @@ MCQ_CHOICES = 4
 MATCHING_PAIRS = 5
 # Extra wrong bricks offered next to the right ones in a word bank.
 WORD_BANK_EXTRA = 3
+# Long-pressing the speaker plays this slower take. Same recording pipeline,
+# different cache key, so it is synthesised once and then free.
+SLOW_SPEED = 0.75
 
 
 @dataclass
@@ -84,7 +88,11 @@ def pick_mode(state: UserItemState | None, direction: str, enabled: list[str]) -
 
 
 def choose_mode(
-    state: UserItemState | None, direction: str, enabled: list[str], item: Item
+    state: UserItemState | None,
+    direction: str,
+    enabled: list[str],
+    item: Item,
+    has_audio: bool = False,
 ) -> str:
     """`pick_mode` decides what the card deserves; this checks the item can
     deliver it and steps down through the remaining modes if not."""
@@ -104,7 +112,7 @@ def choose_mode(
 
     while remaining:
         mode = pick_mode(state, direction, remaining)
-        if supports(mode, item):
+        if supports(mode, item, has_audio):
             return mode
         remaining.remove(mode)
     return "flashcard"
@@ -220,7 +228,7 @@ def _first_example(item: Item) -> Example | None:
     return item.examples[0] if item.examples else None
 
 
-def supports(mode: str, item: Item) -> bool:
+def supports(mode: str, item: Item, has_audio: bool = False) -> bool:
     """Whether an item can actually be asked in this form.
 
     Guards the mode table: a word with no example sentence cannot be a cloze,
@@ -233,9 +241,56 @@ def supports(mode: str, item: Item) -> bool:
         text = item.pt if item.type == "sentence" else (_first_example(item).pt if _first_example(item) else "")
         return len(text.split()) >= 3
     if mode == "listening":
-        # Audio arrives in phase 3; until then this mode is never feasible.
-        return False
+        # The question *is* the recording. Without one there is nothing to ask,
+        # so an item whose audio has not been synthesised yet quietly gets a
+        # different mode instead of an empty player.
+        return has_audio
     return True
+
+
+def spoken_texts(item: Item) -> dict[str, str]:
+    """Which strings of this item are worth hearing.
+
+    The Portuguese side with its article (`a casa`, not `casa`) and the example
+    sentence, because hearing a word inside a sentence is where the rhythm of
+    the language lives.
+    """
+    texts = {"pt": item.display_pt}
+    example = _first_example(item)
+    if example is not None:
+        texts["example"] = example.pt
+    return texts
+
+
+def audio_index(
+    db: Session, items: list[Item], voice: str, include_slow: bool = True
+) -> dict[uuid.UUID, dict[str, str]]:
+    """Adresy nagrań, które **już istnieją**, dla całej sesji jednym zapytaniem.
+
+    Sesja nie syntezuje niczego w locie: czekanie na dostawcę w środku nauki
+    byłoby widoczne, a rachunek zależałby od tego, jak często ktoś się uczy.
+    Nagrania robi wcześniej `scripts/synthesize_all.py`, a tutaj tylko sprawdzam,
+    co jest gotowe.
+    """
+    wanted: dict[uuid.UUID, dict[str, str]] = {}
+    keys: list[str] = []
+    for item in items:
+        entry: dict[str, str] = {}
+        for slot, text in spoken_texts(item).items():
+            key = tts.cache_key(text, voice, 1.0)
+            entry[slot] = key
+            keys.append(key)
+            if include_slow and slot == "pt":
+                slow = tts.cache_key(text, voice, SLOW_SPEED)
+                entry["pt_slow"] = slow
+                keys.append(slow)
+        wanted[item.id] = entry
+
+    available = tts.existing_urls(db, keys)
+    return {
+        item_id: {slot: tts.audio_url(key) for slot, key in slots.items() if key in available}
+        for item_id, slots in wanted.items()
+    }
 
 
 def _word_bank(db: Session, item: Item) -> dict:
@@ -278,6 +333,7 @@ def build_task(
     deck_ids: list[uuid.UUID] | None,
     state: UserItemState | None,
     desired_retention: float,
+    audio: dict[str, str] | None = None,
 ) -> Task:
     example = item.examples[0] if item.examples else None
     payload: dict = {
@@ -288,6 +344,7 @@ def build_task(
         "part_of_speech": item.part_of_speech,
         "notes": item.notes,
         "example": {"pt": example.pt, "pl": example.pl} if example else None,
+        "audio": audio or {},
     }
 
     if mode in ("mcq_pt_pl", "mcq_pl_pt"):
@@ -302,6 +359,16 @@ def build_task(
         payload["question"] = item.display_pt if mode == "mcq_pt_pl" else item.pl
         payload["options"] = options
         payload["answer_index"] = options.index(label(item))
+    elif mode == "listening":
+        # Nothing to read: the recording is the question. Same four choices as
+        # a normal recognition test, so the only new skill being tested is
+        # catching the word by ear.
+        wrong = _distractors(db, item, MCQ_CHOICES - 1, deck_ids)
+        options = [item.pl] + [w.pl for w in wrong]
+        random.shuffle(options)
+        payload["question"] = None
+        payload["options"] = options
+        payload["answer_index"] = options.index(item.pl)
     elif mode == "flashcard":
         payload["front"] = item.display_pt if direction == "recognition" else item.pl
         payload["back"] = item.pl if direction == "recognition" else item.display_pt
@@ -525,23 +592,33 @@ def build_session(
             else:  # pragma: no cover - only when items vanished mid-build
                 states = warmup + states
 
+    queue: list[tuple[bool, Item, UserItemState | None, str]] = []
     for is_new, entry in interleave(states, fresh):
-        index = len(tasks)
         if is_new:
-            item: Item = entry
-            state = None
-            direction = "recognition"
+            queue.append((True, entry, None, "recognition"))
         else:
-            state = entry
-            item = db.get(Item, state.item_id)
-            if item is None:
-                continue
-            direction = state.direction
-        mode = choose_mode(state, direction, enabled, item)
+            item = db.get(Item, entry.item_id)
+            if item is not None:
+                queue.append((False, item, entry, entry.direction))
+
+    heard = [item for _, item, _, _ in queue]
+    for state in warmup:
+        warm_item = db.get(Item, state.item_id)
+        if warm_item is not None:
+            heard.append(warm_item)
+
+    recordings = audio_index(db, heard, user_settings.tts_voice)
+    if tasks and tasks[0].mode == "matching":
+        for pair in tasks[0].payload["pairs"]:
+            pair["audio"] = recordings.get(uuid.UUID(pair["item_id"]), {}).get("pt")
+
+    for is_new, item, state, direction in queue:
+        audio = recordings.get(item.id, {})
+        mode = choose_mode(state, direction, enabled, item, has_audio="pt" in audio)
         tasks.append(
             build_task(
                 db,
-                index,
+                len(tasks),
                 item,
                 direction,
                 mode,
@@ -549,6 +626,7 @@ def build_session(
                 resolved_decks,
                 state,
                 float(user_settings.desired_retention),
+                audio,
             )
         )
     return tasks, resolved_decks
@@ -699,12 +777,16 @@ def build_quiz(
         )
         known.extend(filler)
 
+    chosen = known[:count]
+    recordings = audio_index(db, chosen, user.settings.tts_voice)
+
     tasks: list[Task] = []
-    for item in known[:count]:
-        feasible = [m for m in allowed if supports(m, item)] or ["mcq_pt_pl"]
+    for item in chosen:
+        audio = recordings.get(item.id, {})
+        feasible = [m for m in allowed if supports(m, item, has_audio="pt" in audio)] or ["mcq_pt_pl"]
         mode = random.choice(feasible)
         direction = "production" if mode in ("mcq_pl_pt", "typing", "word_bank") else "recognition"
         tasks.append(
-            build_task(db, len(tasks), item, direction, mode, False, deck_ids, None, 0.90)
+            build_task(db, len(tasks), item, direction, mode, False, deck_ids, None, 0.90, audio)
         )
     return tasks

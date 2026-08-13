@@ -11,7 +11,8 @@ PyJWT==2.10.1
 python-multipart==0.0.20
 fsrs==6.3.2
 rapidfuzz==3.11.0
+# Klient HTTP dla syntezy mowy — od fazy 3 potrzebny też produkcyjnie.
+httpx==0.28.1
 
 # dev / test
 pytest==8.3.4
-httpx==0.28.1

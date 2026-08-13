@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 
 import type { Task } from "@/api/types";
+import { say } from "@/api/speech";
 import { cx } from "../ui";
 
 export interface MatchOutcome {
@@ -13,6 +14,7 @@ interface Tile {
   itemId: string;
   text: string;
   side: "pt" | "pl";
+  audio?: string | null;
 }
 
 /**
@@ -27,7 +29,15 @@ export function Matching({ task, onDone }: { task: Task; onDone: (outcomes: Matc
   const [left, right] = useMemo(() => {
     const shuffle = <T,>(list: T[]) => [...list].sort(() => Math.random() - 0.5);
     return [
-      shuffle(pairs.map<Tile>((p) => ({ key: `pt-${p.item_id}`, itemId: p.item_id, text: p.pt, side: "pt" }))),
+      shuffle(
+        pairs.map<Tile>((p) => ({
+          key: `pt-${p.item_id}`,
+          itemId: p.item_id,
+          text: p.pt,
+          side: "pt",
+          audio: p.audio,
+        })),
+      ),
       shuffle(pairs.map<Tile>((p) => ({ key: `pl-${p.item_id}`, itemId: p.item_id, text: p.pl, side: "pl" }))),
     ];
   }, [task.index]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -39,6 +49,11 @@ export function Matching({ task, onDone }: { task: Task; onDone: (outcomes: Matc
 
   function tap(tile: Tile) {
     if (done.has(tile.itemId)) return;
+
+    // Dotknięcie portugalskiego klocka wypowiada go. Rozgrzewka jest jedynym
+    // momentem sesji, w którym słowa przewijają się seriami — usłyszeć pięć
+    // z rzędu jest warte więcej niż to samo pojedynczo.
+    if (tile.side === "pt") void say(tile.text, { url: tile.audio });
 
     if (!selected) {
       setSelected(tile);

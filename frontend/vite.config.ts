@@ -30,6 +30,21 @@ export default defineConfig({
       workbox: {
         globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
         navigateFallbackDenylist: [/^\/api/],
+        runtimeCaching: [
+          {
+            // Nagranie spod danego adresu nigdy się nie zmienia — adres jest
+            // skrótem jego treści. Raz pobrane może zostać na telefonie na
+            // zawsze, więc wymowa działa też w metrze bez zasięgu.
+            urlPattern: ({ url }) => url.pathname.startsWith("/api/audio/"),
+            handler: "CacheFirst",
+            options: {
+              cacheName: "porto-audio",
+              expiration: { maxEntries: 2000, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              cacheableResponse: { statuses: [0, 200] },
+              rangeRequests: true,
+            },
+          },
+        ],
       },
     }),
   ],

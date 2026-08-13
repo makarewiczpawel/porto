@@ -36,6 +36,19 @@ class Settings(BaseSettings):
     # cookie_secure=true, or browsers drop the cookie silently.
     cookie_samesite: str = "lax"
 
+    # ── synteza mowy ──────────────────────────────────────────────────────
+    # Pusty klucz nie jest błędem: aplikacja działa bez audio, a przycisk
+    # głośnika schodzi wtedy na głos wbudowany w przeglądarkę.
+    google_tts_api_key: str = ""
+    # Wavenet-A istnieje w pt-PT od lat i brzmi naturalnie. Listę wszystkich
+    # dostępnych głosów zwraca `GET /api/audio/voices` — prosto od Google, więc
+    # nie trzeba zgadywać, co dostawca akurat oferuje.
+    tts_voice_default: str = "pt-PT-Wavenet-A"
+    # Cała baza to ~15 tys. znaków, więc ten limit jest dziesięciokrotnym
+    # zapasem, a nie ograniczeniem. Chodzi o to, żeby błąd w pętli nie zamienił
+    # się w rachunek.
+    tts_monthly_char_limit: int = 150_000
+
     @field_validator("database_url")
     @classmethod
     def _use_psycopg_driver(cls, value: str) -> str:

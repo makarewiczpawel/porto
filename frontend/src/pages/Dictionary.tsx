@@ -4,6 +4,7 @@ import { Link, useParams } from "react-router-dom";
 
 import { api } from "@/api/client";
 import type { ItemDetail, Page, Item } from "@/api/types";
+import { SpeakButton } from "@/components/SpeakButton";
 import { Card, EmptyState, Label, Pill, Spinner, cx } from "@/components/ui";
 
 const LEVELS = ["A1", "A2", "B1"];
@@ -110,18 +111,18 @@ function Chip({
 
 export function ItemRow({ item }: { item: Item }) {
   return (
-    <Link
-      to={`/slownik/${item.id}`}
-      className="flex items-center gap-3 rounded-2xl border border-line bg-surface px-3 py-2.5 hover:border-accent-line"
-    >
-      <div className="min-w-0">
-        <div className="pt truncate text-[17px] leading-tight">{item.display_pt}</div>
-        <div className="truncate text-[12.5px] text-ink-2">{item.pl}</div>
-      </div>
-      <div className="ml-auto flex-none">
-        <Pill tone={item.cefr_level === "A1" ? "neutral" : "accent"}>{item.cefr_level}</Pill>
-      </div>
-    </Link>
+    <div className="flex items-center gap-2 rounded-2xl border border-line bg-surface pr-2.5 hover:border-accent-line">
+      <Link to={`/slownik/${item.id}`} className="flex min-w-0 flex-1 items-center gap-3 py-2.5 pl-3">
+        <div className="min-w-0">
+          <div className="pt truncate text-[17px] leading-tight">{item.display_pt}</div>
+          <div className="truncate text-[12.5px] text-ink-2">{item.pl}</div>
+        </div>
+        <div className="ml-auto flex-none">
+          <Pill tone={item.cefr_level === "A1" ? "neutral" : "accent"}>{item.cefr_level}</Pill>
+        </div>
+      </Link>
+      <SpeakButton text={item.display_pt} url={item.audio_url} size="sm" />
+    </div>
   );
 }
 
@@ -161,6 +162,9 @@ export function ItemDetailPage() {
           {item.plural && <Pill>lm. {item.plural}</Pill>}
         </div>
         {item.ipa && <div className="mt-2 text-[11.5px] text-ink-3">{item.ipa}</div>}
+        <div className="mt-3 flex justify-center">
+          <SpeakButton text={item.display_pt} url={item.audio_url} size="lg" />
+        </div>
       </Card>
 
       {item.notes && (
@@ -176,8 +180,13 @@ export function ItemDetailPage() {
           <div className="grid gap-2">
             {item.examples.map((example) => (
               <Card key={example.id}>
-                <div className="pt text-[16px]">{example.pt}</div>
-                <div className="mt-0.5 text-[12.5px] text-ink-2">{example.pl}</div>
+                <div className="flex items-start gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="pt text-[16px]">{example.pt}</div>
+                    <div className="mt-0.5 text-[12.5px] text-ink-2">{example.pl}</div>
+                  </div>
+                  <SpeakButton text={example.pt} size="sm" />
+                </div>
               </Card>
             ))}
           </div>

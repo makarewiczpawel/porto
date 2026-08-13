@@ -5,14 +5,21 @@ Prywatna aplikacja webowa (PWA) do codziennej nauki **portugalskiego europejskie
 Codzienna sesja słówek i zwrotów z harmonogramem powtórek (FSRS), ćwiczenia w wielu formach,
 quizy i wymowa w głosach pt-PT. Aplikacja jest zamknięta — konto zakłada się kodem zaproszenia.
 
-**Status: fazy 1 i 2 gotowe.** Działa codzienna nauka w sześciu formach ćwiczeń, harmonogram
-FSRS, streak, quizy z historią wyników, słownik z 430 pozycjami, PWA instalowalna na telefonie.
+**Status: fazy 1, 2 i wymowa z fazy 3 gotowe.** Działa codzienna nauka w siedmiu formach
+ćwiczeń, harmonogram FSRS, streak, quizy z historią wyników, słownik z 430 pozycjami, wymowa
+pt-PT przy każdym portugalskim słowie i PWA instalowalna na telefonie.
 
 **Tryby ćwiczeń.** Ten sam materiał wraca w coraz trudniejszej formie, zależnie od tego, jak
 dobrze znasz słowo: fiszka → test wyboru → wpisywanie z pamięci → luka w zdaniu. Do tego
 dopasowywanie par jako rozgrzewka i rozsypanka słów dla całych zdań. Odpowiedzi pisane mają trzy
 wyniki, nie dwa — literówka i brakujący akcent liczą się jako „prawie", wracają szybciej niż
 poprawna odpowiedź, ale nie kasują postępu jak błąd.
+
+**Wymowa.** Przy każdym portugalskim słowie i zdaniu jest głośnik: tapnięcie odtwarza,
+przytrzymanie zwalnia do 0,75×. Nagrania powstają raz, syntezatorem Google w głosie pt-PT, i
+leżą w bazie — odtwarzanie nic nie kosztuje i działa bez zasięgu. Doszedł tryb **ze słuchu**:
+pytaniem jest samo nagranie, bez napisu. Gdy nagrania jeszcze nie ma, aplikacja sięga po głos
+wbudowany w telefon — ale wyłącznie portugalski europejski; brazylijskiego świadomie nie użyje.
 
 **Quizy.** Sprawdzian niezależny od harmonogramu: quiz mierzy, nie uczy, więc domyślnie nie
 przesuwa żadnej karty. Pomyłki można jednym kliknięciem dorzucić do jutrzejszej kolejki.
@@ -67,7 +74,7 @@ npm run dev                   # http://localhost:5173
 ## Testy
 
 ```bash
-cd backend && .venv/bin/python -m pytest tests/ -q     # 100 testów
+cd backend && .venv/bin/python -m pytest tests/ -q     # 120 testów
 cd frontend && npm run typecheck && npm run build
 ```
 
@@ -85,8 +92,10 @@ backend/
       scheduler.py     # opakowanie FSRS — jedyne miejsce, które zna bibliotekę
       task_builder.py  # dobór kart, przeplot nowych, wybór trybu, dystraktory
       grader.py        # ocena odpowiedzi pisanych: dobrze / prawie / źle
+      tts.py           # synteza mowy — jedyne miejsce, które zna Google
       stats.py         # dzienne agregaty i streak w strefie użytkownika
     seed/        # 20 talii PT-PT w JSON + idempotentny loader
+  scripts/       # synthesize_all.py — nagrywa całą bazę, wznawialnie
   alembic/       # migracje
   tests/
 frontend/
@@ -113,6 +122,7 @@ CORS_ORIGINS=https://porto.pmakarewicz.com
 COOKIE_DOMAIN=.pmakarewicz.com
 COOKIE_SECURE=true
 COOKIE_SAMESITE=lax
+GOOGLE_TTS_API_KEY=<klucz API z Google Cloud>
 ```
 
 Przy generowaniu domeny Railway pyta o port aplikacji — podaj **8080**. Serwer słucha na
@@ -126,6 +136,32 @@ przekierowanie tras SPA.
 
 > Vite wkleja `VITE_API_URL` **w czasie builda**. Zmiana tej zmiennej wymaga ponownego
 > uruchomienia deploya — inaczej w plikach zostanie stary adres.
+
+## Wymowa
+
+Nagrania powstają **raz**, skryptem, a nie przy każdym odtworzeniu. Cała baza to około
+900 klipów i niecałe 8 tysięcy znaków — mieści się w darmowym miesięcznym limicie Google
+z ponadstukrotnym zapasem.
+
+```bash
+# 1. Klucz: konsola Google Cloud → włącz „Cloud Text-to-Speech API"
+#    → API i usługi → Dane logowania → Utwórz klucz API
+#    → w Railway dodaj zmienną GOOGLE_TTS_API_KEY
+
+# 2. Synteza (lokalnie albo w konsoli Railway, katalog `backend`)
+python -m scripts.synthesize_all --dry-run   # ile i za ile
+python -m scripts.synthesize_all             # nagrywa brakujące
+```
+
+Skrypt jest wznawialny — przerwanie kosztuje najwyżej jedno nagranie. Domyślnie nagrywa dla
+głosów faktycznie wybranych na kontach, więc po zmianie głosu w ustawieniach trzeba go
+uruchomić ponownie.
+
+Nagrania trzymane są w tabeli `audio_assets` w bazie, nie w osobnym magazynie plików: przy tej
+skali (~10 MB) osobne konto i klucze do S3 kosztowałyby więcej pracy, niż dają korzyści, a tak
+wszystko wchodzi do jednej kopii zapasowej. Adres nagrania jest skrótem jego treści, więc
+`/api/audio/<hash>.mp3` jest wieczne i cache'owane na rok — również przez service workera, co
+daje działającą wymowę offline.
 
 ## CI
 
