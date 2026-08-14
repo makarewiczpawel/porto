@@ -47,9 +47,15 @@ export default defineConfig({
             urlPattern: ({ url }) => /^\/api\/audio\/[0-9a-f]{64}\.mp3$/.test(url.pathname),
             handler: "CacheFirst",
             options: {
-              cacheName: "porto-audio",
+              // Nazwa ze zmienionym numerem: stara pamięć podręczna zdążyła się
+              // zapełnić odpowiedziami nieprzezroczystymi o zerowej długości,
+              // a te są nie do naprawienia — trzeba je porzucić, nie poprawiać.
+              cacheName: "porto-audio-v2",
               expiration: { maxEntries: 2000, maxAgeSeconds: 60 * 60 * 24 * 365 },
-              cacheableResponse: { statuses: [0, 200] },
+              // Wyłącznie 200. Zero znaczy „odpowiedź, której nie wolno mi
+              // odczytać" — zapisanie jej wygląda jak sukces, a daje pusty plik
+              // i ciszę do końca życia pamięci podręcznej.
+              cacheableResponse: { statuses: [200] },
               rangeRequests: true,
             },
           },

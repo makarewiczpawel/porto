@@ -39,12 +39,44 @@ export function stop() {
   }
 }
 
-/** Nagranie z serwera. Odrzucone obietnice są normalne (autoplay), nie błędem. */
+/**
+ * Nagranie z serwera. Odrzucone obietnice są normalne (autoplay), nie błędem.
+ *
+ * `crossOrigin` wygląda na szczegół, a decyduje o tym, czy na telefonie w ogóle
+ * coś słychać. API stoi na innej domenie niż aplikacja, więc bez tego
+ * przeglądarka pobiera nagranie „na ślepo": dostaje odpowiedź nieprzezroczystą,
+ * której nie wolno jej odczytać. Taka odpowiedź trafiała do pamięci offline
+ * jako plik o zerowej długości i od tego momentu było już tylko gorzej —
+ * Safari, które przy dźwięku zawsze prosi o fragment pliku, nie miało czego
+ * odtworzyć i milczało. Na komputerze problem się nie ujawniał, bo tam
+ * przeglądarka pobiera nagranie w całości i strumieniuje je z pominięciem
+ * pamięci podręcznej.
+ *
+ * Z nagłówkami CORS odpowiedź jest zwykłym, czytelnym plikiem: da się ją
+ * odtworzyć, zapisać na później i pociąć na fragmenty. Gdyby serwer ich kiedyś
+ * nie przysłał, druga próba idzie po staremu — lepiej stracić tryb offline dla
+ * jednego nagrania niż ciszę zamiast wymowy.
+ */
+function load(src: string, cors: boolean): Promise<void> {
+  // Pierwsza próba mogła zostawić element w trakcie wczytywania; druga nie ma
+  // się z czym ścigać.
+  stop();
+  return new Promise((resolve, reject) => {
+    const audio = new Audio();
+    if (cors) audio.crossOrigin = "anonymous";
+    audio.src = src;
+    current = audio;
+    audio.addEventListener("error", () => reject(new Error("nie udało się wczytać nagrania")), {
+      once: true,
+    });
+    audio.play().then(resolve, reject);
+  });
+}
+
 export function playRecording(url: string): Promise<void> {
   stop();
-  const audio = new Audio(absoluteUrl(url));
-  current = audio;
-  return audio.play().catch(() => undefined);
+  const src = absoluteUrl(url);
+  return load(src, true).catch(() => load(src, false).catch(() => undefined));
 }
 
 function portugueseVoice(): SpeechSynthesisVoice | null {

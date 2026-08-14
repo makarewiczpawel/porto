@@ -25,12 +25,27 @@ const queryClient = new QueryClient({
   },
 });
 
+/**
+ * Sprząta pamięć podręczną nagrań z poprzedniej wersji.
+ *
+ * Tamta zdążyła zapisać odpowiedzi nieprzezroczyste o zerowej długości —
+ * telefon uznawał je za gotowe nagrania i odtwarzał ciszę. Nowa nazwa sprawia,
+ * że nikt już do nich nie zagląda, ale bez tego zostałyby na urządzeniu
+ * na rok. Usunięcie jest bezpieczne: nagrania pobiorą się ponownie przy
+ * pierwszym odtworzeniu.
+ */
+function dropPoisonedAudioCache() {
+  if (typeof caches === "undefined") return;
+  void caches.delete("porto-audio");
+}
+
 function Shell() {
   const { user, ready } = useAuth();
 
   // Dosyłanie zaległych odpowiedzi żyje poza ekranem sesji: użytkownik może
   // zamknąć aplikację w metrze i otworzyć ją następnego dnia w domu.
   useEffect(() => watchConnection(), []);
+  useEffect(dropPoisonedAudioCache, []);
 
   if (!ready) {
     return (
