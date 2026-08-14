@@ -4,22 +4,14 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { ApiError, api } from "@/api/client";
 import type { Deck, ImportResult, ItemDetail } from "@/api/types";
-import { Button, Card, ErrorNote, Label } from "@/components/ui";
+import { Button, Card, ErrorNote, Label, plural } from "@/components/ui";
+import { GenerateSet } from "./AiGenerate";
 
 const LEVELS = ["A1", "A2", "B1", "B2", "C1"];
 
-/** Polska odmiana przez liczbę: 1 wiersz, 2 wiersze, 5 wierszy. */
-function plural(count: number, one: string, few: string, many: string): string {
-  if (count === 1) return one;
-  const lastTwo = count % 100;
-  const last = count % 10;
-  if (last >= 2 && last <= 4 && !(lastTwo >= 12 && lastTwo <= 14)) return few;
-  return many;
-}
-
-/** Dodawanie jednego słowa i import listy — dwa sposoby na to samo. */
+/** Trzy drogi do tego samego: jedno słowo, gotowa lista albo zestaw z AI. */
 export function AddItemPage() {
-  const [tab, setTab] = useState<"one" | "many">("one");
+  const [tab, setTab] = useState<"one" | "many" | "ai">("one");
 
   return (
     <div className="px-4 pt-4">
@@ -28,11 +20,12 @@ export function AddItemPage() {
       </Link>
       <h1 className="pt mb-4 text-2xl">Dodaj słówka</h1>
 
-      <div className="mb-4 grid grid-cols-2 gap-2">
+      <div className="mb-4 grid grid-cols-3 gap-2">
         {(
           [
             ["one", "Pojedyncze"],
             ["many", "Import listy"],
+            ["ai", "Wygeneruj"],
           ] as const
         ).map(([id, label]) => (
           <button
@@ -50,7 +43,9 @@ export function AddItemPage() {
         ))}
       </div>
 
-      {tab === "one" ? <SingleItemForm /> : <ImportForm />}
+      {tab === "one" && <SingleItemForm />}
+      {tab === "many" && <ImportForm />}
+      {tab === "ai" && <GenerateSet />}
     </div>
   );
 }

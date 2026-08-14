@@ -49,6 +49,20 @@ class Settings(BaseSettings):
     # się w rachunek.
     tts_monthly_char_limit: int = 150_000
 
+    # ── AI ────────────────────────────────────────────────────────────────
+    # Bez klucza aplikacja działa jak dotąd, tylko ekrany AI mówią wprost, że
+    # są wyłączone. Tak samo jak przy syntezie mowy: brak klucza to konfiguracja,
+    # nie awaria.
+    anthropic_api_key: str = ""
+    ai_model: str = "claude-opus-5"
+    # Rachunek za model rośnie po cichu. Ten limit jest twardy: po jego
+    # przekroczeniu każde wywołanie kończy się czytelnym 429, a nie fakturą.
+    # 5 USD to przy generowaniu zestawów kilkaset pozycji miesięcznie.
+    ai_monthly_budget_usd: float = 5.0
+    # Ile pozycji wolno poprosić za jednym razem. Powyżej tego odpowiedź robi
+    # się długa, wolna i gorszej jakości.
+    ai_max_items_per_set: int = 30
+
     @field_validator("database_url")
     @classmethod
     def _use_psycopg_driver(cls, value: str) -> str:

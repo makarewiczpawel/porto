@@ -9,7 +9,9 @@ from app.models.base import Base, created_at_col, uuid_pk
 
 # Modes the session builder may pick from. Phase 1 ships the first three;
 # the rest arrive in phase 2/3 and are already accepted in settings so the
-# column does not need a migration then.
+# column does not need a migration then. `translate_ai` joins them in phase 4
+# and is the one mode that is *not* on by default — it costs money per answer
+# and waits for the model before it can say whether the sentence was right.
 ALL_MODES = [
     "flashcard",
     "mcq_pt_pl",
@@ -19,6 +21,7 @@ ALL_MODES = [
     "matching",
     "word_bank",
     "listening",
+    "translate_ai",
 ]
 PHASE1_MODES = ["flashcard", "mcq_pt_pl", "mcq_pl_pt"]
 # What a new account starts with — every mode. `listening` is safe to have on

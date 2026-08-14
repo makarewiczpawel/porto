@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 
 import { api } from "@/api/client";
-import type { AudioUsage, Mode, Settings, Voice } from "@/api/types";
+import type { AiUsage, AudioUsage, Mode, Settings, Voice } from "@/api/types";
 import { Button, Card, Label, Spinner } from "@/components/ui";
 import { useAuth } from "@/store/auth";
 
@@ -16,6 +16,11 @@ const MODES: { id: Mode; label: string; hint: string }[] = [
   { id: "word_bank", label: "Rozsypanka", hint: "szyk zdania" },
   { id: "matching", label: "Dopasowywanie par", hint: "rozgrzewka na start sesji" },
   { id: "listening", label: "Ze słuchu", hint: "wymaga nagrania — bez niego pomijany" },
+  {
+    id: "translate_ai",
+    label: "Przetłumacz zdanie",
+    hint: "ocenia AI — każda odpowiedź kosztuje i trwa kilka sekund",
+  },
 ];
 
 export function SettingsPage() {
@@ -160,6 +165,9 @@ export function SettingsPage() {
       <Label className="mb-2 mt-5">Wymowa</Label>
       <VoiceSettings settings={settings} patch={patch} />
 
+      <Label className="mb-2 mt-5">AI</Label>
+      <AiSettings />
+
       <Label className="mb-2 mt-5">Konto</Label>
       <Card className="grid gap-3">
         <div className="flex items-center justify-between gap-3">
@@ -174,8 +182,59 @@ export function SettingsPage() {
         </Button>
       </Card>
 
-      <p className="mt-6 text-center text-[11.5px] text-ink-3">Tryb offline dochodzi w fazie 3.</p>
+      <p className="mt-6 text-center text-[11.5px] text-ink-3">
+        Nauka działa też bez zasięgu — postęp dosyła się, gdy połączenie wróci.
+      </p>
     </div>
+  );
+}
+
+/** Zużycie budżetu AI w bieżącym miesiącu — jedyne miejsce, gdzie widać koszt. */
+function AiSettings() {
+  const usage = useQuery({
+    queryKey: ["ai-usage"],
+    queryFn: () => api.get<AiUsage>("/api/ai/usage"),
+    retry: false,
+  });
+
+  if (usage.isLoading) return <Card><Spinner label="Sprawdzam…" /></Card>;
+  if (!usage.data) return null;
+  const data = usage.data;
+
+  if (!data.configured) {
+    return (
+      <Card>
+        <p className="text-[12px] text-ink-2">
+          Funkcje AI są wyłączone — brakuje klucza do modelu. Nie ma wtedy generowania zestawów,
+          przycisku „dlaczego źle?" ani trybu „przetłumacz zdanie"; reszta aplikacji działa
+          normalnie.
+        </p>
+      </Card>
+    );
+  }
+
+  const ratio = data.budget_usd > 0 ? Math.min(data.spent_usd / data.budget_usd, 1) : 0;
+  return (
+    <Card className="grid gap-2">
+      <div className="flex items-baseline justify-between text-[13px]">
+        <span>Wydane w tym miesiącu</span>
+        <b className="tnum">
+          {data.spent_usd.toFixed(2)} / {data.budget_usd.toFixed(2)} USD
+        </b>
+      </div>
+      <div className="h-[6px] overflow-hidden rounded-full bg-surface-3">
+        <div
+          className={`h-full rounded-full ${data.over_budget ? "bg-bad" : "bg-accent"}`}
+          style={{ width: `${ratio * 100}%` }}
+        />
+      </div>
+      <div className="text-[11.5px] text-ink-3">
+        Model: {data.model} · wywołań: {data.calls_this_month}.{" "}
+        {data.over_budget
+          ? "Budżet wyczerpany — funkcje AI wrócą pierwszego dnia miesiąca."
+          : "Po wyczerpaniu budżetu funkcje AI się wyłączają, a nauka działa dalej."}
+      </div>
+    </Card>
   );
 }
 

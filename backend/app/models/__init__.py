@@ -1,3 +1,4 @@
+from app.models.ai import AI_KINDS, AI_STATUSES, AiCacheEntry, AiJob
 from app.models.audio import AudioAsset
 from app.models.base import Base
 from app.models.content import (
@@ -23,7 +24,11 @@ from app.models.study import (
 from app.models.user import ALL_MODES, DEFAULT_MODES, PHASE1_MODES, User, UserSettings
 
 __all__ = [
+    "AI_KINDS",
+    "AI_STATUSES",
     "ALL_MODES",
+    "AiCacheEntry",
+    "AiJob",
     "AudioAsset",
     "Base",
     "CARD_STATES",

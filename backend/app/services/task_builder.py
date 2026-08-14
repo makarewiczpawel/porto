@@ -18,6 +18,7 @@ from app.models import (
     UserItemState,
     UserSettings,
 )
+from app.services import ai
 from app.services import scheduler as sched
 from app.services import tts
 from app.services.grader import normalize, strip_accents
@@ -97,6 +98,18 @@ def choose_mode(
     """`pick_mode` decides what the card deserves; this checks the item can
     deliver it and steps down through the remaining modes if not."""
     remaining = [m for m in enabled if m != "matching"]
+
+    # Tłumaczenie całego zdania z głowy jest trudniejsze niż ułożenie go z
+    # klocków, więc gdy jest włączone, ma pierwszeństwo przed „szykiem zdania".
+    # Domyślnie włączone nie jest: każda odpowiedź to płatne wywołanie modelu.
+    if (
+        direction == "production"
+        and "translate_ai" in remaining
+        and state is not None
+        and state.state == "review"
+        and supports("translate_ai", item)
+    ):
+        return "translate_ai"
 
     # A whole sentence is worth rebuilding rather than retyping: word order is
     # the thing being learned there, and it is the only mode that drills it.
@@ -228,6 +241,21 @@ def _first_example(item: Item) -> Example | None:
     return item.examples[0] if item.examples else None
 
 
+def translation_pair(item: Item) -> tuple[str, str] | None:
+    """Co przetłumaczyć i jaka jest wersja wzorcowa.
+
+    Zdanie tłumaczy się w całości; przy pojedynczym słowie sensem ćwiczenia
+    jest jego zdanie przykładowe, bo tłumaczenie jednego słowa niczego nie
+    uczy o szyku ani o odmianie.
+    """
+    if item.type == "sentence":
+        return item.pl, item.pt
+    example = _first_example(item)
+    if example is not None:
+        return example.pl, example.pt
+    return None
+
+
 def supports(mode: str, item: Item, has_audio: bool = False) -> bool:
     """Whether an item can actually be asked in this form.
 
@@ -245,6 +273,10 @@ def supports(mode: str, item: Item, has_audio: bool = False) -> bool:
         # so an item whose audio has not been synthesised yet quietly gets a
         # different mode instead of an empty player.
         return has_audio
+    if mode == "translate_ai":
+        # Ocenę wystawia model, więc bez klucza tryb po prostu nie istnieje —
+        # zamiast pytania bez oceny użytkownik dostaje zwykłe ćwiczenie.
+        return item.type == "sentence" and translation_pair(item) is not None and ai.is_configured()
     return True
 
 
@@ -392,6 +424,15 @@ def build_task(
             payload["expected"] = parts["answer"]
             payload["alternatives"] = []
             payload["question"] = example.pl
+    elif mode == "translate_ai":
+        pair = translation_pair(item)
+        if pair is None:  # pragma: no cover - guarded by supports()
+            payload["question"] = item.pl
+            payload["expected"] = item.display_pt
+            mode = "typing"
+        else:
+            payload["question"], payload["expected"] = pair
+            payload["alternatives"] = []
     elif mode == "word_bank":
         payload.update(_word_bank(db, item))
         payload["expected"] = payload.pop("sentence")

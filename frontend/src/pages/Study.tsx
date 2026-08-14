@@ -15,6 +15,7 @@ const MODE_LABELS: Partial<Record<string, string>> = {
   word_bank: "Szyk zdania",
   typing: "Z pamięci",
   listening: "Ze słuchu",
+  translate_ai: "Przetłumacz zdanie",
 };
 
 export function StudyPage() {
@@ -102,6 +103,7 @@ export function StudyPage() {
         match: event.match,
         diff: event.diff,
         summary: event.summary,
+        heading: event.heading,
       },
     );
   }
@@ -175,7 +177,17 @@ export function StudyPage() {
             match={feedback.match}
             diff={feedback.diff}
             summary={feedback.summary}
+            heading={feedback.heading}
             speak={speakOnFeedback}
+            explain={
+              feedback.userAnswer && feedback.itemId
+                ? {
+                    itemId: feedback.itemId,
+                    userAnswer: feedback.userAnswer,
+                    expected: feedback.correctAnswer,
+                  }
+                : undefined
+            }
             onNext={next}
           />
         )}

@@ -49,6 +49,8 @@ przesuwa żadnej karty. Pomyłki można jednym kliknięciem dorzucić do jutrzej
 | Backend | FastAPI · SQLAlchemy 2.0 · Alembic · PostgreSQL 15+ |
 | Harmonogram powtórek | `fsrs` (py-fsrs 6.x) |
 | Ocena odpowiedzi | `rapidfuzz` (tolerancja literówek i akcentów) |
+| Wymowa | Google Cloud Text-to-Speech (pt-PT), nagrania w bazie |
+| AI | Anthropic Messages API (`anthropic`), model z `AI_MODEL` |
 | Frontend | React 18 · Vite · TypeScript · Tailwind CSS 4 · TanStack Query · Zustand |
 | Hosting | Railway (API + baza) · Cloudflare Pages (frontend) |
 
@@ -97,12 +99,14 @@ testów można nadpisać zmienną `TEST_DATABASE_URL`.
 backend/
   app/
     models/      # ORM: users, items, decks, user_item_state, reviews, …
-    routers/     # auth, content (items/decks/settings), study
+    routers/     # auth, content (items/decks/settings), study, quizzes, audio, ai
     services/
       scheduler.py     # opakowanie FSRS — jedyne miejsce, które zna bibliotekę
       task_builder.py  # dobór kart, przeplot nowych, wybór trybu, dystraktory
       grader.py        # ocena odpowiedzi pisanych: dobrze / prawie / źle
       tts.py           # synteza mowy — jedyne miejsce, które zna Google
+      ai.py            # model językowy — jedyne miejsce, które zna Anthropic
+      lexicon.py       # wspólne reguły dopisywania do słownika (rodzajnik, talia)
       importer.py      # parser CSV: wybaczający format, raport z numerami wierszy
       stats.py         # dzienne agregaty i streak w strefie użytkownika
     seed/        # 20 talii PT-PT w JSON + idempotentny loader
@@ -134,6 +138,8 @@ COOKIE_DOMAIN=.pmakarewicz.com
 COOKIE_SECURE=true
 COOKIE_SAMESITE=lax
 GOOGLE_TTS_API_KEY=<klucz API z Google Cloud>
+ANTHROPIC_API_KEY=<klucz z console.anthropic.com>
+AI_MONTHLY_BUDGET_USD=5
 ```
 
 Przy generowaniu domeny Railway pyta o port aplikacji — podaj **8080**. Serwer słucha na
@@ -173,6 +179,31 @@ skali (~10 MB) osobne konto i klucze do S3 kosztowałyby więcej pracy, niż daj
 wszystko wchodzi do jednej kopii zapasowej. Adres nagrania jest skrótem jego treści, więc
 `/api/audio/<hash>.mp3` jest wieczne i cache'owane na rok — również przez service workera, co
 daje działającą wymowę offline.
+
+## AI
+
+Funkcje AI — generowanie zestawów, „dlaczego źle?", ocena tłumaczenia, dogenerowanie zdań
+przykładowych — chodzą na Anthropic Messages API przez oficjalny SDK. Bez zmiennej
+`ANTHROPIC_API_KEY` po prostu ich nie ma: ekran generowania mówi, że jest wyłączony, przycisk
+„dlaczego źle?" się nie pokazuje, a tryb „przetłumacz zdanie" znika z sesji. Reszta aplikacji
+działa bez zmian.
+
+Trzy zabezpieczenia przed rachunkiem:
+
+- **Księga.** Każde wywołanie, także nieudane, zostawia wiersz w `ai_generation_jobs` z liczbą
+  tokenów i kosztem. Zużycie w bieżącym miesiącu widać w `/ustawienia`.
+- **Twardy limit.** Po przekroczeniu `AI_MONTHLY_BUDGET_USD` (domyślnie 5 USD) funkcje AI
+  zwracają `429` z komunikatem po polsku, zamiast wydawać dalej.
+- **Pamięć podręczna.** Ta sama pomyłka wyjaśniana jest raz; to samo tłumaczenie oceniane raz.
+  Klucz to skrót treści pytania, więc powtórka jest darmowa i natychmiastowa.
+
+Nad tym wszystkim stoi zasada, której pilnują testy: **żadna treść z modelu nie trafia do
+słownika bez akceptacji człowieka**. Wygenerowany zestaw czeka w zadaniu, aż ktoś odznaczy to,
+czego nie chce, poprawi to, co chce inaczej, i kliknie „zatwierdź zaznaczone". Dopiero wtedy
+powstają pozycje (`source=ai`), nowa talia i nagrania wymowy.
+
+Prompt systemowy wymienia zakazane brazylizmy parami — „NIE ônibus / TAK autocarro" — bo
+polecenie „pisz po europejsku" model traktuje jak sugestię, a konkretną listę jak regułę.
 
 ## CI
 

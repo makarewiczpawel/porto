@@ -2,10 +2,10 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
 
-import { api } from "@/api/client";
+import { ApiError, api } from "@/api/client";
 import type { ItemDetail, Page, Item } from "@/api/types";
 import { SpeakButton } from "@/components/SpeakButton";
-import { Card, EmptyState, Label, Pill, Spinner, cx } from "@/components/ui";
+import { Button, Card, EmptyState, Label, Pill, Spinner, cx } from "@/components/ui";
 
 const LEVELS = ["A1", "A2", "B1"];
 
@@ -182,24 +182,23 @@ export function ItemDetailPage() {
         </Card>
       )}
 
-      {item.examples.length > 0 && (
-        <div className="mt-4">
-          <Label className="mb-2">Przykłady</Label>
-          <div className="grid gap-2">
-            {item.examples.map((example) => (
-              <Card key={example.id}>
-                <div className="flex items-start gap-2">
-                  <div className="min-w-0 flex-1">
-                    <div className="pt text-[16px]">{example.pt}</div>
-                    <div className="mt-0.5 text-[12.5px] text-ink-2">{example.pl}</div>
-                  </div>
-                  <SpeakButton text={example.pt} url={example.audio_url} size="sm" />
+      <div className="mt-4">
+        <Label className="mb-2">Przykłady</Label>
+        <div className="grid gap-2">
+          {item.examples.map((example) => (
+            <Card key={example.id}>
+              <div className="flex items-start gap-2">
+                <div className="min-w-0 flex-1">
+                  <div className="pt text-[16px]">{example.pt}</div>
+                  <div className="mt-0.5 text-[12.5px] text-ink-2">{example.pl}</div>
                 </div>
-              </Card>
-            ))}
-          </div>
+                <SpeakButton text={example.pt} url={example.audio_url} size="sm" />
+              </div>
+            </Card>
+          ))}
+          <MoreExamples item={item} onSaved={() => void query.refetch()} />
         </div>
-      )}
+      </div>
 
       <div className="mt-4">
         <Label className="mb-2">Twoje powtórki</Label>
@@ -267,4 +266,76 @@ function formatDue(due: string) {
   if (days < 31) return `za ${days} dni`;
   const months = Math.round(days / 30);
   return `za ${months} mies.`;
+}
+
+/**
+ * Dogenerowanie zdań przykładowych dla pozycji, która ich nie ma.
+ *
+ * Propozycje pojawiają się na ekranie i tyle — dopisuje je do pozycji dopiero
+ * kliknięcie „dodaj". Ta sama zasada, co przy zestawach: treść z modelu wchodzi
+ * do bazy wyłącznie przez decyzję człowieka.
+ */
+function MoreExamples({ item, onSaved }: { item: ItemDetail; onSaved: () => void }) {
+  const [found, setFound] = useState<{ pt: string; pl: string }[] | null>(null);
+  const [state, setState] = useState<"idle" | "loading" | "off">("idle");
+  const [note, setNote] = useState<string | null>(null);
+
+  async function ask() {
+    setState("loading");
+    setNote(null);
+    try {
+      const result = await api.post<{ examples: { pt: string; pl: string }[] }>("/api/ai/examples", {
+        item_id: item.id,
+        count: 2,
+      });
+      setFound(result.examples);
+      setState("idle");
+    } catch (caught) {
+      if (caught instanceof ApiError && ["AI_NOT_CONFIGURED", "AI_BUDGET"].includes(caught.code)) {
+        setState("off");
+        return;
+      }
+      setNote(caught instanceof Error ? caught.message : "Nie udało się teraz zapytać.");
+      setState("idle");
+    }
+  }
+
+  async function keep(example: { pt: string; pl: string }) {
+    await api.post("/api/ai/examples/accept", { item_id: item.id, pt: example.pt, pl: example.pl });
+    setFound((current) => (current ?? []).filter((entry) => entry.pt !== example.pt));
+    onSaved();
+  }
+
+  if (state === "off") return null;
+
+  return (
+    <div className="grid gap-2">
+      {(found ?? []).map((example) => (
+        <Card key={example.pt} className="border-dashed">
+          <div className="pt text-[16px]">{example.pt}</div>
+          <div className="mt-0.5 text-[12.5px] text-ink-2">{example.pl}</div>
+          <div className="mt-2 flex gap-2">
+            <Button size="sm" onClick={() => void keep(example)}>
+              Dodaj
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setFound((current) => (current ?? []).filter((e) => e.pt !== example.pt))}
+            >
+              Odrzuć
+            </Button>
+          </div>
+        </Card>
+      ))}
+      {note && <p className="text-[12px] text-bad">{note}</p>}
+      <Button variant="ghost" size="sm" onClick={() => void ask()} disabled={state === "loading"}>
+        {state === "loading"
+          ? "Układam zdania…"
+          : item.examples.length === 0
+            ? "Wymyśl zdanie przykładowe"
+            : "Dołóż jeszcze jedno"}
+      </Button>
+    </div>
+  );
 }
