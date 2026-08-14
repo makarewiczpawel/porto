@@ -134,7 +134,13 @@ function ActivityHeatmap() {
           {query.data.active_days} {plural(query.data.active_days, "dzień", "dni", "dni")} nauki
         </span>
       </div>
-      <div className="flex gap-[3px] overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      {/* Czytnik ekranu dostaje jedno zdanie podsumowania. Sto osiemdziesiąt
+          etykiet „14 lutego: 0 kart" to nie dostępność, tylko hałas. */}
+      <div
+        role="img"
+        aria-label={`Aktywność z ostatnich ${days.length} dni: ${query.data.active_days} dni z nauką, ${query.data.total_reviews} kart łącznie.`}
+        className="flex gap-[3px] overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
         {weeks.map((week, index) => (
           <div key={index} className="grid flex-none gap-[3px]">
             {week.map((day, position) =>
@@ -151,7 +157,7 @@ function ActivityHeatmap() {
           </div>
         ))}
       </div>
-      <div className="mt-2 flex items-center gap-1.5 text-[10.5px] text-ink-3">
+      <div aria-hidden="true" className="mt-2 flex items-center gap-1.5 text-[10.5px] text-ink-3">
         mniej
         <span className="h-[9px] w-[9px] rounded-[2px] bg-surface-3" />
         <span className="h-[9px] w-[9px] rounded-[2px] bg-accent/30" />

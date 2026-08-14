@@ -10,6 +10,8 @@ import io
 import json
 from datetime import datetime, timedelta, timezone
 
+from sqlalchemy import select
+
 from app.models import DailyStat, Review, UserItemState
 from app.services import stats as stats_service
 from app.services import task_builder as tb
@@ -226,3 +228,94 @@ def test_export_can_skip_the_seed_base(db, registered, client):
     mine = client.get("/api/items/export?format=json&mine_only=true").json()
     assert everything["count"] == 3
     assert [item["pt"] for item in mine["items"]] == ["saudade"]
+
+
+# ── test poziomujący ──────────────────────────────────────────────────────
+def _answer_all(client, attempt, correct_indexes):
+    """Odpowiada na wszystkie pytania; wskazane numery — poprawnie."""
+    payload = []
+    for question in attempt["questions"]:
+        index = question["index"]
+        options = question.get("options", [])
+        # Poprawna odpowiedź to tłumaczenie hasła; błędna — cokolwiek innego.
+        right = options.index(question["pl"]) if question["pl"] in options else 0
+        wrong = next((i for i in range(len(options)) if i != right), right)
+        payload.append(
+            {"index": index, "selected_index": right if index in correct_indexes else wrong}
+        )
+    client.post(f"/api/quizzes/attempts/{attempt['id']}/answers", json={"answers": payload})
+
+
+def test_placement_marks_known_words_as_review(db, registered, client):
+    from app.models import User, UserItemState
+
+    user = db.get(User, registered["user"]["id"])
+    make_items(db, count=30, level="A1")
+
+    attempt = client.post("/api/quizzes/placement").json()
+    assert len(attempt["questions"]) >= 10
+    known = {q["index"] for q in attempt["questions"][:5]}
+    _answer_all(client, attempt, known)
+
+    result = client.post(f"/api/quizzes/attempts/{attempt['id']}/placement-result").json()
+    assert result["known_marked"] == 5
+
+    states = db.query(UserItemState).filter(UserItemState.user_id == user.id).all()
+    assert len(states) == 5, "tylko rozpoznane słowa dostają kartę"
+    assert {s.state for s in states} == {"review"}
+    # Krótki odstęp: klik w teście to słabszy dowód niż przypomnienie z głowy.
+    assert all(0 < (s.due - datetime.now(timezone.utc)).days < 5 for s in states)
+
+
+def test_placement_leaves_unknown_words_as_new(db, registered, client):
+    from app.models import User, UserItemState
+
+    user = db.get(User, registered["user"]["id"])
+    make_items(db, count=30, level="A1")
+    attempt = client.post("/api/quizzes/placement").json()
+    _answer_all(client, attempt, set())
+
+    client.post(f"/api/quizzes/attempts/{attempt['id']}/placement-result")
+    assert db.query(UserItemState).filter(UserItemState.user_id == user.id).count() == 0
+
+
+def test_placement_suggests_the_first_level_not_passed(db, registered, client):
+    make_items(db, count=40, level="A1")
+    attempt = client.post("/api/quizzes/placement").json()
+    _answer_all(client, attempt, set())
+
+    result = client.post(f"/api/quizzes/attempts/{attempt['id']}/placement-result").json()
+    assert result["suggested_level"] == "A1"
+    assert result["by_level"]["A1"] == 0
+
+
+def test_placement_result_refuses_an_ordinary_quiz(db, registered, client):
+    make_items(db, count=12)
+    attempt = client.post("/api/quizzes/quick", json={"count": 5}).json()
+    response = client.post(f"/api/quizzes/attempts/{attempt['id']}/placement-result")
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "NOT_A_PLACEMENT"
+
+
+def test_placement_does_not_overwrite_existing_progress(db, registered, client):
+    """Kto już się uczy, ten może chcieć zrobić test z ciekawości — i nie może
+    stracić przez to swojego harmonogramu."""
+    from app.models import User, UserItemState
+
+    user = db.get(User, registered["user"]["id"])
+    _, items = make_items(db, count=30, level="A1")
+    far = datetime.now(timezone.utc) + timedelta(days=120)
+    db.add(UserItemState(user_id=user.id, item_id=items[0].id, direction="recognition",
+                         state="review", due=far, stability=90.0, difficulty=5.0, reps=9))
+    db.commit()
+
+    attempt = client.post("/api/quizzes/placement").json()
+    _answer_all(client, attempt, {q["index"] for q in attempt["questions"]})
+    client.post(f"/api/quizzes/attempts/{attempt['id']}/placement-result")
+
+    kept = db.execute(
+        select(UserItemState).where(
+            UserItemState.user_id == user.id, UserItemState.item_id == items[0].id
+        )
+    ).scalar_one()
+    assert kept.reps == 9 and kept.stability == 90.0
