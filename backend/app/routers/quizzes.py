@@ -154,6 +154,156 @@ def delete_quiz(
     db.commit()
 
 
+# ── test poziomujący ──────────────────────────────────────────────────────
+# Trzydzieści pytań rozłożonych po poziomach. Sensu nie ma tu równa liczba
+# pytań z każdego poziomu tylko dlatego, że tak ładniej: A1 jest najgęstsze,
+# bo to ono decyduje, czy w ogóle zaczynać od zera, a B1 rzadsze, bo służy
+# tylko ustaleniu sufitu.
+PLACEMENT_PLAN = [("A1", 12), ("A2", 10), ("B1", 8)]
+PLACEMENT_NAME = "Test poziomujący"
+# Powyżej tego progu poziom uznajemy za opanowany na tyle, żeby przeskoczyć go
+# w całości. Niżej — materiał z niego wchodzi do nauki normalnie.
+PLACEMENT_PASS = 70
+# Odstęp pierwszej powtórki dla słów rozpoznanych w teście.
+PLACEMENT_INTERVAL_DAYS = 3
+
+
+@router.post("/placement", response_model=QuizAttemptOut, status_code=201)
+def start_placement(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Trzydzieści pytań A1–B1, żeby nie zaczynać od „bom dia", gdy się je zna.
+
+    To zwykłe podejście quizowe — ten sam mechanizm pytań, ta sama ocena po
+    stronie serwera. Różni się tym, co dzieje się z wynikiem: zamiast punktacji
+    dostaje się gotowy stan nauki, w którym znane słowa są już zaplanowane na
+    powtórkę, a nieznane czekają jako nowe.
+    """
+    questions: list[dict] = []
+    for level, count in PLACEMENT_PLAN:
+        tasks = build_quiz(db, user, count=count, level=level, modes=["mcq_pt_pl"])
+        for task in tasks:
+            entry = task.as_dict()
+            entry["level"] = level
+            questions.append(entry)
+
+    if len(questions) < 10:
+        raise unprocessable(
+            "NOT_ENOUGH_ITEMS",
+            "Za mało pozycji w bazie, żeby ułożyć test poziomujący.",
+        )
+    # Numery muszą być ciągłe i rosnąć — ocena chodzi po nich, a pytania
+    # przyszły z trzech osobnych zapytań, każde numerowane od zera.
+    for index, entry in enumerate(questions):
+        entry["index"] = index
+
+    attempt = QuizAttempt(
+        user_id=user.id,
+        name=PLACEMENT_NAME,
+        questions={"questions": questions, "placement": True},
+    )
+    db.add(attempt)
+    db.commit()
+    db.refresh(attempt)
+    return QuizAttemptOut(
+        id=attempt.id,
+        name=attempt.name,
+        started_at=attempt.started_at,
+        time_limit_s=None,
+        questions=_public(questions),
+    )
+
+
+@router.post("/attempts/{attempt_id}/placement-result")
+def apply_placement(
+    attempt_id: uuid.UUID, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+) -> dict:
+    """Wynik testu zamieniony na stan nauki.
+
+    Poprawnie rozpoznane słowo dostaje kartę „do powtórki" z krótkim odstępem —
+    krótkim celowo: test sprawdził rozpoznawanie jednym kliknięciem, a to słabszy
+    dowód niż przypomnienie sobie słowa z głowy. Pierwsza prawdziwa powtórka
+    zweryfikuje to w kilka dni i dopiero ona rozciągnie odstęp.
+
+    Pomylone słowa nie dostają nic. Wejdą do nauki normalną drogą, jako nowe —
+    czyli od pokazania, a nie od odpytywania.
+    """
+    attempt = _attempt_or_404(db, user, attempt_id)
+    if not attempt.questions.get("placement"):
+        raise unprocessable("NOT_A_PLACEMENT", "To podejście nie jest testem poziomującym.")
+
+    questions = {q["index"]: q for q in attempt.questions["questions"]}
+    answers = (
+        db.execute(select(QuizAnswer).where(QuizAnswer.attempt_id == attempt.id)).scalars().all()
+    )
+
+    now = datetime.now(timezone.utc)
+    per_level: dict[str, dict[str, int]] = {
+        level: {"asked": 0, "correct": 0} for level, _ in PLACEMENT_PLAN
+    }
+    for question in questions.values():
+        per_level.setdefault(question.get("level", "A1"), {"asked": 0, "correct": 0})["asked"] += 1
+
+    known = 0
+    for answer in answers:
+        question = questions.get(answer.question_index)
+        if question is None:
+            continue
+        level = question.get("level", "A1")
+        if not answer.is_correct:
+            continue
+        per_level[level]["correct"] += 1
+
+        item_id = uuid.UUID(question["item_id"])
+        existing = db.execute(
+            select(UserItemState).where(
+                UserItemState.user_id == user.id,
+                UserItemState.item_id == item_id,
+                UserItemState.direction == "recognition",
+            )
+        ).scalar_one_or_none()
+        if existing is not None:
+            continue
+        db.add(
+            UserItemState(
+                user_id=user.id,
+                item_id=item_id,
+                direction="recognition",
+                state="review",
+                due=now + timedelta(days=PLACEMENT_INTERVAL_DAYS),
+                stability=float(PLACEMENT_INTERVAL_DAYS),
+                difficulty=5.0,
+                reps=1,
+                correct_reps=1,
+            )
+        )
+        known += 1
+
+    scores = {
+        level: round(data["correct"] / data["asked"] * 100) if data["asked"] else 0
+        for level, data in per_level.items()
+    }
+    # Poziom startowy to pierwszy, którego nie zaliczono. Zaliczone przeskakujemy
+    # w całości — ich materiał i tak jest już zaplanowany jako powtórka.
+    suggested = PLACEMENT_PLAN[-1][0]
+    for level, _ in PLACEMENT_PLAN:
+        if scores.get(level, 0) < PLACEMENT_PASS:
+            suggested = level
+            break
+
+    if attempt.finished_at is None:
+        attempt.finished_at = now
+        total = sum(d["asked"] for d in per_level.values())
+        got = sum(d["correct"] for d in per_level.values())
+        attempt.score = round(got / total * 100, 1) if total else 0.0
+    db.commit()
+
+    return {
+        "known_marked": known,
+        "suggested_level": suggested,
+        "by_level": scores,
+        "score": float(attempt.score or 0),
+    }
+
+
 @router.post("/quick", response_model=QuizAttemptOut, status_code=201)
 def quick_quiz(
     body: QuizQuickIn, user: User = Depends(get_current_user), db: Session = Depends(get_db)
@@ -171,7 +321,7 @@ def quick_quiz(
         id=attempt.id,
         name=attempt.name,
         started_at=attempt.started_at,
-        time_limit_s=None,
+        time_limit_s=body.time_limit_s,
         questions=_public(attempt.questions["questions"]),
     )
 

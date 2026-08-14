@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 
+import { useSession } from "@/store/session";
 import { cx } from "./ui";
 
 const TABS = [
@@ -50,8 +51,22 @@ const TABS = [
 
 export function AppLayout() {
   const location = useLocation();
+  // Brak zasięgu widać teraz wszędzie, nie tylko w trakcie sesji. Bez tego
+  // ekran talii po prostu nie doczytywał się w nieskończoność i wyglądał na
+  // zepsuty, zamiast powiedzieć, o co chodzi.
+  const online = useSession((state) => state.online);
+
   return (
     <div className="mx-auto flex min-h-dvh max-w-[560px] flex-col bg-surface">
+      {!online && (
+        <div
+          role="status"
+          className="safe-top bg-warm/15 px-4 pb-2 text-center text-[12px] text-ink-2"
+        >
+          <span aria-hidden="true">✈ </span>
+          Brak połączenia — postęp zapisuje się na urządzeniu i doleci później.
+        </div>
+      )}
       <main className="flex-1 pb-24">
         <Outlet />
       </main>

@@ -3,15 +3,22 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { ApiError, api } from "@/api/client";
-import type { Quiz, QuizAttempt, QuizHistoryEntry, QuizResult } from "@/api/types";
+import type {
+  PlacementResult,
+  Quiz,
+  QuizAttempt,
+  QuizHistoryEntry,
+  QuizResult,
+} from "@/api/types";
 import { TaskRenderer } from "@/components/TaskRenderer";
 import type { AnswerEvent } from "@/components/TaskRenderer";
-import { Button, Card, EmptyState, ErrorNote, Label, Pill, Spinner, cx } from "@/components/ui";
+import { Button, Card, EmptyState, ErrorNote, Label, Pill, Spinner, cx, plural } from "@/components/ui";
 
 // ── hub ───────────────────────────────────────────────────────────────────
 export function QuizzesPage() {
   const navigate = useNavigate();
   const [count, setCount] = useState(10);
+  const [limit, setLimit] = useState<number | null>(null);
 
   const quizzes = useQuery({ queryKey: ["quizzes"], queryFn: () => api.get<Quiz[]>("/api/quizzes") });
   const history = useQuery({
@@ -20,7 +27,8 @@ export function QuizzesPage() {
   });
 
   const quick = useMutation({
-    mutationFn: () => api.post<QuizAttempt>("/api/quizzes/quick", { count }),
+    mutationFn: () =>
+      api.post<QuizAttempt>("/api/quizzes/quick", { count, time_limit_s: limit }),
     onSuccess: (attempt) => navigate(`/quizy/${attempt.id}`, { state: attempt }),
   });
   const saved = useMutation({
@@ -28,7 +36,13 @@ export function QuizzesPage() {
     onSuccess: (attempt) => navigate(`/quizy/${attempt.id}`, { state: attempt }),
   });
 
-  const failure = [quick.error, saved.error].find(Boolean);
+  const placement = useMutation({
+    mutationFn: () => api.post<QuizAttempt>("/api/quizzes/placement"),
+    onSuccess: (attempt) =>
+      navigate(`/quizy/${attempt.id}`, { state: { ...attempt, placement: true } }),
+  });
+
+  const failure = [quick.error, saved.error, placement.error].find(Boolean);
   const message =
     failure instanceof ApiError
       ? failure.code === "NOT_ENOUGH_ITEMS"
@@ -66,8 +80,53 @@ export function QuizzesPage() {
               </button>
             ))}
           </div>
+          {/* Limit czasu zmienia charakter testu: bez niego sprawdza się wiedzę,
+              z nim — czy słowo przychodzi do głowy od razu. Domyślnie wyłączony,
+              bo presja czasu przy nauce od zera bardziej przeszkadza niż uczy. */}
+          <div className="mb-3 flex items-center gap-2">
+            <span className="text-[12.5px] text-ink-2">Na czas:</span>
+            {[
+              [null, "bez limitu"],
+              [60, "1 min"],
+              [180, "3 min"],
+            ].map(([value, label]) => (
+              <button
+                key={String(label)}
+                type="button"
+                onClick={() => setLimit(value as number | null)}
+                aria-pressed={limit === value}
+                className={cx(
+                  "rounded-full border px-2.5 py-1 text-[11.5px] font-semibold",
+                  limit === value
+                    ? "border-accent bg-accent text-accent-ink"
+                    : "border-line bg-surface text-ink-2",
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           <Button onClick={() => quick.mutate()} disabled={quick.isPending}>
             {quick.isPending ? "Układam…" : "Zacznij"}
+          </Button>
+        </Card>
+
+        {/* Test poziomujący ma sens raz — na starcie albo po długiej przerwie.
+            Dlatego nie jest przyciskiem obok innych, tylko osobną kartą z
+            wyjaśnieniem, co zrobi z bazą. */}
+        <Card>
+          <Label>Test poziomujący</Label>
+          <p className="mb-3 mt-1.5 text-[13px] text-ink-2">
+            Trzydzieści pytań od A1 do B1. Słowa, które rozpoznasz, aplikacja od razu potraktuje
+            jako znane i zaplanuje im pierwszą powtórkę — reszta wejdzie do nauki normalnie.
+            Nic nie kasuje dotychczasowego postępu.
+          </p>
+          <Button
+            variant="ghost"
+            onClick={() => placement.mutate()}
+            disabled={placement.isPending}
+          >
+            {placement.isPending ? "Układam test…" : "Sprawdź swój poziom"}
           </Button>
         </Card>
 
@@ -107,7 +166,8 @@ export function QuizzesPage() {
         {history.data && history.data.length > 0 && (
           <div className="mt-2">
             <Label className="mb-2">Historia</Label>
-            <Card className="grid gap-2.5">
+            <ScoreChart entries={history.data} />
+            <Card className="mt-2 grid gap-2.5">
               {history.data.slice(0, 8).map((entry) => (
                 <div key={entry.attempt_id} className="flex items-center justify-between gap-3 text-[13.5px]">
                   <span className="truncate text-ink-2">
@@ -139,6 +199,7 @@ export function QuizAttemptPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const [attempt] = useState<QuizAttempt | null>((location.state as QuizAttempt) ?? null);
+  const isPlacement = Boolean((location.state as { placement?: boolean } | null)?.placement);
   const [position, setPosition] = useState(0);
   const [answered, setAnswered] = useState(0);
   const startedAt = useRef(Date.now());
@@ -148,10 +209,23 @@ export function QuizAttemptPage() {
 
   const questions = attempt?.questions ?? [];
   const task = questions[position];
+  const [left, setLeft] = useState<number | null>(attempt?.time_limit_s ?? null);
 
   useEffect(() => {
     if (!attempt) navigate("/quizy", { replace: true });
   }, [attempt, navigate]);
+
+  // Zegar startuje raz i tyka do zera; po drodze nie da się go zatrzymać, bo
+  // to jest cały sens testu na czas. Po upływie limitu test oddaje się sam z
+  // tym, co zdążyło zostać odpowiedziane — nieodpowiedziane pytania liczą się
+  // jako pominięte, tak samo jak przy ręcznym zakończeniu.
+  useEffect(() => {
+    if (left === null) return;
+    const timer = window.setInterval(() => {
+      setLeft((value) => (value === null ? null : Math.max(value - 1, 0)));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [left === null]);
 
   const submit = useMutation({
     mutationFn: async () => {
@@ -159,7 +233,14 @@ export function QuizAttemptPage() {
         await api.post(`/api/quizzes/attempts/${attemptId}/answers`, { answers: pending.current });
         pending.current = [];
       }
-      return api.post<QuizResult>(`/api/quizzes/attempts/${attemptId}/submit`);
+      const result = await api.post<QuizResult>(`/api/quizzes/attempts/${attemptId}/submit`);
+      if (!isPlacement) return result;
+      // Wynik testu poziomującego to nie punkty, tylko gotowy stan nauki —
+      // dopiero to wywołanie zamienia rozpoznane słowa w zaplanowane powtórki.
+      const placement = await api.post<PlacementResult>(
+        `/api/quizzes/attempts/${attemptId}/placement-result`,
+      );
+      return { ...result, placement };
     },
     onSuccess: (result) => navigate(`/quizy/${attemptId}/wynik`, { replace: true, state: result }),
   });
@@ -184,6 +265,7 @@ export function QuizAttemptPage() {
 
   if (!attempt) return null;
   if (submit.isPending) return <Spinner label="Liczę wynik…" />;
+  if (left === 0 && !submit.isPending && !submit.isSuccess) submit.mutate();
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -196,6 +278,17 @@ export function QuizAttemptPage() {
         >
           ✕
         </button>
+        {left !== null && (
+          <span
+            className={`flex-none text-[13px] font-bold tnum ${
+              left <= 15 ? "text-bad" : "text-ink-2"
+            }`}
+            aria-live="polite"
+            aria-label={`Pozostały czas: ${left} sekund`}
+          >
+            {Math.floor(left / 60)}:{String(left % 60).padStart(2, "0")}
+          </span>
+        )}
         <div className="h-[7px] flex-1 overflow-hidden rounded-full bg-surface-3">
           <div
             className="h-full rounded-full bg-accent transition-[width] duration-300"
@@ -268,6 +361,8 @@ export function QuizResultPage() {
       </div>
 
       <div className="mt-6 grid gap-3">
+        {result.placement && <PlacementSummary placement={result.placement} />}
+
         <div className="grid grid-cols-2 gap-2">
           <div className="rounded-2xl border border-line bg-surface-2 px-2 py-3 text-center">
             <div className="tnum text-xl font-bold text-good">{result.correct}</div>
@@ -317,5 +412,79 @@ export function QuizResultPage() {
         </Button>
       </div>
     </div>
+  );
+}
+
+/**
+ * Wyniki podejść w czasie — najstarsze po lewej.
+ *
+ * Sens jest jeden: pojedynczy wynik nic nie mówi, dopiero kilka obok siebie
+ * pokazuje, czy się poprawia. Dlatego wykres pojawia się dopiero przy drugim
+ * podejściu; przy jednym słupku byłby ozdobą.
+ */
+function ScoreChart({ entries }: { entries: QuizHistoryEntry[] }) {
+  const scored = entries.filter((entry) => entry.finished_at !== null).slice(0, 12).reverse();
+  if (scored.length < 2) return null;
+  const height = 72;
+
+  return (
+    <Card>
+      <div className="flex items-end gap-1.5" style={{ height: height + 18 }}>
+        {scored.map((entry) => (
+          <div key={entry.attempt_id} className="flex flex-1 flex-col items-center justify-end gap-1">
+            <span
+              className={`w-full rounded-t-[3px] ${
+                entry.score >= 80 ? "bg-good" : entry.score >= 50 ? "bg-accent" : "bg-bad"
+              }`}
+              style={{ height: Math.max((entry.score / 100) * height, 3) }}
+              title={`${entry.name}: ${Math.round(entry.score)}%`}
+            />
+            <span className="text-[9px] leading-[12px] text-ink-3 tnum">
+              {Math.round(entry.score)}
+            </span>
+          </div>
+        ))}
+      </div>
+      <p className="mt-1 text-[11px] text-ink-3">Ostatnie podejścia, od najstarszego.</p>
+    </Card>
+  );
+}
+
+/**
+ * Co test poziomujący zrobił z bazą.
+ *
+ * Najważniejsza liczba to nie procent, tylko ile słów przestało być nowych —
+ * bo to ona decyduje, od czego zacznie się pierwsza sesja. Wynik po poziomach
+ * jest obok, żeby było widać, gdzie leży granica.
+ */
+function PlacementSummary({ placement }: { placement: PlacementResult }) {
+  return (
+    <Card className="border-accent-line bg-accent-soft">
+      <Label className="text-accent">Twój poziom startowy</Label>
+      <div className="pt mt-1 text-3xl">{placement.suggested_level}</div>
+      <p className="mt-1.5 text-[13px] text-ink-2">
+        {placement.known_marked > 0 ? (
+          <>
+            <b>{placement.known_marked}</b>{" "}
+            {plural(placement.known_marked, "słowo", "słowa", "słów")} rozpoznanych — aplikacja
+            zaplanowała im pierwszą powtórkę zamiast uczyć ich od zera. Reszta wejdzie do nauki
+            normalnie.
+          </>
+        ) : (
+          <>Zaczynamy od podstaw — to dobre miejsce na start, nic tu nie idzie na marne.</>
+        )}
+      </p>
+      <div className="mt-3 flex gap-2">
+        {Object.entries(placement.by_level).map(([level, score]) => (
+          <div
+            key={level}
+            className="flex-1 rounded-xl border border-line bg-surface px-2 py-2 text-center"
+          >
+            <div className="text-[13px] font-bold tnum">{score}%</div>
+            <div className="text-[10.5px] text-ink-3">{level}</div>
+          </div>
+        ))}
+      </div>
+    </Card>
   );
 }

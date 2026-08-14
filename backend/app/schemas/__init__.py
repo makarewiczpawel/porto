@@ -314,6 +314,7 @@ class QuizQuickIn(BaseModel):
     deck_ids: list[uuid.UUID] | None = None
     cefr_level: str | None = Field(default=None, max_length=2)
     modes: list[str] | None = None
+    time_limit_s: int | None = Field(default=None, ge=30, le=3600)
 
 
 class QuizAttemptOut(BaseModel):

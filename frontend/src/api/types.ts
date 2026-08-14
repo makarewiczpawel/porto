@@ -265,6 +265,8 @@ export interface QuizResult {
   seconds: number;
   previous_score: number | null;
   mistakes: QuizMistake[];
+  /** Ustawione tylko dla testu poziomującego. */
+  placement?: PlacementResult;
 }
 
 export interface QuizHistoryEntry {
@@ -429,4 +431,12 @@ export interface HardItem {
   leech: boolean;
   suspended: boolean;
   last_seen: string | null;
+}
+
+/** Wynik testu poziomującego — co aplikacja zrobiła z odpowiedziami. */
+export interface PlacementResult {
+  known_marked: number;
+  suggested_level: string;
+  by_level: Record<string, number>;
+  score: number;
 }
