@@ -38,7 +38,13 @@ export default defineConfig({
             // Nagranie spod danego adresu nigdy się nie zmienia — adres jest
             // skrótem jego treści. Raz pobrane może zostać na telefonie na
             // zawsze, więc wymowa działa też w metrze bez zasięgu.
-            urlPattern: ({ url }) => url.pathname.startsWith("/api/audio/"),
+            //
+            // Wzorzec celuje w sam plik nagrania, nie w cały prefiks `/api/audio/`.
+            // Pod tym prefiksem żyją też zapytania o stan biblioteki i o listę
+            // głosów, a te zmieniają się co chwilę — złapane w cache „na rok,
+            // niezmienne" zamarzały na pierwszej odpowiedzi i pokazywały stare
+            // liczby długo po tym, jak przestały być prawdziwe.
+            urlPattern: ({ url }) => /^\/api\/audio\/[0-9a-f]{64}\.mp3$/.test(url.pathname),
             handler: "CacheFirst",
             options: {
               cacheName: "porto-audio",

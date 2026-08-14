@@ -75,20 +75,14 @@ class GoogleTTS:
     def __init__(self, api_key: str) -> None:
         self.api_key = api_key
 
-    def synthesize(self, text: str, voice: str, speed: float) -> Spoken:
+    def _request(self, text: str, voice: str, audio_config: dict) -> httpx.Response:
         payload = {
             "input": {"text": text},
             "voice": {"languageCode": REQUIRED_LOCALE, "name": voice},
-            "audioConfig": {
-                "audioEncoding": "MP3",
-                "speakingRate": round(float(speed), 2),
-                # Krótkie hasła w oderwaniu od zdania brzmią urwanie; lekkie
-                # obniżenie tempa mowy załatwia to lepiej niż cisza na końcu.
-                "effectsProfileId": ["handset-class-device"],
-            },
+            "audioConfig": audio_config,
         }
         try:
-            response = httpx.post(
+            return httpx.post(
                 GOOGLE_ENDPOINT,
                 params={"key": self.api_key},
                 json=payload,
@@ -96,6 +90,36 @@ class GoogleTTS:
             )
         except httpx.HTTPError as exc:  # sieć padła, DNS, timeout
             raise TTSError(f"Nie udało się połączyć z syntezatorem mowy: {exc}") from exc
+
+    def synthesize(self, text: str, voice: str, speed: float) -> Spoken:
+        slower = abs(float(speed) - 1.0) > 0.001
+        config: dict = {"audioEncoding": "MP3"}
+        if slower:
+            config["speakingRate"] = round(float(speed), 2)
+        if shapeable(voice):
+            # Krótkie hasła w oderwaniu od zdania brzmią urwanie; profil
+            # słuchawkowy wygładza to lepiej niż cisza na końcu.
+            config["effectsProfileId"] = ["handset-class-device"]
+
+        response = self._request(text, voice, config)
+
+        # Najlepsze głosy Google — te, które brzmią jak człowiek — przyjmują
+        # mniej opcji niż stare Wavenety i odrzucają całe żądanie, gdy dostaną
+        # nieznane pole. Bez tego ustępstwa wybranie lepszego głosu kończyło się
+        # serią błędów i żadnym nagraniem, czyli powrotem do głosu z telefonu.
+        if response.status_code == 400 and len(config) > 1:
+            minimal = {"audioEncoding": "MP3"}
+            retry = self._request(text, voice, minimal)
+            if retry.status_code == 200:
+                if slower:
+                    # Nagranie by powstało, ale w normalnym tempie — a zapisane
+                    # pod kluczem wolnego byłoby cichym oszustwem: przycisk
+                    # „wolniej" odtwarzałby to samo co zwykły.
+                    raise TTSError(
+                        f"Głos {voice} nie obsługuje zmiany tempa, "
+                        "więc wolniejsza wersja nie powstanie."
+                    )
+                response = retry
 
         if response.status_code != 200:
             raise TTSError(_google_message(response))
@@ -134,6 +158,14 @@ class GoogleTTS:
                 }
             )
         return sorted(found, key=lambda v: (v["quality"] == "standard", v["name"]))
+
+
+# Głosy rodziny Chirp powstają inaczej niż Wavenet i nie przyjmują części
+# ustawień obróbki dźwięku. Nazwa jest jedyną informacją, jaką mamy przed
+# wysłaniem żądania; gdyby lista kiedyś przestała się zgadzać, ratuje nas
+# ponowna próba bez tych pól.
+def shapeable(voice: str) -> bool:
+    return "chirp" not in voice.lower()
 
 
 def _quality_of(name: str) -> str:

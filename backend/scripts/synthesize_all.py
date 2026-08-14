@@ -18,42 +18,16 @@ import sys
 import time
 
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
 
 from app.config import settings
 from app.db import SessionLocal
-from app.models import Item, UserSettings
+from app.models import UserSettings
 from app.services import tts
-from app.services.task_builder import SLOW_SPEED
+from app.services.voice_library import planned
 
 # Google przyjmuje spokojnie kilka żądań na sekundę; ta przerwa trzyma nas
 # z dala od limitu, a przy kilkuset nagraniach kosztuje minutę.
 PAUSE_SECONDS = 0.12
-
-
-def planned(db) -> list[tuple[str, float]]:
-    """Pary (tekst, tempo), które powinny istnieć."""
-    wanted: list[tuple[str, float]] = []
-    seen: set[tuple[str, float]] = set()
-
-    items = (
-        db.execute(select(Item).options(selectinload(Item.examples)).where(Item.verified.is_(True)))
-        .scalars()
-        .unique()
-        .all()
-    )
-    for item in items:
-        for text, speed in (
-            (item.display_pt, 1.0),
-            (item.display_pt, SLOW_SPEED),
-            *[(example.pt, 1.0) for example in item.examples],
-        ):
-            clean = tts.normalize_text(text)
-            if not clean or (clean, speed) in seen:
-                continue
-            seen.add((clean, speed))
-            wanted.append((clean, speed))
-    return wanted
 
 
 def voices_in_use(db) -> list[str]:

@@ -21,6 +21,7 @@ from app.models import (
 from app.services import ai
 from app.services import scheduler as sched
 from app.services import tts
+from app.services import voice_library
 from app.services.grader import normalize, strip_accents
 
 # New items are dripped into the queue rather than dumped at the front: after
@@ -35,8 +36,9 @@ MATCHING_PAIRS = 5
 # Extra wrong bricks offered next to the right ones in a word bank.
 WORD_BANK_EXTRA = 3
 # Long-pressing the speaker plays this slower take. Same recording pipeline,
-# different cache key, so it is synthesised once and then free.
-SLOW_SPEED = 0.75
+# different cache key, so it is synthesised once and then free. Definicja
+# mieszka przy bibliotece nagrań — sesja tylko z niej korzysta.
+SLOW_SPEED = voice_library.SLOW_SPEED
 
 
 @dataclass

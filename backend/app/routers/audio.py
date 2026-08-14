@@ -18,7 +18,7 @@ from app.db import get_db
 from app.deps import get_current_user
 from app.errors import not_found, unprocessable
 from app.models import AudioAsset, User
-from app.services import tts
+from app.services import tts, voice_library
 
 router = APIRouter(prefix="/api/audio", tags=["audio"])
 
@@ -40,6 +40,19 @@ class SpeakOut(BaseModel):
     cached: bool
 
 
+class SynthesizeIn(BaseModel):
+    # Czterdzieści nagrań to kilkanaście sekund pracy — na tyle krótko, żeby
+    # żądanie nie wisiało, i na tyle długo, żeby pasek postępu ruszał z sensem.
+    limit: int = Field(default=40, ge=1, le=200)
+    voice: str | None = Field(default=None, max_length=64)
+
+
+# Zdanie do odsłuchania głosu przed wyborem. Ma w sobie to, po czym poznaje się
+# portugalski europejski: ścieśnione „e", szeleszczące „s" na końcu sylaby i
+# nosówkę w „não".
+SAMPLE_TEXT = "Bom dia! Hoje não vou de comboio, prefiro passear pela cidade."
+
+
 @router.get("/voices")
 def list_voices(user: User = Depends(get_current_user)) -> dict:
     """Głosy pt-PT prosto od dostawcy — do odsłuchania w ustawieniach."""
@@ -54,6 +67,59 @@ def list_voices(user: User = Depends(get_current_user)) -> dict:
 @router.get("/usage")
 def audio_usage(user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> dict:
     return tts.usage(db)
+
+
+@router.get("/coverage")
+def coverage(
+    voice: str | None = Query(default=None, max_length=64),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Ile nagrań dla tego głosu już jest, a ilu brakuje.
+
+    Bez tej liczby zmiana głosu wygląda jak brak zmiany: aplikacja nie znajduje
+    nagrań, po cichu schodzi na głos z telefonu i nic nie mówi.
+    """
+    return voice_library.coverage(db, voice or user.settings.tts_voice).as_dict()
+
+
+@router.post("/synthesize-missing")
+def synthesize_missing(
+    body: SynthesizeIn, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+) -> dict:
+    """Dogrywa porcję brakujących nagrań. Front woła w pętli aż do zera."""
+    voice = body.voice or user.settings.tts_voice
+    try:
+        result = voice_library.synthesize_batch(db, voice, body.limit)
+    except tts.TTSNotConfigured as exc:
+        raise unprocessable("TTS_NOT_CONFIGURED", str(exc)) from exc
+    except tts.TTSError as exc:
+        raise unprocessable("TTS_FAILED", str(exc)) from exc
+    return result.as_dict()
+
+
+@router.post("/sample", response_model=SpeakOut)
+def sample(
+    voice: str = Query(min_length=1, max_length=64),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> SpeakOut:
+    """Zdanie na próbę w podanym głosie — do posłuchania przed wyborem.
+
+    Głosu nie da się ocenić z nazwy, a wybranie złego kosztuje całą bibliotekę
+    nagraną od nowa. Jedno zdanie to ułamek grosza.
+    """
+    before = tts.lookup(db, SAMPLE_TEXT, voice, 1.0)
+    try:
+        asset = tts.speak(db, SAMPLE_TEXT, voice=voice, speed=1.0)
+    except tts.TTSNotConfigured as exc:
+        raise unprocessable("TTS_NOT_CONFIGURED", str(exc)) from exc
+    except tts.TTSLimitReached as exc:
+        raise unprocessable("TTS_LIMIT", str(exc)) from exc
+    except tts.TTSError as exc:
+        raise unprocessable("TTS_FAILED", str(exc)) from exc
+    db.commit()
+    return SpeakOut(url=tts.audio_url(asset.cache_key), cache_key=asset.cache_key, cached=before is not None)
 
 
 @router.post("/speak", response_model=SpeakOut)

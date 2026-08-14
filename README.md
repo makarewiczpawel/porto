@@ -171,8 +171,16 @@ python -m scripts.synthesize_all             # nagrywa brakujące
 ```
 
 Skrypt jest wznawialny — przerwanie kosztuje najwyżej jedno nagranie. Domyślnie nagrywa dla
-głosów faktycznie wybranych na kontach, więc po zmianie głosu w ustawieniach trzeba go
-uruchomić ponownie.
+głosów faktycznie wybranych na kontach.
+
+Konsola nie jest już jednak potrzebna: **Ustawienia → Wymowa** pokazują, ile nagrań istnieje
+dla wybranego głosu, i mają przycisk, który dogrywa brakujące. To ważne, bo nagrania są
+kluczowane nazwą głosu — zmiana głosu nie przerabia istniejących, tylko odsyła aplikację po
+zbiór, którego jeszcze nie ma. Zanim ten licznik powstał, wyglądało to jak „zmiana głosu nic
+nie dała": aplikacja po cichu schodziła na syntetyczny głos wbudowany w telefon.
+
+Każdy głos da się tam też przesłuchać na jednym zdaniu przed wyborem. Warto — nazwa nic nie
+mówi, a różnica między głosem podstawowym a naturalnym słychać od pierwszego słowa.
 
 Nagrania trzymane są w tabeli `audio_assets` w bazie, nie w osobnym magazynie plików: przy tej
 skali (~10 MB) osobne konto i klucze do S3 kosztowałyby więcej pracy, niż dają korzyści, a tak
