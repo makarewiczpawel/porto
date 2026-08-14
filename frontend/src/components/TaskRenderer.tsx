@@ -230,11 +230,16 @@ function Flashcard({ task, locked, autoPlay, onAnswer }: Props) {
 
           {(frontIsPortuguese || revealed) && (
             <div className="absolute right-3 top-3 grid justify-items-end gap-2">
+              {/* Samo odtworzenie tylko wtedy, gdy portugalski jest pytaniem.
+                  Na karcie produkcyjnej (polski na wierzchu) to Ty masz
+                  powiedzieć słowo — usłyszenie go w chwili odsłonięcia
+                  odbiera sens ćwiczeniu. Przycisk zostaje, cisza jest
+                  domyślna. */}
               <SpeakButton
                 text={frontIsPortuguese ? front : back}
                 url={task.audio?.pt}
                 slowUrl={task.audio?.pt_slow}
-                autoPlay={autoPlay && (frontIsPortuguese || revealed)}
+                autoPlay={autoPlay && frontIsPortuguese}
               />
               {revealed && task.example && (
                 <SpeakButton

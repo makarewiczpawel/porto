@@ -108,18 +108,16 @@ export function StudyPage() {
 
   // Wymowa przy informacji zwrotnej. Przy ćwiczeniach z luką słucha się całego
   // zdania, nie wyrwanego słowa — dopiero w zdaniu słychać, jak ono brzmi.
-  // Samo odtworzenie ma sens tam, gdzie portugalskiego jeszcze nie było na
-  // ekranie; przy rozpoznawaniu byłoby powtórką tego, co już zabrzmiało.
+  //
+  // Nic tu nie odtwarza się samo. Wcześniej robiło to przy ćwiczeniach
+  // produkcyjnych i wychodziło z tego podwójne odtworzenie tego samego słowa:
+  // raz przy odsłonięciu karty, raz przy ocenie. Przycisk wystarczy — kto chce
+  // usłyszeć, tapie.
   const speakOnFeedback =
     task && task.mode !== "matching"
       ? task.mode === "cloze" && task.example
         ? { text: task.example.pt, url: task.audio?.example }
-        : {
-            text: task.pt,
-            url: task.audio?.pt,
-            slowUrl: task.audio?.pt_slow,
-            autoPlay: Boolean(settings?.autoplay_audio) && task.direction === "production",
-          }
+        : { text: task.pt, url: task.audio?.pt, slowUrl: task.audio?.pt_slow }
       : undefined;
 
   return (
