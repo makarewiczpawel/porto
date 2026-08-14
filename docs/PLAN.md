@@ -355,20 +355,20 @@ zweryfikować bez wywołania płatnego API.
 ## Faza 5 — Statystyki, import, dopracowanie [~1 tydzień]
 
 ### 5.1 Statystyki [~6 h]
-- [ ] `GET /api/stats/overview`, `/heatmap`, `/forecast`, `/leeches`, `/weakest`
-- [ ] `/stats`: kafelki (streak, opanowane, retencja, czas), `ActivityHeatmap`, `ForecastChart`, lista trudnych słów z akcjami (zawieś / zresetuj / edytuj)
+- [x] `GET /api/stats/overview`, `/heatmap`, `/forecast`, `/hardest` — „trudne słowa" to jedna lista zamiast dwóch (`/leeches` i `/weakest` różniłyby się tylko progiem, a pokazywałyby to samo)
+- [x] `/postep`: kafelki (streak, opanowane, retencja 30 dni, czas), `ActivityHeatmap`, prognoza powtórek, lista trudnych słów prowadząca do pozycji, gdzie są akcje
 
 ### 5.2 Import i eksport [~4 h]
 - [x] `POST /api/items/import` — zrobione razem z 2.3. Format wybaczający: separator wykrywany (`,` `;` tab), nagłówek opcjonalny, kolumny po zawartości a nie po pozycji; limit 2000 wierszy, raport z numerami wierszy
 - [x] Interfejs importu: wklejenie tekstu, podgląd przed zatwierdzeniem
-- [ ] Wgranie pliku (na razie tylko wklejenie treści)
-- [ ] Eksport całej bazy do CSV/JSON
+- [x] Wgranie pliku — trafia do tego samego pola co wklejenie, więc podgląd działa tak samo
+- [x] Eksport całej bazy do CSV/JSON (`GET /api/items/export`), CSV w formacie przyjmowanym przez import
 
 ### 5.3 Uzupełnienia [~5 h]
 - [ ] Test poziomujący: 30 pytań A1–B1, wynik ustawia poziom startowy i oznacza znane pozycje jako `review` z krótkim interwałem
 - [ ] Quiz na czas (limit na test lub pytanie)
 - [ ] Historia podejść quizu z wykresem
-- [ ] Tryb „nadrabianie" po przerwie: rozkłada nawis `due` na 7 dni zamiast wywalać 300 kart naraz (ryzyko #4)
+- [x] Tryb „nadrabianie" po przerwie: rozkłada nawis `due` na 7 dni zamiast wywalać 300 kart naraz (ryzyko #4). Bez ruszania terminów w bazie — zmienia się porcja na sesję i komunikat, FSRS dalej liczy opóźnienie jako część odpowiedzi
 
 ### 5.4 Polish [~4 h]
 - [ ] Lighthouse mobile: Performance ≥ 90, Accessibility ≥ 95, PWA installable
@@ -377,10 +377,13 @@ zweryfikować bez wywołania płatnego API.
 - [ ] Backup bazy: potwierdzić harmonogram na Railway + jednorazowy eksport testowy
 
 ### Definition of Done — Faza 5
-- [ ] Heatmapa pokazuje pełną historię od pierwszego dnia nauki
-- [ ] Import 200-wierszowego CSV → raport, zero utraconych wierszy bez wyjaśnienia
-- [ ] Wyniki Lighthouse osiągnięte
-- [ ] Eksport bazy odtworzony w świeżej instancji lokalnej
+- [x] Heatmapa pokazuje pełną historię od pierwszego dnia nauki
+- [x] Import 200-wierszowego CSV → raport, zero utraconych wierszy bez wyjaśnienia
+- [x] Eksport bazy wraca przez import bez przeróbek (test `test_csv_export_round_trips_through_the_importer`)
+- [ ] Wyniki Lighthouse osiągnięte — wymaga uruchomienia na wdrożonej aplikacji
+
+Do dokończenia w 5.3/5.4: test poziomujący, quiz na czas, historia podejść z wykresem,
+audyt Lighthouse i potwierdzenie harmonogramu kopii zapasowych w Railway.
 
 ---
 

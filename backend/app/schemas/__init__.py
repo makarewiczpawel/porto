@@ -194,6 +194,14 @@ class DeckDetailOut(DeckOut):
 
 
 # ── study ─────────────────────────────────────────────────────────────────
+class CatchUpOut(BaseModel):
+    """Plan nadrabiania po przerwie: ile zaległości i ile z nich na dziś."""
+
+    backlog: int
+    today: int
+    days: int
+
+
 class QueueSummaryOut(BaseModel):
     due: int
     new_available: int
@@ -202,6 +210,7 @@ class QueueSummaryOut(BaseModel):
     streak: int
     goal_met: bool
     next_due_at: datetime | None
+    catch_up: CatchUpOut | None = None
 
 
 class SessionCreateIn(BaseModel):

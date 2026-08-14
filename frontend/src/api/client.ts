@@ -96,8 +96,31 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   return (await parse(response)) as T;
 }
 
+/**
+ * Pobranie pliku, nie JSON-a — eksport bazy.
+ *
+ * Nie da się tego zrobić zwykłym linkiem: adres wymaga nagłówka z tokenem,
+ * którego `<a href>` nie potrafi dołożyć. Stąd pobranie przez `fetch` i
+ * podanie gotowej zawartości przeglądarce.
+ */
+export async function requestBlob(path: string): Promise<Blob> {
+  const headers: Record<string, string> = {};
+  if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+  let response = await fetch(`${BASE}${path}`, { headers, credentials: "include" });
+  if (response.status === 401 && (await refreshOnce())) {
+    const retryHeaders: Record<string, string> = {};
+    if (accessToken) retryHeaders.Authorization = `Bearer ${accessToken}`;
+    response = await fetch(`${BASE}${path}`, { headers: retryHeaders, credentials: "include" });
+  }
+  if (!response.ok) {
+    throw new ApiError(response.status, null, "Nie udało się pobrać pliku.");
+  }
+  return response.blob();
+}
+
 export const api = {
   get: <T>(path: string) => request<T>(path),
+  blob: (path: string) => requestBlob(path),
   post: <T>(path: string, body?: unknown) => request<T>(path, { method: "POST", body }),
   patch: <T>(path: string, body?: unknown) => request<T>(path, { method: "PATCH", body }),
   del: <T>(path: string) => request<T>(path, { method: "DELETE" }),

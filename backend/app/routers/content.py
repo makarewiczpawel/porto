@@ -1,7 +1,10 @@
+import csv
+import io
+import json
 import uuid
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
@@ -114,6 +117,98 @@ def list_items(
     )
     return PageOut(
         items=_with_audio(db, list(rows), user), total=total, page=page, per_page=per_page
+    )
+
+
+@router.get("/items/export")
+def export_items(
+    format: str = Query(default="csv", pattern="^(csv|json)$"),
+    mine_only: bool = Query(default=False),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> Response:
+    """Cała baza w jednym pliku — do kopii zapasowej i do odtworzenia gdzie indziej.
+
+    CSV wychodzi w tym samym formacie, który przyjmuje import, więc plik
+    wyeksportowany stąd wraca tu bez żadnej obróbki. JSON zawiera dodatkowo
+    zdania przykładowe i talie, bo w CSV nie da się ich zmieścić bez wymyślania
+    własnej składni.
+
+    `mine_only` ogranicza plik do pozycji dodanych ręcznie, zaimportowanych i
+    zatwierdzonych z AI. Baza startowa wraca przy każdym wdrożeniu sama, więc
+    w kopii zapasowej jest tylko ciężarem.
+    """
+    query = (
+        select(Item)
+        .options(selectinload(Item.examples))
+        .order_by(Item.cefr_level.asc(), Item.pt.asc())
+    )
+    if mine_only:
+        query = query.where(Item.source != "seed")
+    rows = db.execute(query).scalars().unique().all()
+
+    deck_names: dict[uuid.UUID, list[str]] = {}
+    for item_id, name in db.execute(
+        select(DeckItem.item_id, Deck.name).join(Deck, Deck.id == DeckItem.deck_id)
+    ).all():
+        deck_names.setdefault(item_id, []).append(name)
+
+    stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    if format == "json":
+        payload = {
+            "exported_at": datetime.now(timezone.utc).isoformat(),
+            "count": len(rows),
+            "items": [
+                {
+                    "pt": row.pt,
+                    "pl": row.pl,
+                    "article": row.article,
+                    "gender": row.gender,
+                    "type": row.type,
+                    "part_of_speech": row.part_of_speech,
+                    "cefr_level": row.cefr_level,
+                    "plural": row.plural,
+                    "notes": row.notes,
+                    "source": row.source,
+                    "decks": deck_names.get(row.id, []),
+                    "examples": [{"pt": e.pt, "pl": e.pl} for e in row.examples],
+                }
+                for row in rows
+            ],
+        }
+        body = json.dumps(payload, ensure_ascii=False, indent=2)
+        return Response(
+            content=body,
+            media_type="application/json; charset=utf-8",
+            headers={"Content-Disposition": f'attachment; filename="porto-{stamp}.json"'},
+        )
+
+    buffer = io.StringIO()
+    # Średnik, bo plik ma się otwierać w polskim Excelu bez czarów, a import i
+    # tak rozpoznaje separator sam.
+    writer = csv.writer(buffer, delimiter=";", lineterminator="\n")
+    writer.writerow(["pt", "pl", "poziom", "typ", "rodzajnik", "rodzaj", "notatka", "przyklad_pt", "przyklad_pl"])
+    for row in rows:
+        example = row.examples[0] if row.examples else None
+        writer.writerow(
+            [
+                row.pt,
+                row.pl,
+                row.cefr_level,
+                row.type,
+                row.article or "",
+                row.gender or "",
+                row.notes or "",
+                example.pt if example else "",
+                example.pl if example else "",
+            ]
+        )
+    # BOM: bez niego Excel czyta „ç" i „ã" jako krzaki, a to jest plik, który
+    # ktoś otworzy w arkuszu, nie tylko w edytorze kodu.
+    return Response(
+        content="\ufeff" + buffer.getvalue(),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="porto-{stamp}.csv"'},
     )
 
 

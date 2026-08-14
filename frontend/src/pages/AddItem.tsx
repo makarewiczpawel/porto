@@ -256,6 +256,28 @@ function ImportForm() {
           />
         </label>
 
+        {/* Wgranie pliku to ta sama droga co wklejenie — plik trafia do tego
+            samego pola, więc widać, co się zaraz zaimportuje, i da się to
+            jeszcze poprawić przed zatwierdzeniem. */}
+        <label className="flex items-center gap-2 text-[12.5px] text-ink-2">
+          <span className="cursor-pointer rounded-xl border border-line-strong bg-surface-2 px-3 py-2 font-semibold">
+            Wgraj plik
+            <input
+              type="file"
+              accept=".csv,.txt,text/csv,text/plain"
+              className="hidden"
+              onChange={async (event) => {
+                const file = event.target.files?.[0];
+                if (!file) return;
+                setCsv(await file.text());
+                setPreview(null);
+                event.target.value = "";
+              }}
+            />
+          </span>
+          …albo wklej treść powyżej
+        </label>
+
         <label className="grid gap-1.5">
           <span className="text-[13px] font-semibold">Nowa talia (nieobowiązkowo)</span>
           <input
