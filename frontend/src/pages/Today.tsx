@@ -152,30 +152,70 @@ export function TodayPage() {
         <div className="mt-2">
           <Label className="mb-2">Skróty</Label>
           <div className="grid gap-2">
-            <Link
-              to="/quizy"
-              className="flex items-center justify-between rounded-2xl border border-line bg-surface px-3.5 py-3 text-[14.5px] font-semibold"
-            >
-              Szybki quiz — sprawdź się
-              <span className="text-ink-3">→</span>
-            </Link>
-            <Link
-              to="/talie"
-              className="flex items-center justify-between rounded-2xl border border-line bg-surface px-3.5 py-3 text-[14.5px] font-semibold"
-            >
-              Ucz się z wybranej talii
-              <span className="text-ink-3">→</span>
-            </Link>
-            <Link
-              to="/slownik"
-              className="flex items-center justify-between rounded-2xl border border-line bg-surface px-3.5 py-3 text-[14.5px] font-semibold"
-            >
-              Przeglądaj słownik
-              <span className="text-ink-3">→</span>
-            </Link>
+            <Shortcut to="/quizy" label="Szybki quiz" hint="sprawdź się bez wpływu na powtórki">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M9 9a3 3 0 1 1 4 2.8c-.7.3-1 .9-1 1.7v.4" />
+              <circle cx="12" cy="17.4" r="0.6" fill="currentColor" />
+            </Shortcut>
+            <Shortcut to="/talie" label="Ucz się z talii" hint="wybierz jeden temat">
+              <rect x="3" y="6" width="13" height="14" rx="2" />
+              <path d="M8 3h11a2 2 0 0 1 2 2v11" />
+            </Shortcut>
+            <Shortcut to="/slownik" label="Przeglądaj słownik" hint="szukaj, dodawaj, słuchaj">
+              <path d="M4 5a2 2 0 0 1 2-2h12v18H6a2 2 0 0 1-2-2z" />
+              <path d="M8 7h7M8 11h7" />
+            </Shortcut>
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * Wiersz skrótu z ikoną i podpisem.
+ *
+ * Wcześniej trzy skróty wyglądały jak trzy puste prostokąty z drobną strzałką
+ * — na telefonie nie do rozróżnienia jednym spojrzeniem. Ikona daje im
+ * tożsamość, a druga linijka mówi, po co się tam wchodzi.
+ */
+function Shortcut({
+  to,
+  label,
+  hint,
+  children,
+}: {
+  to: string;
+  label: string;
+  hint: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      to={to}
+      className="flex items-center gap-3 rounded-2xl border border-line bg-surface px-3.5 py-3 transition active:scale-[0.99] hover:border-accent-line"
+    >
+      <span className="grid h-9 w-9 flex-none place-content-center rounded-xl bg-accent-soft text-accent">
+        <svg
+          viewBox="0 0 24 24"
+          className="h-[18px] w-[18px]"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          {children}
+        </svg>
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[14.5px] font-semibold leading-tight">{label}</span>
+        <span className="block text-[11.5px] text-ink-3">{hint}</span>
+      </span>
+      <span className="flex-none text-ink-3" aria-hidden="true">
+        →
+      </span>
+    </Link>
   );
 }

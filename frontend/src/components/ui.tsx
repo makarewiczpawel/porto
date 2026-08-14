@@ -71,7 +71,9 @@ export function ProgressRing({ value, max, label }: { value: number; max: number
   return (
     <div className="relative h-44 w-44">
       <svg width="176" height="176" viewBox="0 0 176 176" className="-rotate-90">
-        <circle cx="88" cy="88" r={radius} fill="none" stroke="var(--color-surface-3)" strokeWidth="13" />
+        {/* Tor cieńszy od wypełnienia: pusty pierścień ma wyglądać jak miejsce
+            czekające na wypełnienie, a nie jak ciemne koło. */}
+        <circle cx="88" cy="88" r={radius} fill="none" stroke="var(--color-surface-3)" strokeWidth="9" />
         <circle
           cx="88"
           cy="88"

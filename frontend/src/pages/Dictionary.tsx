@@ -117,17 +117,27 @@ function Chip({
   );
 }
 
-export function ItemRow({ item }: { item: Item }) {
+/**
+ * Wiersz listy słów.
+ *
+ * `showLevel` istnieje dlatego, że w talii jednego poziomu każda pozycja ma tę
+ * samą plakietkę — dwadzieścia razy „A1" pod sobą nie niesie żadnej informacji,
+ * a zabiera miejsce i uwagę. W słowniku, gdzie poziomy się mieszają, plakietka
+ * ma sens i zostaje.
+ */
+export function ItemRow({ item, showLevel = true }: { item: Item; showLevel?: boolean }) {
   return (
-    <div className="flex items-center gap-2 rounded-2xl border border-line bg-surface pr-2.5 hover:border-accent-line">
-      <Link to={`/slownik/${item.id}`} className="flex min-w-0 flex-1 items-center gap-3 py-2.5 pl-3">
+    <div className="flex items-center gap-1 rounded-2xl border border-line bg-surface pr-2 transition hover:border-accent-line">
+      <Link to={`/slownik/${item.id}`} className="flex min-w-0 flex-1 items-center gap-3 py-2.5 pl-3.5">
         <div className="min-w-0">
           <div className="pt truncate text-[17px] leading-tight">{item.display_pt}</div>
           <div className="truncate text-[12.5px] text-ink-2">{item.pl}</div>
         </div>
-        <div className="ml-auto flex-none">
-          <Pill tone={item.cefr_level === "A1" ? "neutral" : "accent"}>{item.cefr_level}</Pill>
-        </div>
+        {showLevel && (
+          <div className="ml-auto flex-none">
+            <Pill tone={item.cefr_level === "A1" ? "neutral" : "accent"}>{item.cefr_level}</Pill>
+          </div>
+        )}
       </Link>
       <SpeakButton text={item.display_pt} url={item.audio_url} size="sm" />
     </div>

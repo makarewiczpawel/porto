@@ -187,7 +187,7 @@ export function QuizAttemptPage() {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <div className="safe-top flex items-center gap-3 px-4 pb-2 pt-3">
+      <div className="safe-top flex items-center gap-3 px-4 pb-2">
         <button
           type="button"
           onClick={() => submit.mutate()}
@@ -252,7 +252,7 @@ export function QuizResultPage() {
   const tone = result.score >= 80 ? "text-good" : result.score >= 60 ? "text-ink" : "text-bad";
 
   return (
-    <div className="safe-top px-4 pb-8 pt-6">
+    <div className="safe-top-lg px-4 pb-8">
       <div className="grid justify-items-center gap-1 text-center">
         <div className={cx("pt text-6xl leading-none tnum", tone)}>{Math.round(result.score)}%</div>
         <p className="text-sm text-ink-2">

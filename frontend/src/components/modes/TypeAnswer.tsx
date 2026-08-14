@@ -9,6 +9,14 @@ export const DIACRITICS = ["ã", "ç", "á", "é", "ó", "ê", "â", "í", "ú",
 interface Props {
   /** What is being asked for — the Polish prompt, or a sentence with a gap. */
   prompt: React.ReactNode;
+  /**
+   * Zmiana tej wartości czyści pole. Musi to być coś trwałego — numer pytania —
+   * a nie sam `prompt`: ten jest elementem tworzonym od nowa przy każdym
+   * renderze rodzica, więc czyścił wpisaną odpowiedź dokładnie w chwili
+   * pokazania oceny. Zostawało „Poprawnie: sim" bez śladu po tym, co się
+   * napisało, czyli bez tego, co przy nauce języka jest najciekawsze.
+   */
+  resetKey?: string | number;
   placeholder?: string;
   disabled?: boolean;
   inline?: boolean;
@@ -19,13 +27,20 @@ interface Props {
  * A text field built for typing Portuguese on a Polish phone: autocorrect off
  * (it mangles the words), and the accented characters one tap away.
  */
-export function TypeAnswer({ prompt, placeholder = "wpisz po portugalsku", disabled, inline, onSubmit }: Props) {
+export function TypeAnswer({
+  prompt,
+  resetKey,
+  placeholder = "wpisz po portugalsku",
+  disabled,
+  inline,
+  onSubmit,
+}: Props) {
   const [value, setValue] = useState("");
   const input = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setValue("");
-  }, [prompt]);
+  }, [resetKey]);
 
   function insert(char: string) {
     const field = input.current;
@@ -50,7 +65,10 @@ export function TypeAnswer({ prompt, placeholder = "wpisz po portugalsku", disab
 
   return (
     <>
-      <div className="flex flex-1 flex-col justify-center">{prompt}</div>
+      {/* Pytanie pod górną krawędzią, nie na środku wolnej przestrzeni: gdy
+          wyskoczy klawiatura, środek i tak przestaje istnieć, a bez niej
+          pytanie wisiało w pustce daleko od pola odpowiedzi. */}
+      <div className="flex flex-1 flex-col justify-start pt-6">{prompt}</div>
 
       <div className="grid gap-2">
         <input
@@ -85,7 +103,10 @@ export function TypeAnswer({ prompt, placeholder = "wpisz po portugalsku", disab
           )}
         />
 
-        <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {/* Zawijane, nie przewijane. Ucięty rząd na krawędzi ekranu wygląda
+            jak błąd i nie mówi, że coś jest dalej — a tu chodzi o litery, bez
+            których nie da się napisać poprawnie ani jednego słowa. */}
+        <div className="flex flex-wrap gap-1.5 pb-1">
           {DIACRITICS.map((char) => (
             <button
               key={char}
@@ -93,7 +114,7 @@ export function TypeAnswer({ prompt, placeholder = "wpisz po portugalsku", disab
               tabIndex={-1}
               disabled={disabled}
               onClick={() => insert(char)}
-              className="pt h-10 min-w-[38px] flex-none rounded-lg border border-line bg-surface-2 text-lg hover:border-accent-line hover:bg-accent-soft disabled:opacity-50"
+              className="pt h-10 flex-1 basis-[13%] rounded-lg border border-line bg-surface-2 text-lg hover:border-accent-line hover:bg-accent-soft disabled:opacity-50"
             >
               {char}
             </button>

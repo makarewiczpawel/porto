@@ -405,12 +405,15 @@ function Typing({ task, locked, accentStrict, localGrading, onAnswer }: Props) {
   return (
     <TypeAnswer
       disabled={locked}
+      resetKey={task.index}
       prompt={
         <>
           <div className="text-[11px] font-bold uppercase tracking-[0.1em] text-ink-3">
             Napisz po portugalsku
           </div>
-          <p className="mt-3 text-2xl font-semibold">
+          {/* Pytanie jest bohaterem tego ekranu — przy poprzednim rozmiarze
+              ginęło w pustce między paskiem postępu a klawiaturą. */}
+          <p className="mt-3 text-[30px] font-semibold leading-tight">
             {task.question ?? task.pl}
           </p>
         </>
@@ -439,6 +442,7 @@ function Cloze({ task, locked, accentStrict, localGrading, onAnswer }: Props) {
   return (
     <TypeAnswer
       disabled={locked}
+      resetKey={task.index}
       inline
       placeholder="brakujące słowo"
       prompt={

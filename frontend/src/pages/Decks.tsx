@@ -80,6 +80,9 @@ export function DeckDetailPage() {
   if (!query.data) return <EmptyState title="Nie ma takiej talii" action={{ label: "Wróć do talii", to: "/talie" }} />;
 
   const deck = query.data;
+  // Talia „A1" złożona z samych pozycji A1 nie potrzebuje dwudziestu plakietek
+  // z napisem A1.
+  const mixedLevels = new Set(deck.items.map((item) => item.cefr_level)).size > 1;
   const error =
     start.error instanceof ApiError
       ? start.error.code === "NOTHING_TO_STUDY"
@@ -107,6 +110,13 @@ export function DeckDetailPage() {
           </div>
           {deck.cefr_level && <Pill tone="accent">{deck.cefr_level}</Pill>}
         </div>
+        {deck.description && (
+          // Opis wisiał osobno między kartą a przyciskiem — jedno zdanie bez
+          // przynależności. Należy do nagłówka talii, więc siedzi w tej karcie.
+          <p className="mt-2.5 border-t border-line pt-2.5 text-[13px] text-ink-2">
+            {deck.description}
+          </p>
+        )}
         <div className="mt-3">
           <DeckBar deck={deck} />
         </div>
@@ -115,7 +125,7 @@ export function DeckDetailPage() {
         </div>
       </Card>
 
-      {deck.description && <p className="mt-3 text-[13.5px] text-ink-2">{deck.description}</p>}
+
 
       {error && (
         <div className="mt-3">
@@ -132,7 +142,7 @@ export function DeckDetailPage() {
       <Label className="mb-2 mt-5">Pozycje</Label>
       <div className="grid gap-2">
         {deck.items.map((item) => (
-          <ItemRow key={item.id} item={item} />
+          <ItemRow key={item.id} item={item} showLevel={mixedLevels} />
         ))}
       </div>
     </div>

@@ -41,7 +41,13 @@ export function ProgressPage() {
       <div className="grid grid-cols-3 gap-2">
         <Tile value={data.streak} label="dni z rzędu" tone="text-warm" />
         <Tile value={states.review ?? 0} label="opanowanych" tone="text-good" />
-        <Tile value={`${data.accuracy}%`} label="skuteczność" tone="text-ink" />
+        {/* Zero procent przy zerze powtórek to nie wynik, tylko brak wyniku —
+            a wygląda jak porażka. */}
+        <Tile
+          value={data.reviews_total > 0 ? `${data.accuracy}%` : "—"}
+          label="skuteczność"
+          tone="text-ink"
+        />
       </div>
 
       <Card className="mt-3">
@@ -86,9 +92,6 @@ export function ProgressPage() {
         </div>
       </Card>
 
-      <p className="mt-6 text-center text-[11.5px] text-ink-3">
-        Heatmapa aktywności i prognoza powtórek dochodzą w fazie 5.
-      </p>
     </div>
   );
 }
