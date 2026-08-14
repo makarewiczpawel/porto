@@ -169,6 +169,16 @@ function Review({ generation, onBack }: { generation: AiGeneration; onBack: () =
         queryClient.invalidateQueries({ queryKey: [key] });
       }
       navigate(`/talie/${result.deck_id}`);
+      // Nagrania powstają w tle, tuż po odpowiedzi serwera — a talia otwiera
+      // się natychmiast, więc przy pierwszym wejściu głośników jeszcze nie ma.
+      // Bez tego zajrzenia jeszcze raz nowy zestaw wygląda na taki bez wymowy
+      // i trzeba samemu wpaść na to, żeby odświeżyć.
+      if (result.audio_queued > 0) {
+        window.setTimeout(
+          () => queryClient.invalidateQueries({ queryKey: ["deck", result.deck_id] }),
+          8000,
+        );
+      }
     },
     onError: (caught) => {
       if (caught instanceof ApiError && caught.code === "AI_JOB_NOT_FOUND") {
