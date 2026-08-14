@@ -33,7 +33,10 @@ export function SummaryPage() {
   const seconds = summary.seconds % 60;
 
   return (
-    <div className="safe-top px-4 pb-8 pt-6">
+    // Kolumna na całą wysokość: podsumowanie bywa krótkie, a wtedy treść
+    // wisiała w górnej połowie ekranu nad pustką. Przycisk siada na dole, tam
+    // gdzie i tak jest kciuk.
+    <div className="safe-top-lg safe-bottom flex min-h-dvh flex-col px-4">
       <div className="grid justify-items-center gap-1 text-center">
         <div className="text-4xl">{summary.accuracy >= 80 ? "🎉" : "💪"}</div>
         <div className="pt text-6xl leading-none tnum">{Math.round(summary.accuracy)}%</div>
@@ -54,7 +57,7 @@ export function SummaryPage() {
         )}
       </div>
 
-      <div className="mt-6 grid gap-3">
+      <div className="mt-7 grid gap-3">
         <div className="grid grid-cols-3 gap-2">
           <Tile value={summary.correct_count} label="poprawnych" tone="text-good" />
           <Tile value={summary.completed_count - summary.correct_count} label="pomyłek" tone="text-bad" />
@@ -85,18 +88,23 @@ export function SummaryPage() {
         )}
 
         {summary.mistakes.length > 0 && (
-          <div>
-            <Label className="mb-2">Pomyłki tej sesji</Label>
+          <div className="mt-1">
+            <Label className="mb-2">Do powtórzenia</Label>
             <div className="grid gap-2">
               {summary.mistakes.map((mistake, index) => (
-                <Card key={`${mistake.item_id}-${index}`}>
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="pt text-[17px]">{mistake.pt}</div>
-                    <Pill tone="bad">{mistake.pl}</Pill>
-                  </div>
+                <Card key={`${mistake.item_id}-${index}`} className="py-3">
+                  {/* Poprawna odpowiedź pod hasłem, zwykłym tekstem. Wcześniej
+                      siedziała w czerwonej plakietce po prawej — a czerwień w
+                      całej aplikacji znaczy „błąd", więc dokładnie to, czego
+                      trzeba się nauczyć, wyglądało na rzecz do odrzucenia. */}
+                  <div className="pt text-[17px] leading-snug">{mistake.pt}</div>
+                  <div className="mt-0.5 text-[13.5px] text-ink-2">{mistake.pl}</div>
                   {mistake.user_answer && (
-                    <div className="mt-1 text-xs text-ink-3">
-                      twoja odpowiedź: <i>{mistake.user_answer}</i>
+                    <div className="mt-1.5 text-[12px] text-ink-3">
+                      twoja odpowiedź:{" "}
+                      <span className="text-bad line-through decoration-bad/50">
+                        {mistake.user_answer}
+                      </span>
                     </div>
                   )}
                 </Card>
@@ -104,7 +112,11 @@ export function SummaryPage() {
             </div>
           </div>
         )}
+      </div>
 
+      {/* Przycisk zamykający dzień — przyklejony do dołu, żeby ekran kończył
+          się tam, gdzie kończy się telefon. */}
+      <div className="mt-auto pb-4 pt-6">
         <Button onClick={() => navigate("/")}>Gotowe na dziś</Button>
       </div>
     </div>

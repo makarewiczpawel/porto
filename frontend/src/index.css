@@ -117,9 +117,17 @@ input:focus-visible {
   outline-offset: 2px;
 }
 
-/* Respect the notch and the home indicator. */
+/* Respect the notch and the home indicator.
+   Uwaga na pułapkę: te klasy ustawiają `padding-top`, więc **przykrywają**
+   dołożone obok `pt-*` z Tailwinda. Na telefonie z wcięciem nie było tego widać,
+   bo wcięcie samo daje odstęp — ale w przeglądarce i na ekranie bez wcięcia
+   górny margines znikał do zera i treść kleiła się do krawędzi. Dlatego odstęp
+   jest tutaj, z minimum, i nie dokłada się do niego niczego z zewnątrz. */
 .safe-top {
-  padding-top: env(safe-area-inset-top);
+  padding-top: max(env(safe-area-inset-top), 0.75rem);
+}
+.safe-top-lg {
+  padding-top: max(env(safe-area-inset-top), 1.75rem);
 }
 .safe-bottom {
   padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);

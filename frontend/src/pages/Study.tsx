@@ -124,7 +124,7 @@ export function StudyPage() {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <div className="safe-top flex items-center gap-3 px-4 pb-2 pt-3">
+      <div className="safe-top flex items-center gap-3 px-4 pb-2">
         <button
           type="button"
           onClick={leave}

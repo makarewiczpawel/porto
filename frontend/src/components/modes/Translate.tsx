@@ -76,6 +76,7 @@ export function Translate({
 
   return (
     <TypeAnswer
+      resetKey={task.index}
       prompt={
         <div className="grid gap-2">
           <div className="text-[11px] font-bold uppercase tracking-[0.1em] text-ink-3">
