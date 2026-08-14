@@ -178,6 +178,9 @@ export function SettingsPage() {
       <Label className="mb-2 mt-5">AI</Label>
       <AiSettings />
 
+      <Label className="mb-2 mt-5">Kopia zapasowa</Label>
+      <Backup />
+
       <Label className="mb-2 mt-5">Konto</Label>
       <Card className="grid gap-3">
         <div className="flex items-center justify-between gap-3">
@@ -244,6 +247,57 @@ function AiSettings() {
           ? "Budżet wyczerpany — funkcje AI wrócą pierwszego dnia miesiąca."
           : "Po wyczerpaniu budżetu funkcje AI się wyłączają, a nauka działa dalej."}
       </div>
+    </Card>
+  );
+}
+
+/**
+ * Eksport bazy do pliku.
+ *
+ * CSV wychodzi w formacie, który przyjmuje import — plik stąd wraca tam bez
+ * żadnej obróbki, więc to jest realna kopia zapasowa, a nie raport do
+ * oglądania. JSON dokłada zdania przykładowe i przypisanie do talii, których
+ * w jednej tabelce nie da się zmieścić bez wymyślania własnej składni.
+ */
+function Backup() {
+  const [busy, setBusy] = useState<string | null>(null);
+  const [problem, setProblem] = useState<string | null>(null);
+
+  async function download(format: "csv" | "json") {
+    setBusy(format);
+    setProblem(null);
+    try {
+      const blob = await api.blob(`/api/items/export?format=${format}&mine_only=false`);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `porto-${new Date().toISOString().slice(0, 10)}.${format}`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (caught) {
+      setProblem(caught instanceof Error ? caught.message : "Nie udało się pobrać pliku.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <Card className="grid gap-2">
+      <p className="text-[12.5px] text-ink-2">
+        Cały słownik w jednym pliku. CSV otwiera się w arkuszu i wraca przez import bez
+        przeróbek; JSON dodatkowo zachowuje zdania przykładowe i talie.
+      </p>
+      <div className="flex gap-2">
+        <Button variant="ghost" size="sm" onClick={() => void download("csv")} disabled={busy !== null}>
+          {busy === "csv" ? "Pobieram…" : "Pobierz CSV"}
+        </Button>
+        <Button variant="ghost" size="sm" onClick={() => void download("json")} disabled={busy !== null}>
+          {busy === "json" ? "Pobieram…" : "Pobierz JSON"}
+        </Button>
+      </div>
+      {problem && <p className="text-[12px] text-bad">{problem}</p>}
     </Card>
   );
 }

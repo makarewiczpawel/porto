@@ -54,6 +54,7 @@ def queue_summary(user: User = Depends(get_current_user), db: Session = Depends(
         goal_met=bool(today and today.goal_met),
         streak=stats_service.streak(db, user, stats_service.local_day(user, now)),
         next_due_at=counts["next_due_at"],
+        catch_up=counts.get("catch_up"),
     )
 
 
@@ -506,27 +507,11 @@ def reset_item(
     db.commit()
 
 
-@router.get("/stats/overview")
+# Statystyki wyprowadziły się do `app/routers/stats.py` — tu został tylko
+# stary adres, bo aplikacja w telefonie może być starsza niż serwer i nie ma
+# powodu, żeby ekran postępu przestał jej działać do czasu odświeżenia.
+@router.get("/stats/overview", deprecated=True)
 def overview(user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> dict:
-    now = datetime.now(timezone.utc)
-    by_state = dict(
-        db.execute(
-            select(UserItemState.state, func.count())
-            .where(UserItemState.user_id == user.id)
-            .group_by(UserItemState.state)
-        ).all()
-    )
-    total_items = db.execute(select(func.count()).select_from(Item).where(Item.verified.is_(True))).scalar_one()
-    reviews_total = db.execute(
-        select(func.count()).select_from(Review).where(Review.user_id == user.id)
-    ).scalar_one()
-    correct_total = db.execute(
-        select(func.count()).select_from(Review).where(Review.user_id == user.id, Review.is_correct.is_(True))
-    ).scalar_one()
-    return {
-        "streak": stats_service.streak(db, user, stats_service.local_day(user, now)),
-        "cards_by_state": by_state,
-        "items_total": total_items,
-        "reviews_total": reviews_total,
-        "accuracy": round(correct_total / reviews_total * 100, 1) if reviews_total else 0.0,
-    }
+    from app.routers.stats import overview as current
+
+    return current(user, db)

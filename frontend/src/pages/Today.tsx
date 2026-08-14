@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 
 import { ApiError, api } from "@/api/client";
 import type { QueueSummary, StudySession } from "@/api/types";
-import { Button, Card, ErrorNote, Label, Pill, ProgressRing, Spinner } from "@/components/ui";
+import { Button, Card, ErrorNote, Label, Pill, ProgressRing, Spinner, plural } from "@/components/ui";
 import { useAuth } from "@/store/auth";
 import { useSession } from "@/store/session";
 
@@ -118,6 +118,20 @@ export function TodayPage() {
             <div className="text-xs text-ink-2">nowych pozycji</div>
           </div>
         </div>
+
+        {data.catch_up && (
+          // Trzysta zaległych powtórek to nie kolejka, tylko ściana. Tydzień
+          // nadrabiania jest do przejścia; „300 kart" nie jest.
+          <Card className="border-warm/40 bg-warm/10">
+            <div className="text-[14px] font-semibold text-warm">Nadrabianie po przerwie</div>
+            <p className="mt-1 text-[13px] text-ink-2">
+              Uzbierało się <b>{data.catch_up.backlog}</b>{" "}
+              {plural(data.catch_up.backlog, "powtórka", "powtórki", "powtórek")}. Zamiast
+              wszystkiego naraz sesja weźmie dziś <b>{data.catch_up.today}</b> —
+              w {data.catch_up.days} dni wrócisz na bieżąco.
+            </p>
+          </Card>
+        )}
 
         {startError && <ErrorNote>{startError}</ErrorNote>}
 

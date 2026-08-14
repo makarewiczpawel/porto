@@ -111,6 +111,12 @@ export interface DeckDetail extends Deck {
   items: Item[];
 }
 
+export interface CatchUp {
+  backlog: number;
+  today: number;
+  days: number;
+}
+
 export interface QueueSummary {
   due: number;
   new_available: number;
@@ -119,6 +125,8 @@ export interface QueueSummary {
   streak: number;
   goal_met: boolean;
   next_due_at: string | null;
+  /** Plan nadrabiania — ustawiony dopiero, gdy zaległości urosły ponad próg. */
+  catch_up?: CatchUp | null;
 }
 
 export interface Task {
@@ -370,4 +378,55 @@ export interface AiGrade {
   corrected: string;
   feedback: string;
   cached: boolean;
+}
+
+// ── statystyki (faza 5) ────────────────────────────────────────────────────
+export interface Overview {
+  streak: number;
+  cards_by_state: Record<string, number>;
+  items_total: number;
+  reviews_total: number;
+  accuracy: number;
+  /** Skuteczność z ostatnich 30 dni, bez pierwszego kontaktu z nowym słowem.
+   *  `null` znaczy „za mało danych", nie „zero". */
+  retention_30d: number | null;
+  seconds_total: number;
+}
+
+export interface HeatmapDay {
+  date: string;
+  reviews: number;
+  new: number;
+  correct: number;
+  seconds: number;
+  goal_met: boolean;
+}
+
+export interface Heatmap {
+  days: HeatmapDay[];
+  total_reviews: number;
+  active_days: number;
+}
+
+export interface ForecastDay {
+  date: string;
+  due: number;
+}
+
+export interface Forecast {
+  days: ForecastDay[];
+  total: number;
+}
+
+export interface HardItem {
+  item_id: string;
+  pt: string;
+  pl: string;
+  attempts: number;
+  misses: number;
+  accuracy: number;
+  lapses: number;
+  leech: boolean;
+  suspended: boolean;
+  last_seen: string | null;
 }

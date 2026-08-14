@@ -213,6 +213,15 @@ powstają pozycje (`source=ai`), nowa talia i nagrania wymowy.
 Prompt systemowy wymienia zakazane brazylizmy parami — „NIE ônibus / TAK autocarro" — bo
 polecenie „pisz po europejsku" model traktuje jak sugestię, a konkretną listę jak regułę.
 
+## Kopia zapasowa
+
+`Ustawienia → Kopia zapasowa` pobiera cały słownik jako CSV albo JSON. CSV wychodzi w tym
+samym formacie, który przyjmuje import, więc plik stąd wraca tam bez żadnej obróbki — to jest
+realna kopia, nie raport do oglądania. JSON dokłada zdania przykładowe i przypisanie do talii.
+
+Historia powtórek i harmonogram FSRS zostają w bazie; ich kopię robi Railway. Sam eksport
+odtwarza materiał, nie postęp.
+
 ## CI
 
 `.github/workflows/ci.yml` przy każdym pushu i pull requeście sprawdza:

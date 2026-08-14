@@ -5,7 +5,7 @@ from sqlalchemy import text
 from app.config import settings
 from app.db import engine
 from app.errors import register_error_handlers
-from app.routers import ai, audio, auth, content, quizzes, study
+from app.routers import ai, audio, auth, content, quizzes, stats, study
 
 app = FastAPI(
     title=settings.app_name,
@@ -29,6 +29,7 @@ app.include_router(study.router)
 app.include_router(quizzes.router)
 app.include_router(audio.router)
 app.include_router(ai.router)
+app.include_router(stats.router)
 
 
 @app.get("/api/health", tags=["system"])

@@ -1,5 +1,6 @@
 """Builds a study session: which cards, in what order, asked in which form."""
 
+import math
 import random
 import uuid
 from dataclasses import dataclass
@@ -610,10 +611,25 @@ def build_session(
     if not enabled:
         enabled = ["flashcard"]
 
-    unlock_production(db, user, now)
-
     review_cap = user_settings.review_limit if review_limit is None else review_limit
     new_cap = user_settings.new_per_day if new_limit is None else new_limit
+
+    # Po dłuższej przerwie kolejka zaległości potrafi urosnąć do kilkuset kart.
+    # Sesja bierze wtedy tylko dzienną porcję planu nadrabiania — reszta wraca
+    # jutro. Bez tego pierwsze wejście po wakacjach kończy się zamknięciem
+    # aplikacji, a nie nauką.
+    #
+    # Liczone **przed** odblokowaniem produkcji, czyli z tej samej liczby, którą
+    # przed chwilą pokazał ekran „Dziś". Inaczej porcja rosłaby po drodze i
+    # zapowiedź rozmijałaby się z tym, co faktycznie dostaje uczeń.
+    if review_limit is None:
+        plan = catch_up_plan(
+            queue_counts(db, user, now, resolved_decks)["due"], user_settings.review_limit
+        )
+        if plan is not None:
+            review_cap = plan["today"]
+
+    unlock_production(db, user, now)
 
     states = due_states(db, user, now, review_cap, resolved_decks)
     fresh = new_items(db, user, new_cap, resolved_decks)
@@ -707,10 +723,38 @@ def queue_counts(db: Session, user: User, now: datetime, deck_ids: list[uuid.UUI
         )
     ).scalar_one_or_none()
 
+    due_count = db.execute(due_q).scalar_one()
     return {
-        "due": db.execute(due_q).scalar_one(),
+        "due": due_count,
         "new_available": db.execute(new_q).scalar_one(),
         "next_due_at": next_due,
+        "catch_up": catch_up_plan(due_count, user.settings.review_limit),
+    }
+
+
+# Powyżej tylu zaległych powtórek kolejka przestaje być kolejką, a zaczyna być
+# ścianą. Po dwóch tygodniach przerwy potrafi ich być trzysta — a trzysta kart
+# naraz to nie nauka, tylko powód, żeby przestać.
+BACKLOG_THRESHOLD = 60
+CATCH_UP_DAYS = 7
+
+
+def catch_up_plan(due: int, review_limit: int) -> dict | None:
+    """Rozłożenie nawisu na tydzień, gdy zaległości urosły ponad próg.
+
+    Nic tu nie przestawia terminów w bazie — FSRS ma prawo uważać, że te karty
+    są na dziś, i ma rację. Zmienia się tylko *porcja na jedno posiedzenie* i
+    to, co widzi użytkownik: zamiast „300 powtórek" dostaje „dziś 43 z 300,
+    nadrobisz w tydzień". Karty, które przez ten tydzień poczekają dłużej,
+    FSRS i tak policzy poprawnie — ich opóźnienie jest częścią odpowiedzi.
+    """
+    if due <= BACKLOG_THRESHOLD:
+        return None
+    portion = max(1, math.ceil(due / CATCH_UP_DAYS))
+    return {
+        "backlog": due,
+        "today": min(portion, review_limit),
+        "days": CATCH_UP_DAYS,
     }
 
 
