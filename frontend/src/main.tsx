@@ -1,20 +1,47 @@
-import { StrictMode, useEffect } from "react";
+import { StrictMode, Suspense, lazy, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import { AppLayout, FullScreenLayout } from "@/components/Layout";
 import { Spinner } from "@/components/ui";
-import { AddItemPage } from "@/pages/AddItem";
-import { DeckDetailPage, DecksPage } from "@/pages/Decks";
-import { DictionaryPage, ItemDetailPage } from "@/pages/Dictionary";
 import { LoginPage } from "@/pages/Login";
-import { ProgressPage } from "@/pages/Progress";
-import { QuizAttemptPage, QuizResultPage, QuizzesPage } from "@/pages/Quiz";
-import { SettingsPage } from "@/pages/Settings";
-import { StudyPage } from "@/pages/Study";
-import { SummaryPage } from "@/pages/Summary";
 import { TodayPage } from "@/pages/Today";
+
+/**
+ * Ekrany doczytywane na żądanie.
+ *
+ * Logowanie i „Dziś" idą w głównej paczce, bo od nich zaczyna się każde
+ * uruchomienie. Reszta — słownik, talie, quizy, wykresy postępu, generowanie
+ * z AI — to kod, którego pierwszy ekran nie potrzebuje, a przy starcie
+ * kosztował ponad połowę pobranego JavaScriptu.
+ */
+const AddItemPage = lazy(() => import("@/pages/AddItem").then((m) => ({ default: m.AddItemPage })));
+const DecksPage = lazy(() => import("@/pages/Decks").then((m) => ({ default: m.DecksPage })));
+const DeckDetailPage = lazy(() =>
+  import("@/pages/Decks").then((m) => ({ default: m.DeckDetailPage })),
+);
+const DictionaryPage = lazy(() =>
+  import("@/pages/Dictionary").then((m) => ({ default: m.DictionaryPage })),
+);
+const ItemDetailPage = lazy(() =>
+  import("@/pages/Dictionary").then((m) => ({ default: m.ItemDetailPage })),
+);
+const ProgressPage = lazy(() =>
+  import("@/pages/Progress").then((m) => ({ default: m.ProgressPage })),
+);
+const QuizzesPage = lazy(() => import("@/pages/Quiz").then((m) => ({ default: m.QuizzesPage })));
+const QuizAttemptPage = lazy(() =>
+  import("@/pages/Quiz").then((m) => ({ default: m.QuizAttemptPage })),
+);
+const QuizResultPage = lazy(() =>
+  import("@/pages/Quiz").then((m) => ({ default: m.QuizResultPage })),
+);
+const SettingsPage = lazy(() =>
+  import("@/pages/Settings").then((m) => ({ default: m.SettingsPage })),
+);
+const StudyPage = lazy(() => import("@/pages/Study").then((m) => ({ default: m.StudyPage })));
+const SummaryPage = lazy(() => import("@/pages/Summary").then((m) => ({ default: m.SummaryPage })));
 import { AuthProvider, useAuth } from "@/store/auth";
 import { watchConnection } from "@/store/session";
 import "./index.css";
@@ -58,7 +85,8 @@ function Shell() {
   if (!user) return <LoginPage />;
 
   return (
-    <Routes>
+    <Suspense fallback={<Spinner />}>
+      <Routes>
       <Route element={<AppLayout />}>
         <Route path="/" element={<TodayPage />} />
         <Route path="/slownik" element={<DictionaryPage />} />
@@ -76,8 +104,9 @@ function Shell() {
         <Route path="/quizy/:attemptId" element={<QuizAttemptPage />} />
         <Route path="/quizy/:attemptId/wynik" element={<QuizResultPage />} />
       </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
   );
 }
 

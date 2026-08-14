@@ -371,7 +371,7 @@ zweryfikować bez wywołania płatnego API.
 - [x] Tryb „nadrabianie" po przerwie: rozkłada nawis `due` na 7 dni zamiast wywalać 300 kart naraz (ryzyko #4). Bez ruszania terminów w bazie — zmienia się porcja na sesję i komunikat, FSRS dalej liczy opóźnienie jako część odpowiedzi
 
 ### 5.4 Polish [~4 h]
-- [ ] Lighthouse mobile: Performance ≥ 90, Accessibility ≥ 95, PWA installable — do uruchomienia na wdrożonej aplikacji
+- [x] Lighthouse mobile: raport z wdrożonej aplikacji (87 / 92 / 100 / 82) przerobiony punkt po punkcie — patrz niżej. Wynik po poprawkach do potwierdzenia kolejnym uruchomieniem
 - [x] Przegląd a11y: kontrasty tekstu pomocniczego podniesione do 4,5:1, focus widoczny, `aria-live` na feedbacku, mapa aktywności jako jeden opis zamiast 182 etykiet
 - [x] Obsługa błędów sieci w interfejsie: pasek „brak połączenia" na każdym ekranie, kolejka odpowiedzi dosyła się sama
 - [ ] Backup bazy: potwierdzić harmonogram na Railway (eksport z aplikacji gotowy i przetestowany)
@@ -380,11 +380,21 @@ zweryfikować bez wywołania płatnego API.
 - [x] Heatmapa pokazuje pełną historię od pierwszego dnia nauki
 - [x] Import 200-wierszowego CSV → raport, zero utraconych wierszy bez wyjaśnienia
 - [x] Eksport bazy wraca przez import bez przeróbek (test `test_csv_export_round_trips_through_the_importer`)
-- [ ] Wyniki Lighthouse osiągnięte — wymaga uruchomienia na wdrożonej aplikacji
+- [ ] Wyniki Lighthouse potwierdzone ponownym uruchomieniem po wdrożeniu poprawek
 
-Zostaje audyt Lighthouse i potwierdzenie harmonogramu kopii zapasowych w Railway. Obu nie da
-się zrobić z tego środowiska: pierwsze wymaga wdrożonej aplikacji, drugie dostępu do konsoli
-Railway.
+Pierwszy raport (mobile, 14.08): Performance 87, Accessibility 92, Best practices 100, SEO 82.
+Każda uwaga została zaadresowana u źródła:
+
+| Uwaga | Co zrobiono |
+|---|---|
+| `[user-scalable="no"]` w viewport | Zdjęte `maximum-scale` — powiększanie tekstu znów działa |
+| Brak `meta description` | Dodany opis aplikacji |
+| Nieprawidłowy `robots.txt` | Prawdziwy plik z `Disallow: /` — to aplikacja prywatna |
+| `registerSW.js` blokuje render (466 ms) | `injectRegister: "script-defer"` |
+| 52 KiB nieużywanego JS | Podział na paczki per ekran; główna z 307 → 238 kB |
+| Trzy rundy do API na starcie | `preconnect` do domeny API |
+
+Zostaje potwierdzenie harmonogramu kopii zapasowych w Railway — wymaga dostępu do konsoli.
 
 ---
 
