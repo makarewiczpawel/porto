@@ -2,8 +2,18 @@
 <html lang="pl">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1" />
+    <!-- Bez `maximum-scale`: blokada powiększania odbiera możliwość przybliżenia
+         tekstu komuś, kto tego potrzebuje, a chroniła tylko przed przypadkowym
+         zoomem przy dwukliku. To zły interes. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#1B4FB0" />
+    <meta
+      name="description"
+      content="Porto — codzienna nauka portugalskiego europejskiego. Powtórki planowane algorytmem FSRS, wymowa pt-PT, tryb offline."
+    />
+    <!-- API stoi na innej domenie, a pierwsze żądanie leci zaraz po starcie.
+         Nawiązanie połączenia z góry oszczędza DNS i TLS na ścieżce krytycznej. -->
+    <link rel="preconnect" href="https://api-porto.pmakarewicz.com" crossorigin />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />

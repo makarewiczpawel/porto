@@ -10,6 +10,10 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",
+      // Skrypt rejestrujący blokował pierwsze malowanie na blisko pół sekundy
+      // (Lighthouse: 466 ms). Service worker nie jest potrzebny do pokazania
+      // pierwszego ekranu, więc może poczekać na koniec parsowania dokumentu.
+      injectRegister: "script-defer",
       includeAssets: ["favicon.svg", "apple-touch-icon.png"],
       manifest: {
         name: "Porto — nauka portugalskiego",
@@ -32,7 +36,9 @@ export default defineConfig({
         // Bez tego wejście na /nauka po zamknięciu aplikacji w trybie offline
         // kończy się błędem przeglądarki zamiast wznowieniem sesji.
         navigateFallback: "index.html",
-        navigateFallbackDenylist: [/^\/api/],
+        // `robots.txt` musi być prawdziwym plikiem, nie stroną aplikacji —
+        // inaczej roboty dostają HTML zamiast reguł.
+        navigateFallbackDenylist: [/^\/api/, /^\/robots\.txt$/],
         runtimeCaching: [
           {
             // Nagranie spod danego adresu nigdy się nie zmienia — adres jest

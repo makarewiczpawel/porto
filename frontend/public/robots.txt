@@ -1,0 +1,3 @@
+# Prywatna aplikacja do nauki — nie ma tu nic do zaindeksowania.
+User-agent: *
+Disallow: /
