@@ -60,6 +60,10 @@ export function TypeAnswer({ prompt, placeholder = "wpisz po portugalsku", disab
           onKeyDown={(event) => {
             if (event.key === "Enter") {
               event.preventDefault();
+              // Ten sam Enter nie może zatwierdzić odpowiedzi i od razu zamknąć
+              // informacji zwrotnej, która właśnie się przez niego pojawiła.
+              // Ekran oceny nasłuchuje na oknie, więc event musi się tu skończyć.
+              event.stopPropagation();
               submit();
             }
           }}

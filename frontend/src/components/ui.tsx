@@ -5,6 +5,15 @@ export function cx(...parts: (string | false | null | undefined)[]) {
   return parts.filter(Boolean).join(" ");
 }
 
+/** Polska odmiana przez liczbę: 1 wiersz, 2 wiersze, 5 wierszy. */
+export function plural(count: number, one: string, few: string, many: string): string {
+  if (count === 1) return one;
+  const lastTwo = count % 100;
+  const last = count % 10;
+  if (last >= 2 && last <= 4 && !(lastTwo >= 12 && lastTwo <= 14)) return few;
+  return many;
+}
+
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: "primary" | "ghost" | "quiet";
   size?: "md" | "sm";

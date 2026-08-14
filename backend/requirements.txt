@@ -13,6 +13,8 @@ fsrs==6.3.2
 rapidfuzz==3.11.0
 # Klient HTTP dla syntezy mowy — od fazy 3 potrzebny też produkcyjnie.
 httpx==0.28.1
+# Model językowy — generowanie zestawów i pomoc przy błędach (faza 4).
+anthropic==0.122.0
 
 # dev / test
 pytest==8.3.4

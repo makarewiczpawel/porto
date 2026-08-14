@@ -241,6 +241,17 @@ def _grade(task: dict, answer: AnswerIn, *, accent_strict: bool) -> Graded:
             diff=grader.diff_hint(given, expected) if not result.is_correct or result.partial else None,
         )
 
+    if mode == "translate_ai":
+        # Ocenę wystawił model, zanim odpowiedź tu dotarła — przy zdaniu nie ma
+        # jednej poprawnej wersji, więc porównanie znak po znaku odpadłoby na
+        # każdym poprawnym synonimie. Zapisujemy jego werdykt razem z tym, co
+        # uczeń faktycznie napisał, żeby dało się do tego wrócić.
+        rating = answer.rating or sched.GOOD
+        return Graded(
+            one(rating > sched.AGAIN, rating, answer.user_answer),
+            correct_answer=task.get("expected") or task.get("pt", ""),
+        )
+
     # flashcard: the user grades themselves
     rating = answer.rating or sched.GOOD
     correct_text = task.get("back") or task.get("pl", "")

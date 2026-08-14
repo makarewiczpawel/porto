@@ -34,6 +34,10 @@ interface Feedback {
   match?: string;
   diff?: string;
   summary?: string;
+  heading?: string;
+  /** Pozycja i to, co zostało wpisane — potrzebne, by zapytać „dlaczego źle?". */
+  itemId?: string;
+  userAnswer?: string;
 }
 
 interface SessionState {
@@ -142,6 +146,9 @@ export const useSession = create<SessionState>()(
           match: localResult?.match,
           diff: localResult?.diff,
           summary: localResult?.summary,
+          heading: localResult?.heading,
+          itemId: task.item_id,
+          userAnswer: payload.user_answer ?? undefined,
         };
 
         set({

@@ -1,5 +1,3 @@
-import re
-import unicodedata
 import uuid
 from datetime import datetime, timezone
 
@@ -29,6 +27,7 @@ from app.schemas import (
     SettingsPatch,
 )
 from app.services import importer
+from app.services.lexicon import DEFAULT_DECK_NAME, default_deck, slugify, split_article
 from app.services.task_builder import audio_index, deck_counts
 
 router = APIRouter(prefix="/api", tags=["content"])
@@ -235,65 +234,6 @@ def get_deck(
 
 
 # ── własne pozycje i talie ────────────────────────────────────────────────
-def _slugify(name: str, user_id: uuid.UUID) -> str:
-    """Slug talii bierze kawałek identyfikatora właściciela.
-
-    Dwie osoby mogą nazwać swoją talię „Praca" i obie mają do tego prawo, a
-    `slug` jest unikalny w całej bazie.
-    """
-    base = re.sub(r"[^a-z0-9]+", "-", unicodedata.normalize("NFKD", name.lower())
-                  .encode("ascii", "ignore").decode()).strip("-")
-    return f"{base or 'talia'}-{user_id.hex[:6]}"
-
-
-def _split_article(pt: str, article: str | None) -> tuple[str, str | None]:
-    """Rodzajnik trzymamy w osobnej kolumnie, ale ludzie piszą go w słowie.
-
-    Bez tego „a esplanada" z rodzajnikiem „a" wyświetla się jako
-    „a a esplanada". Doklejamy go z powrotem przy wyświetlaniu, więc tutaj musi
-    zniknąć z samego hasła.
-    """
-    text = pt.strip()
-    lowered = text.lower()
-    if article:
-        prefix = f"{article.strip().lower()} "
-        if lowered.startswith(prefix):
-            return text[len(prefix):].strip(), article.strip()
-        return text, article.strip()
-    for candidate in ("a", "o", "as", "os", "um", "uma"):
-        if lowered.startswith(f"{candidate} "):
-            return text[len(candidate) + 1:].strip(), candidate
-    return text, None
-
-
-DEFAULT_DECK_NAME = "Moje słówka"
-
-
-def _default_deck(db: Session, user: User) -> Deck:
-    """Prywatna talia, do której trafia wszystko dodane bez wskazania miejsca.
-
-    Kolejka nauki dobiera nowe pozycje przez talie — słowo poza jakąkolwiek
-    talią istniałoby w słowniku, ale nigdy nie pojawiłoby się w sesji. Zamiast
-    zmuszać do zakładania talii przed dodaniem pierwszego słowa, zakładamy ją
-    po cichu przy pierwszej potrzebie.
-    """
-    slug = f"moje-{user.id.hex[:6]}"
-    deck = db.execute(select(Deck).where(Deck.slug == slug)).scalar_one_or_none()
-    if deck is None:
-        deck = Deck(
-            slug=slug,
-            name=DEFAULT_DECK_NAME,
-            description="Pozycje dodane ręcznie i zaimportowane.",
-            icon="✍️",
-            is_shared=False,
-            owner_id=user.id,
-            position=100,
-        )
-        db.add(deck)
-        db.flush()
-    return deck
-
-
 def _own_deck_or_404(db: Session, user: User, deck_id: uuid.UUID) -> Deck:
     deck = db.get(Deck, deck_id)
     if deck is None or (deck.owner_id != user.id and not deck.is_shared):
@@ -306,7 +246,7 @@ def create_deck(
     body: DeckCreateIn, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ) -> DeckOut:
     deck = Deck(
-        slug=_slugify(body.name, user.id),
+        slug=slugify(body.name, user.id),
         name=body.name.strip(),
         description=body.description,
         icon=body.icon,
@@ -329,7 +269,7 @@ def create_deck(
 def create_item(
     body: ItemCreateIn, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ) -> ItemDetailOut:
-    pt, article = _split_article(body.pt, body.article)
+    pt, article = split_article(body.pt, body.article)
     pl = body.pl.strip()
     existing = db.execute(select(Item).where(Item.pt == pt, Item.pl == pl)).scalar_one_or_none()
     if existing is not None:
@@ -370,7 +310,7 @@ def create_item(
         )
 
     deck = (
-        _own_deck_or_404(db, user, body.deck_id) if body.deck_id is not None else _default_deck(db, user)
+        _own_deck_or_404(db, user, body.deck_id) if body.deck_id is not None else default_deck(db, user)
     )
     position = db.execute(
         select(func.coalesce(func.max(DeckItem.position), -1)).where(DeckItem.deck_id == deck.id)
@@ -450,7 +390,7 @@ def import_items(
         deck = _own_deck_or_404(db, user, body.deck_id)
     elif body.deck_name:
         deck = Deck(
-            slug=_slugify(body.deck_name, user.id),
+            slug=slugify(body.deck_name, user.id),
             name=body.deck_name.strip(),
             is_shared=False,
             owner_id=user.id,
@@ -463,7 +403,7 @@ def import_items(
             db.rollback()
             raise conflict("DECK_EXISTS", "Masz już talię o tej nazwie.") from None
     else:
-        deck = _default_deck(db, user)
+        deck = default_deck(db, user)
 
     position = (
         db.execute(
@@ -474,7 +414,7 @@ def import_items(
 
     created = skipped = 0
     for row in parsed.rows:
-        pt, article = _split_article(row.pt, row.article)
+        pt, article = split_article(row.pt, row.article)
         item = db.execute(select(Item).where(Item.pt == pt, Item.pl == row.pl)).scalar_one_or_none()
         if item is None:
             item = Item(

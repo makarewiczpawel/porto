@@ -320,30 +320,35 @@ Do zrobienia raz, przed pisaniem kodu.
 **Cel fazy:** baza rośnie na żądanie, a błędy da się zrozumieć.
 
 ### 4.1 Fundament [~4 h]
-- [ ] `services/ai.py`: Anthropic SDK, model z `AI_MODEL`, timeouty i retry
-- [ ] Model `ai_generation_jobs`; migracja
-- [ ] Log tokenów i kosztu każdego wywołania; twardy limit `AI_MONTHLY_BUDGET_USD` → `429` z czytelnym komunikatem
-- [ ] Rate limit `/api/ai/*` (20/h)
+- [x] `services/ai.py`: Anthropic SDK, model z `AI_MODEL`, timeouty i retry
+- [x] Model `ai_generation_jobs`; migracja
+- [x] Log tokenów i kosztu każdego wywołania; twardy limit `AI_MONTHLY_BUDGET_USD` → `429` z czytelnym komunikatem
+- [x] Rate limit `/api/ai/*` (20/h)
 
 ### 4.2 Generowanie zestawów [~6 h]
-- [ ] Prompt systemowy wymuszający PT-PT: jawna lista zakazanych brazylizmów, wymóg podania rodzajnika i rodzaju dla rzeczowników, zdanie przykładowe do każdej pozycji, wyjście jako ścisły JSON
-- [ ] Walidacja odpowiedzi schematem Pydantic; niepoprawny JSON → jedna próba naprawcza, potem `failed`
-- [ ] Automatyczne odrzucanie pozycji już istniejących w bazie (deduplikacja po `(pt, pl)`)
-- [ ] Ekran przeglądu: lista propozycji z checkboxami, edycja inline tłumaczeń i notatek, „zatwierdź zaznaczone"
-- [ ] Akceptacja → `items` (`source=ai`, `verified=true`), nowa talia, kolejka syntezy audio
+- [x] Prompt systemowy wymuszający PT-PT: jawna lista zakazanych brazylizmów, wymóg podania rodzajnika i rodzaju dla rzeczowników, zdanie przykładowe do każdej pozycji, wyjście jako ścisły JSON
+- [x] Walidacja odpowiedzi schematem Pydantic; niepoprawny JSON → jedna próba naprawcza, potem `failed`
+- [x] Automatyczne odrzucanie pozycji już istniejących w bazie (deduplikacja po `(pt, pl)`)
+- [x] Ekran przeglądu: lista propozycji z checkboxami, edycja inline tłumaczeń i notatek, „zatwierdź zaznaczone"
+- [x] Akceptacja → `items` (`source=ai`, `verified=true`), nowa talia, kolejka syntezy audio
 
 ### 4.3 Feedback [~5 h]
-- [ ] `POST /api/ai/explain` — po błędzie przycisk „dlaczego źle?"; odpowiedź maks. 2 zdania po polsku, cache'owana per `(item_id, user_answer)`, żeby ta sama pomyłka nie kosztowała dwa razy
-- [ ] `POST /api/ai/grade-translation` — ocena 0–100, feedback, poprawiona wersja
-- [ ] Tryb `translate_ai` w sesji (opcjonalny, wyłączony domyślnie ze względu na koszt i czas odpowiedzi)
-- [ ] `POST /api/ai/examples` — dogenerowanie zdań przykładowych dla pozycji, która ich nie ma
-- [ ] Widok `/settings` → zużycie AI w bieżącym miesiącu
+- [x] `POST /api/ai/explain` — po błędzie przycisk „dlaczego źle?"; odpowiedź maks. 2 zdania po polsku, cache'owana per `(item_id, user_answer)`, żeby ta sama pomyłka nie kosztowała dwa razy
+- [x] `POST /api/ai/grade-translation` — ocena 0–100, feedback, poprawiona wersja
+- [x] Tryb `translate_ai` w sesji (opcjonalny, wyłączony domyślnie ze względu na koszt i czas odpowiedzi)
+- [x] `POST /api/ai/examples` — dogenerowanie zdań przykładowych dla pozycji, która ich nie ma
+- [x] Widok `/settings` → zużycie AI w bieżącym miesiącu
 
 ### Definition of Done — Faza 4
+- [x] Żadna treść z AI nie trafia do bazy bez akceptacji
+- [x] Przekroczenie limitu miesięcznego zwraca `429` z komunikatem, nie błąd 500
 - [ ] „20 zwrotów A2 u lekarza" → propozycje w < 30 s, po przeglądzie w nowej talii z audio
-- [ ] Żadna treść z AI nie trafia do bazy bez akceptacji
-- [ ] Przekroczenie limitu miesięcznego zwraca `429` z komunikatem, nie błąd 500
 - [ ] Ręczny przegląd 20 wygenerowanych pozycji: brak brazylizmów, poprawne rodzajniki
+
+Dwa ostatnie punkty wymagają prawdziwego klucza `ANTHROPIC_API_KEY` — do sprawdzenia
+po wdrożeniu. Cała droga (formularz → przegląd → talia → nagrania) jest przeklikana
+z podstawionym modelem, ale jakości portugalskiego i czasu odpowiedzi nie da się
+zweryfikować bez wywołania płatnego API.
 
 ---
 

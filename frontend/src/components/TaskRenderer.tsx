@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 
+import { ApiError, api } from "@/api/client";
 import { diffHint, feedbackLabel, gradeAnswer } from "@/api/grade";
-import type { MatchPair, Task } from "@/api/types";
+import type { AiExplanation, MatchPair, Task } from "@/api/types";
 import { Listening } from "./modes/Listening";
 import { Matching } from "./modes/Matching";
 import { SpeakButton } from "./SpeakButton";
+import { Translate } from "./modes/Translate";
 import { TypeAnswer } from "./modes/TypeAnswer";
 import { WordBank } from "./modes/WordBank";
 import { Button, cx } from "./ui";
@@ -22,6 +24,8 @@ export interface AnswerEvent {
   diff?: string;
   /** Replaces the "correct answer" line for modes that have no single answer. */
   summary?: string;
+  /** Nagłówek oceny, gdy „Dobrze / Nie tym razem" nie oddaje wyniku. */
+  heading?: string;
 }
 
 interface Props {
@@ -74,6 +78,8 @@ export function TaskRenderer({
       );
     case "typing":
       return <Typing {...shared} />;
+    case "translate_ai":
+      return <Translate task={task} locked={locked} onAnswer={onAnswer} />;
     case "cloze":
       return <Cloze {...shared} />;
     case "word_bank":
@@ -88,6 +94,7 @@ export function TaskRenderer({
               pairs,
               isCorrect: firstTry === pairs.length,
               correctAnswer: "",
+              heading: firstTry === pairs.length ? "✓ Komplet" : "◐ Rozgrzewka zaliczona",
               // A matching round has no single right answer to show — what
               // matters is how many pairs landed without a wrong attempt.
               summary:
@@ -486,7 +493,9 @@ export function Feedback({
   match,
   diff,
   summary,
+  heading,
   speak,
+  explain,
   onNext,
 }: {
   isCorrect: boolean;
@@ -496,6 +505,7 @@ export function Feedback({
   match?: string;
   diff?: string;
   summary?: string;
+  heading?: string;
   /** Wymowa poprawnej odpowiedzi — moment, w którym najbardziej się przydaje. */
   speak?: {
     text: string;
@@ -503,29 +513,53 @@ export function Feedback({
     slowUrl?: string | null;
     autoPlay?: boolean;
   };
+  /** Dane do pytania „dlaczego źle?"; brak = przycisku nie ma. */
+  explain?: { itemId: string; userAnswer: string; expected: string };
   onNext: () => void;
 }) {
+  // Enter przechodzi dalej — ale dopiero ten Enter, który zaczął się już przy
+  // widocznej informacji zwrotnej.
+  //
+  // Bez tego warunku klawiatura przeskakiwała cały ekran oceny: naciśnięcie
+  // Enter wysyłało wpisaną odpowiedź, ten sam sekwencyjny event dobiegał do
+  // okna już po pojawieniu się informacji zwrotnej i od razu ją zamykał.
+  // Na telefonie nie było tego widać, bo tam odpowiada się przyciskiem.
+  // Dlatego reagujemy na puszczenie klawisza i tylko wtedy, gdy wciśnięcie
+  // też widzieliśmy.
   useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
+    let armed = false;
+    const onDown = (event: KeyboardEvent) => {
       if (event.key === "Enter" || event.key === " ") {
+        armed = true;
+        event.preventDefault();
+      }
+    };
+    const onUp = (event: KeyboardEvent) => {
+      if (!armed) return;
+      if (event.key === "Enter" || event.key === " ") {
+        armed = false;
         event.preventDefault();
         onNext();
       }
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("keydown", onDown);
+    window.addEventListener("keyup", onUp);
+    return () => {
+      window.removeEventListener("keydown", onDown);
+      window.removeEventListener("keyup", onUp);
+    };
   }, [onNext]);
 
   const almost = match === "accent" || match === "typo";
-  const heading = summary
-    ? isCorrect
-      ? "✓ Komplet"
-      : "◐ Rozgrzewka zaliczona"
-    : match
+  // Nagłówek podaje tryb, jeśli ma lepsze słowo na to, co się właśnie stało —
+  // „Komplet" przy dopasowywaniu par znaczy co innego niż „Dobrze".
+  const title =
+    heading ??
+    (match
       ? feedbackLabel(match as never)
       : isCorrect
         ? "✓ Dobrze"
-        : "✕ Nie tym razem";
+        : "✕ Nie tym razem");
 
   return (
     <div
@@ -545,7 +579,7 @@ export function Feedback({
           !isCorrect && !summary && "text-bad",
         )}
       >
-        {heading}
+        {title}
         {speak && (
           <SpeakButton
             text={speak.text}
@@ -590,9 +624,69 @@ export function Feedback({
         {note && <div className="mt-1 text-[12.5px] text-ink-3">{note}</div>}
       </div>
 
+      {explain && !isCorrect && <WhyWrong {...explain} />}
+
       <Button onClick={onNext} autoFocus>
         Dalej
       </Button>
     </div>
+  );
+}
+
+/**
+ * „Dlaczego źle?" — jedno kliknięcie, dwa zdania po polsku.
+ *
+ * Świadomie nie odzywa się samo. Przy dobrze znanym słowie pomyłka jest
+ * literówką i wyjaśnienie tylko przeszkadza; sens ma wtedy, gdy człowiek sam
+ * uzna, że nie rozumie. Serwer pamięta odpowiedź na tę samą pomyłkę, więc
+ * powrót do tego samego błędu jest darmowy i natychmiastowy.
+ */
+function WhyWrong({
+  itemId,
+  userAnswer,
+  expected,
+}: {
+  itemId: string;
+  userAnswer: string;
+  expected: string;
+}) {
+  const [state, setState] = useState<"idle" | "loading" | "done" | "off">("idle");
+  const [text, setText] = useState("");
+
+  async function ask() {
+    setState("loading");
+    try {
+      const result = await api.post<AiExplanation>("/api/ai/explain", {
+        item_id: itemId,
+        user_answer: userAnswer,
+        expected,
+      });
+      setText(result.explanation);
+      setState("done");
+    } catch (caught) {
+      // Brak klucza albo wyczerpany budżet to nie awaria nauki — przycisk
+      // znika, a sesja idzie dalej.
+      if (caught instanceof ApiError && ["AI_NOT_CONFIGURED", "AI_BUDGET"].includes(caught.code)) {
+        setState("off");
+        return;
+      }
+      setText("Nie udało się teraz zapytać. Spróbuj przy następnej pomyłce.");
+      setState("done");
+    }
+  }
+
+  if (state === "off") return null;
+  if (state === "done") {
+    return <div className="rounded-xl border border-line bg-surface px-3 py-2 text-[13px]">{text}</div>;
+  }
+  return (
+    <button
+      type="button"
+      onClick={() => void ask()}
+      disabled={state === "loading"}
+      className="justify-self-start rounded-full border border-line-strong bg-surface px-3 py-1.5 text-[12.5px] font-semibold text-ink-2 disabled:opacity-50"
+    >
+      {state === "loading" ? "Pytam…" : "Dlaczego źle?"}
+    </button>
   );
 }

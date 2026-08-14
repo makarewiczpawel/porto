@@ -1,5 +1,14 @@
 export type Direction = "recognition" | "production";
-export type Mode = "flashcard" | "mcq_pt_pl" | "mcq_pl_pt" | "typing" | "cloze" | "matching" | "word_bank" | "listening";
+export type Mode =
+  | "flashcard"
+  | "mcq_pt_pl"
+  | "mcq_pl_pt"
+  | "typing"
+  | "cloze"
+  | "matching"
+  | "word_bank"
+  | "listening"
+  | "translate_ai";
 
 export interface User {
   id: string;
@@ -290,4 +299,59 @@ export interface ImportResult {
   deck_id: string | null;
   preview: ImportRow[];
   errors: { line: number; reason: string; raw: string }[];
+}
+
+// ── AI ─────────────────────────────────────────────────────────────────────
+export interface AiUsage {
+  configured: boolean;
+  model: string;
+  spent_usd: number;
+  budget_usd: number;
+  remaining_usd: number;
+  calls_this_month: number;
+  over_budget: boolean;
+}
+
+/** Propozycja z modelu — dopóki nie zatwierdzona, nie jest pozycją do nauki. */
+export interface AiProposal {
+  pt: string;
+  pl: string;
+  type: string;
+  part_of_speech: string | null;
+  article: string | null;
+  gender: string | null;
+  plural: string | null;
+  cefr_level: string;
+  notes: string | null;
+  example_pt: string | null;
+  example_pl: string | null;
+}
+
+export interface AiGeneration {
+  job_id: string;
+  deck_name: string;
+  proposals: AiProposal[];
+  skipped_duplicates: number;
+  cost_usd: number;
+}
+
+export interface AiAccepted {
+  deck_id: string;
+  deck_name: string;
+  created: number;
+  skipped_duplicates: number;
+  audio_queued: number;
+}
+
+export interface AiExplanation {
+  verdict: string;
+  explanation: string;
+  cached: boolean;
+}
+
+export interface AiGrade {
+  score: number;
+  corrected: string;
+  feedback: string;
+  cached: boolean;
 }
