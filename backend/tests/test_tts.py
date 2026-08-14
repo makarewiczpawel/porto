@@ -1,11 +1,13 @@
 from datetime import datetime, timedelta, timezone
 
+import httpx
 import pytest
 
 from app.config import settings
 from app.models import AudioAsset, Item, UserItemState
 from app.services import task_builder as tb
 from app.services import tts
+from app.services import voice_library as vl
 from tests.conftest import make_items
 
 
@@ -262,3 +264,156 @@ def test_every_list_of_words_carries_its_audio(client, registered, db):
     detail = client.get(f"/api/items/{item.id}").json()
     assert detail["audio_url"], "karta pozycji"
     assert detail["examples"][0]["audio_url"], "zdanie przykładowe ma własne nagranie"
+
+
+# ── nowsze głosy Google ───────────────────────────────────────────────────
+class PickyGoogle:
+    """Google udający głos, który odrzuca obróbkę dźwięku.
+
+    Najlepsze głosy przyjmują mniej opcji niż stare Wavenety. Bez ustępstwa
+    wybranie takiego głosu kończyło się serią błędów i pustą biblioteką —
+    czyli powrotem do syntetycznego głosu z telefonu, bez żadnego komunikatu.
+    """
+
+    def __init__(self, rejects: set[str]) -> None:
+        self.rejects = rejects
+        self.configs: list[dict] = []
+
+    def __call__(self, url, params=None, json=None, timeout=None):
+        config = json["audioConfig"]
+        self.configs.append(dict(config))
+        offending = self.rejects & set(config)
+        if offending:
+            return httpx.Response(
+                400,
+                json={"error": {"message": f"Unsupported field: {sorted(offending)[0]}"}},
+                request=httpx.Request("POST", url),
+            )
+        import base64 as b64
+
+        return httpx.Response(
+            200,
+            json={"audioContent": b64.b64encode(b"ID3ok").decode()},
+            request=httpx.Request("POST", url),
+        )
+
+
+def test_chirp_voice_is_asked_without_audio_shaping(monkeypatch):
+    google = PickyGoogle(rejects={"effectsProfileId"})
+    monkeypatch.setattr(tts.httpx, "post", google)
+    engine = tts.GoogleTTS("key")
+
+    engine.synthesize("bom dia", "pt-PT-Chirp3-HD-Charon", 1.0)
+
+    assert len(google.configs) == 1, "dla tego głosu nie wolno nawet próbować z profilem"
+    assert "effectsProfileId" not in google.configs[0]
+
+
+def test_unknown_voice_that_refuses_extras_gets_a_second_chance(monkeypatch):
+    google = PickyGoogle(rejects={"effectsProfileId"})
+    monkeypatch.setattr(tts.httpx, "post", google)
+    engine = tts.GoogleTTS("key")
+
+    spoken = engine.synthesize("bom dia", "pt-PT-Wavenet-A", 1.0)
+
+    assert [len(c) for c in google.configs] == [2, 1], "najpierw pełne żądanie, potem gołe"
+    assert spoken.data == b"ID3ok"
+
+
+def test_voice_without_speed_control_refuses_the_slow_take(monkeypatch):
+    """Zapisanie normalnego tempa pod kluczem wolnego byłoby cichym oszustwem:
+    przycisk „wolniej" odtwarzałby dokładnie to samo co zwykły."""
+    google = PickyGoogle(rejects={"speakingRate"})
+    monkeypatch.setattr(tts.httpx, "post", google)
+    engine = tts.GoogleTTS("key")
+
+    with pytest.raises(tts.TTSError, match="tempa"):
+        engine.synthesize("bom dia", "pt-PT-Chirp3-HD-Charon", 0.75)
+
+
+def test_normal_speed_is_not_sent_as_an_option(monkeypatch):
+    """Tempo 1,0 to brak zmiany tempa — wysyłanie go tylko daje głosowi powód
+    do odmowy."""
+    google = PickyGoogle(rejects=set())
+    monkeypatch.setattr(tts.httpx, "post", google)
+    tts.GoogleTTS("key").synthesize("bom dia", "pt-PT-Wavenet-A", 1.0)
+
+    assert "speakingRate" not in google.configs[0]
+
+
+# ── pokrycie biblioteki nagrań ────────────────────────────────────────────
+def test_coverage_counts_what_is_missing_for_this_voice(db, registered, client):
+    make_items(db, count=3)
+    body = client.get("/api/audio/coverage").json()
+
+    # trzy hasła × (normalne + wolne) + trzy zdania przykładowe
+    assert body["planned"] == 9
+    assert body["present"] == 0
+    assert body["missing"] == 9
+    assert body["complete"] is False
+
+
+def test_changing_the_voice_makes_the_library_look_empty(db, registered, client):
+    """Sedno problemu: nagrania są kluczowane głosem, więc po zmianie głosu
+    nie ma czym mówić, dopóki nie powstaną nowe."""
+    make_items(db, count=2)
+    provider = FakeProvider()
+    for text, speed in vl.planned(db):
+        tts.speak(db, text, voice="pt-PT-Wavenet-A", speed=speed, provider=provider)
+    db.commit()
+
+    assert client.get("/api/audio/coverage").json()["complete"] is True
+
+    client.patch("/api/settings", json={"tts_voice": "pt-PT-Wavenet-B"})
+    after = client.get("/api/audio/coverage").json()
+    assert after["voice"] == "pt-PT-Wavenet-B"
+    assert after["present"] == 0
+    assert after["missing"] == after["planned"]
+
+
+def test_missing_recordings_are_filled_in_batches(db, registered, client, monkeypatch):
+    make_items(db, count=4)
+    provider = FakeProvider()
+    monkeypatch.setattr(tts, "get_provider", lambda: provider)
+
+    first = client.post("/api/audio/synthesize-missing", json={"limit": 5}).json()
+    assert first["done"] == 5
+    assert first["remaining"] == 7
+
+    while client.post("/api/audio/synthesize-missing", json={"limit": 5}).json()["remaining"]:
+        pass
+    assert client.get("/api/audio/coverage").json()["complete"] is True
+
+
+def test_a_voice_that_fails_every_time_stops_the_batch(db, registered, client, monkeypatch):
+    make_items(db, count=10)
+    provider = FakeProvider(fail=tts.TTSError("głos odmawia"))
+    monkeypatch.setattr(tts, "get_provider", lambda: provider)
+
+    result = client.post("/api/audio/synthesize-missing", json={"limit": 50}).json()
+    assert result["done"] == 0
+    assert result["failed"] == 5, "pięć porażek pod rząd wystarczy, żeby przestać płacić"
+    assert "odmawia" in result["error"]
+
+
+def test_sample_lets_you_hear_a_voice_before_choosing_it(db, registered, client, monkeypatch):
+    provider = FakeProvider()
+    monkeypatch.setattr(tts, "get_provider", lambda: provider)
+
+    body = client.post("/api/audio/sample?voice=pt-PT-Chirp3-HD-Charon").json()
+    assert body["url"].startswith("/api/audio/")
+    assert body["cached"] is False
+    spoken, voice, _ = provider.calls[0]
+    assert voice == "pt-PT-Chirp3-HD-Charon"
+    assert "comboio" in spoken, "próbka ma zawierać słowa, po których słychać wariant europejski"
+
+    again = client.post("/api/audio/sample?voice=pt-PT-Chirp3-HD-Charon").json()
+    assert again["cached"] is True
+    assert len(provider.calls) == 1
+
+
+def test_sample_still_refuses_a_brazilian_voice(db, registered, client, monkeypatch):
+    monkeypatch.setattr(tts, "get_provider", lambda: FakeProvider())
+    response = client.post("/api/audio/sample?voice=pt-BR-Wavenet-A")
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "TTS_FAILED"

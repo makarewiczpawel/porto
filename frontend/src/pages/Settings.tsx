@@ -1,8 +1,18 @@
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 
 import { api } from "@/api/client";
-import type { AiUsage, AudioUsage, Mode, Settings, Voice } from "@/api/types";
+import type {
+  AiUsage,
+  AudioCoverage,
+  AudioUsage,
+  Mode,
+  Settings,
+  SynthesizeBatch,
+  Voice,
+} from "@/api/types";
+import { playRecording, unlockAudio } from "@/api/speech";
 import { Button, Card, Label, Spinner } from "@/components/ui";
 import { useAuth } from "@/store/auth";
 
@@ -294,11 +304,22 @@ function Stepper({
 }
 
 /**
- * Wymowa: wybór głosu, tempo, autoodtwarzanie i stan biblioteki nagrań.
+ * Wymowa: wybór głosu, odsłuchanie go przed decyzją i stan biblioteki nagrań.
  *
- * Lista głosów przychodzi prosto od dostawcy, a nie z listy wpisanej na sztywno
- * w kodzie — dzięki temu nie da się wybrać głosu, którego nie ma, i nie trzeba
- * aktualizować aplikacji, gdy dojdą nowe.
+ * Dwie rzeczy, których wcześniej tu brakowało, a bez których ten ekran wprowadzał
+ * w błąd.
+ *
+ * Po pierwsze, **głosu nie da się ocenić z nazwy**. „Wavenet-B" nic nie znaczy,
+ * dopóki się go nie usłyszy, a wybranie złego kosztuje całą bibliotekę nagraną
+ * od nowa. Teraz każdy głos można przesłuchać na jednym zdaniu, zanim się go
+ * ustawi.
+ *
+ * Po drugie, **zmiana głosu nie przerabia istniejących nagrań** — one są
+ * kluczowane jego nazwą, więc po zmianie aplikacja nie znajduje żadnego i po
+ * cichu schodzi na głos wbudowany w telefon. Ten brzmi sztucznie i nie reaguje
+ * na tutejsze ustawienia, więc wygląda to jak „zmiana nic nie dała". Licznik
+ * pokrycia mówi teraz wprost, ile nagrań istnieje, a przycisk obok dogrywa
+ * resztę — bez wchodzenia do konsoli serwera.
  */
 function VoiceSettings({
   settings,
@@ -307,6 +328,11 @@ function VoiceSettings({
   settings: Settings;
   patch: (body: Partial<Settings>) => Promise<void>;
 }) {
+  const queryClient = useQueryClient();
+  const [choice, setChoice] = useState(settings.tts_voice);
+  const [playing, setPlaying] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
+
   const voices = useQuery({
     queryKey: ["tts-voices"],
     queryFn: () => api.get<{ configured: boolean; voices: Voice[] }>("/api/audio/voices"),
@@ -321,72 +347,223 @@ function VoiceSettings({
 
   const available = voices.data?.voices ?? [];
   const configured = voices.data?.configured ?? false;
+  const chosen = available.find((voice) => voice.name === choice);
+
+  async function preview() {
+    setNote(null);
+    setPlaying(true);
+    unlockAudio();
+    try {
+      const sample = await api.post<{ url: string }>(
+        `/api/audio/sample?voice=${encodeURIComponent(choice)}`,
+      );
+      await playRecording(sample.url);
+      void usage.refetch();
+    } catch (caught) {
+      setNote(caught instanceof Error ? caught.message : "Nie udało się odtworzyć próbki.");
+    } finally {
+      setPlaying(false);
+    }
+  }
+
+  async function useThisVoice() {
+    await patch({ tts_voice: choice });
+    queryClient.invalidateQueries({ queryKey: ["audio-coverage"] });
+  }
 
   return (
-    <Card className="grid gap-3">
-      {!configured && (
-        <p className="rounded-xl border border-line bg-surface-2 px-3 py-2 text-[12px] text-ink-2">
-          {usage.data && usage.data.clips_stored > 0
-            ? "Brakuje klucza do syntezy mowy, więc nowe nagrania nie powstaną. Te już zapisane działają normalnie."
-            : "Nagrania nie są jeszcze włączone — brakuje klucza do syntezy mowy. Do tego czasu aplikacja czyta portugalski głosem wbudowanym w telefon, o ile ma zainstalowany europejski."}
+    <>
+      <Card className="grid gap-3">
+        {!configured && (
+          <p className="rounded-xl border border-line bg-surface-2 px-3 py-2 text-[12px] text-ink-2">
+            {usage.data && usage.data.clips_stored > 0
+              ? "Brakuje klucza do syntezy mowy, więc nowe nagrania nie powstaną. Te już zapisane działają normalnie."
+              : "Nagrania nie są jeszcze włączone — brakuje klucza do syntezy mowy. Do tego czasu aplikacja czyta portugalski głosem wbudowanym w telefon, o ile ma zainstalowany europejski."}
+          </p>
+        )}
+
+        {available.length > 0 && (
+          <>
+            <label className="grid gap-1.5">
+              <span className="text-[14px]">Głos</span>
+              <select
+                value={choice}
+                onChange={(event) => setChoice(event.target.value)}
+                className="rounded-xl border border-line-strong bg-surface px-3 py-2.5 text-[14px]"
+              >
+                {available.some((voice) => voice.name === choice) ? null : (
+                  <option value={choice}>{choice} (niedostępny)</option>
+                )}
+                {available.map((voice) => (
+                  <option key={voice.name} value={voice.name}>
+                    {voice.name.replace("pt-PT-", "")}
+                    {voice.gender === "female" ? " · kobiecy" : voice.gender === "male" ? " · męski" : ""}
+                    {" · "}
+                    {qualityLabel(voice.quality)}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            {chosen?.quality === "standard" && (
+              <p className="rounded-xl border border-warm/40 bg-warm/10 px-3 py-2 text-[12px] text-ink-2">
+                To głos podstawowy — brzmi wyraźnie syntetycznie. Głosy oznaczone jako
+                naturalne są nagrane inaczej i słychać różnicę od pierwszego słowa.
+              </p>
+            )}
+
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" onClick={() => void preview()} disabled={playing}>
+                {playing ? "Odtwarzam…" : "▶ Posłuchaj"}
+              </Button>
+              {choice !== settings.tts_voice && (
+                <Button size="sm" onClick={() => void useThisVoice()}>
+                  Ustaw ten głos
+                </Button>
+              )}
+            </div>
+            {note && <p className="text-[12px] text-bad">{note}</p>}
+            <span className="text-[11.5px] text-ink-3">
+              Próbka to jedno zdanie — kosztuje ułamek grosza i zostaje zapamiętana.
+            </span>
+          </>
+        )}
+
+        <div className="flex items-center justify-between gap-3 border-t border-line pt-3">
+          <div>
+            <div className="text-[14px]">Odtwarzaj automatycznie</div>
+            <div className="text-[11.5px] text-ink-3">wymowa odzywa się, gdy pojawia się portugalski</div>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={settings.autoplay_audio}
+            aria-label="Odtwarzaj automatycznie"
+            onClick={() => void patch({ autoplay_audio: !settings.autoplay_audio })}
+            className={`relative h-[25px] w-[42px] flex-none rounded-full transition ${
+              settings.autoplay_audio ? "bg-accent" : "bg-line-strong"
+            }`}
+          >
+            <span
+              className={`absolute top-[3px] h-[19px] w-[19px] rounded-full bg-white transition-all ${
+                settings.autoplay_audio ? "left-[20px]" : "left-[3px]"
+              }`}
+            />
+          </button>
+        </div>
+
+        {usage.data && (
+          <div className="border-t border-line pt-3 text-[11.5px] text-ink-3">
+            Nagrań w bazie: <b className="text-ink-2">{usage.data.clips_stored}</b> (
+            {(usage.data.bytes_stored / 1_048_576).toFixed(1)} MB). W tym miesiącu zsyntezowano{" "}
+            {usage.data.chars_this_month.toLocaleString("pl")} z {usage.data.monthly_limit.toLocaleString("pl")}{" "}
+            znaków.
+          </div>
+        )}
+      </Card>
+
+      {configured && <Library voice={settings.tts_voice} />}
+    </>
+  );
+}
+
+function qualityLabel(quality: string): string {
+  if (quality === "standard") return "podstawowy";
+  if (quality === "chirp") return "naturalny (najlepszy)";
+  return `naturalny (${quality})`;
+}
+
+/**
+ * Ile z biblioteki jest nagrane tym głosem — i przycisk, który dogrywa resztę.
+ *
+ * To jest odpowiedź na najbardziej mylące zachowanie całej aplikacji: brak
+ * nagrania nie jest błędem, więc nic o nim nie mówiło. Aplikacja po prostu
+ * czytała głosem telefonu, a użytkownik widział „wymowa brzmi źle i zmiana
+ * ustawień nic nie daje".
+ */
+function Library({ voice }: { voice: string }) {
+  const queryClient = useQueryClient();
+  const [running, setRunning] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+
+  const coverage = useQuery({
+    queryKey: ["audio-coverage", voice],
+    queryFn: () => api.get<AudioCoverage>("/api/audio/coverage"),
+    retry: false,
+  });
+
+  async function fillIn() {
+    setRunning(true);
+    setProblem(null);
+    try {
+      // Porcjami, bo całość to kilkaset wywołań i kilka minut — dłużej, niż
+      // powinno wisieć jedno żądanie. Pętla kończy się sama, gdy nie ma już
+      // czego nagrywać albo gdy serwer mówi, że dalej nie warto próbować.
+      for (;;) {
+        const batch = await api.post<SynthesizeBatch>("/api/audio/synthesize-missing", {
+          limit: 40,
+        });
+        await coverage.refetch();
+        if (batch.error) {
+          setProblem(batch.error);
+          break;
+        }
+        if (batch.remaining === 0 || batch.done === 0) break;
+      }
+      queryClient.invalidateQueries({ queryKey: ["tts-usage"] });
+      queryClient.invalidateQueries({ queryKey: ["items"] });
+      queryClient.invalidateQueries({ queryKey: ["deck"] });
+    } catch (caught) {
+      setProblem(caught instanceof Error ? caught.message : "Nagrywanie się nie udało.");
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  if (!coverage.data) return null;
+  const data = coverage.data;
+  const ratio = data.planned > 0 ? data.present / data.planned : 0;
+
+  return (
+    <Card className="mt-3 grid gap-2">
+      <div className="flex items-baseline justify-between text-[13px]">
+        <span>Nagrania dla tego głosu</span>
+        <b className="tnum">
+          {data.present} / {data.planned}
+        </b>
+      </div>
+      <div className="h-[6px] overflow-hidden rounded-full bg-surface-3">
+        <div
+          className={`h-full rounded-full transition-[width] duration-500 ${
+            data.complete ? "bg-good" : "bg-accent"
+          }`}
+          style={{ width: `${ratio * 100}%` }}
+        />
+      </div>
+
+      {data.present === 0 ? (
+        <p className="rounded-xl border border-warm/40 bg-warm/10 px-3 py-2 text-[12px] text-ink-2">
+          Dla tego głosu nie ma jeszcze <b>żadnego</b> nagrania. Aplikacja czyta wtedy głosem
+          wbudowanym w telefon — ten brzmi sztucznie i nie zmienia się razem z ustawieniem
+          powyżej. Nagraj bibliotekę, żeby usłyszeć wybrany głos.
+        </p>
+      ) : data.complete ? (
+        <p className="text-[11.5px] text-ink-3">
+          Komplet. Każde słowo i zdanie ma wymowę w tym głosie.
+        </p>
+      ) : (
+        <p className="text-[11.5px] text-ink-3">
+          Brakujące pozycje czyta na razie głos telefonu. Nagranie {data.missing} sztuk zajmie
+          około {Math.max(1, Math.round((data.missing * 0.4) / 60))} min.
         </p>
       )}
 
-      {available.length > 0 && (
-        <label className="grid gap-1.5">
-          <span className="text-[14px]">Głos</span>
-          <select
-            value={settings.tts_voice}
-            onChange={(event) => void patch({ tts_voice: event.target.value })}
-            className="rounded-xl border border-line-strong bg-surface px-3 py-2.5 text-[14px]"
-          >
-            {available.some((voice) => voice.name === settings.tts_voice) ? null : (
-              <option value={settings.tts_voice}>{settings.tts_voice} (niedostępny)</option>
-            )}
-            {available.map((voice) => (
-              <option key={voice.name} value={voice.name}>
-                {voice.name.replace("pt-PT-", "")}
-                {voice.gender === "female" ? " · kobiecy" : voice.gender === "male" ? " · męski" : ""}
-                {voice.quality === "standard" ? " · podstawowy" : ""}
-              </option>
-            ))}
-          </select>
-          <span className="text-[11.5px] text-ink-3">
-            Zmiana głosu nie kasuje nagrań — nowe powstaną przy następnej syntezie.
-          </span>
-        </label>
-      )}
+      {problem && <p className="text-[12px] text-bad">{problem}</p>}
 
-      <div className="flex items-center justify-between gap-3 border-t border-line pt-3">
-        <div>
-          <div className="text-[14px]">Odtwarzaj automatycznie</div>
-          <div className="text-[11.5px] text-ink-3">wymowa odzywa się, gdy pojawia się portugalski</div>
-        </div>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={settings.autoplay_audio}
-          aria-label="Odtwarzaj automatycznie"
-          onClick={() => void patch({ autoplay_audio: !settings.autoplay_audio })}
-          className={`relative h-[25px] w-[42px] flex-none rounded-full transition ${
-            settings.autoplay_audio ? "bg-accent" : "bg-line-strong"
-          }`}
-        >
-          <span
-            className={`absolute top-[3px] h-[19px] w-[19px] rounded-full bg-white transition-all ${
-              settings.autoplay_audio ? "left-[20px]" : "left-[3px]"
-            }`}
-          />
-        </button>
-      </div>
-
-      {usage.data && (
-        <div className="border-t border-line pt-3 text-[11.5px] text-ink-3">
-          Nagrań w bazie: <b className="text-ink-2">{usage.data.clips_stored}</b> (
-          {(usage.data.bytes_stored / 1_048_576).toFixed(1)} MB). W tym miesiącu zsyntezowano{" "}
-          {usage.data.chars_this_month.toLocaleString("pl")} z {usage.data.monthly_limit.toLocaleString("pl")}{" "}
-          znaków.
-        </div>
+      {!data.complete && (
+        <Button size="sm" onClick={() => void fillIn()} disabled={running}>
+          {running ? `Nagrywam… zostało ${data.missing}` : `Nagraj brakujące (${data.missing})`}
+        </Button>
       )}
     </Card>
   );

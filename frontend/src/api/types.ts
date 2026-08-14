@@ -283,6 +283,22 @@ export interface AudioUsage {
   bytes_stored: number;
 }
 
+/** Ile nagrań dla wybranego głosu już istnieje. */
+export interface AudioCoverage {
+  voice: string;
+  planned: number;
+  present: number;
+  missing: number;
+  complete: boolean;
+}
+
+export interface SynthesizeBatch {
+  done: number;
+  failed: number;
+  remaining: number;
+  error: string | null;
+}
+
 export interface ImportRow {
   line: number;
   pt: string;

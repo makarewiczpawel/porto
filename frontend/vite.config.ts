@@ -38,12 +38,24 @@ export default defineConfig({
             // Nagranie spod danego adresu nigdy się nie zmienia — adres jest
             // skrótem jego treści. Raz pobrane może zostać na telefonie na
             // zawsze, więc wymowa działa też w metrze bez zasięgu.
-            urlPattern: ({ url }) => url.pathname.startsWith("/api/audio/"),
+            //
+            // Wzorzec celuje w sam plik nagrania, nie w cały prefiks `/api/audio/`.
+            // Pod tym prefiksem żyją też zapytania o stan biblioteki i o listę
+            // głosów, a te zmieniają się co chwilę — złapane w cache „na rok,
+            // niezmienne" zamarzały na pierwszej odpowiedzi i pokazywały stare
+            // liczby długo po tym, jak przestały być prawdziwe.
+            urlPattern: ({ url }) => /^\/api\/audio\/[0-9a-f]{64}\.mp3$/.test(url.pathname),
             handler: "CacheFirst",
             options: {
-              cacheName: "porto-audio",
+              // Nazwa ze zmienionym numerem: stara pamięć podręczna zdążyła się
+              // zapełnić odpowiedziami nieprzezroczystymi o zerowej długości,
+              // a te są nie do naprawienia — trzeba je porzucić, nie poprawiać.
+              cacheName: "porto-audio-v2",
               expiration: { maxEntries: 2000, maxAgeSeconds: 60 * 60 * 24 * 365 },
-              cacheableResponse: { statuses: [0, 200] },
+              // Wyłącznie 200. Zero znaczy „odpowiedź, której nie wolno mi
+              // odczytać" — zapisanie jej wygląda jak sukces, a daje pusty plik
+              // i ciszę do końca życia pamięci podręcznej.
+              cacheableResponse: { statuses: [200] },
               rangeRequests: true,
             },
           },
