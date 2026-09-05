@@ -13,11 +13,13 @@ dogranie ich nie wymagało konsoli.
 
 from __future__ import annotations
 
+import uuid
 from dataclasses import dataclass
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
+from app.db import SessionLocal
 from app.models import Item
 from app.services import tts
 
@@ -50,6 +52,39 @@ class Coverage:
         }
 
 
+def spoken_texts(item: Item) -> dict[str, str]:
+    """Które napisy tej pozycji warto usłyszeć.
+
+    Strona portugalska z rodzajnikiem („a casa", nie „casa"), zdanie
+    przykładowe — bo dopiero w zdaniu słychać rytm języka — i odpowiedź
+    rozmówcy, którą trzeba przede wszystkim rozpoznać ze słuchu, bo pada
+    znienacka i cudzym tempem.
+
+    **To jest jedyna definicja tego, co w aplikacji brzmi.** Odtwarzanie i
+    lista „do nagrania" muszą czytać z tego samego miejsca — gdy się rozeszły,
+    odpowiedzi rozmówcy nie trafiały na listę i żadne kliknięcie „Nagraj
+    brakujące" nie mogło ich dograć. Aplikacja czytała je wtedy głosem
+    telefonu, czyli innym niż wybrany, i nic tego nie tłumaczyło.
+    """
+    texts = {"pt": item.display_pt}
+    if item.examples:
+        texts["example"] = item.examples[0].pt
+    if item.reply_pt:
+        texts["reply"] = item.reply_pt
+    return texts
+
+
+def texts_with_speeds(item: Item) -> list[tuple[str, float]]:
+    """Pary (tekst, tempo) dla jednej pozycji. Wolniejsze podejście dotyczy
+    tylko samego hasła — przy zdaniu i odpowiedzi nikt go nie przytrzymuje."""
+    out: list[tuple[str, float]] = []
+    for slot, text in spoken_texts(item).items():
+        out.append((text, 1.0))
+        if slot == "pt":
+            out.append((text, SLOW_SPEED))
+    return out
+
+
 def planned(db: Session) -> list[tuple[str, float]]:
     """Pary (tekst, tempo), które powinny istnieć dla każdego głosu."""
     wanted: list[tuple[str, float]] = []
@@ -62,11 +97,7 @@ def planned(db: Session) -> list[tuple[str, float]]:
         .all()
     )
     for item in items:
-        for text, speed in (
-            (item.display_pt, 1.0),
-            (item.display_pt, SLOW_SPEED),
-            *[(example.pt, 1.0) for example in item.examples],
-        ):
+        for text, speed in texts_with_speeds(item):
             clean = tts.normalize_text(text)
             if not clean or (clean, speed) in seen:
                 continue
@@ -145,3 +176,57 @@ def synthesize_batch(
             streak = 0
 
     return BatchResult(done=done, failed=failed, remaining=max(remaining - done, 0), error=error)
+
+
+# Ile nagrań wolno dograć w tle po jednej sesji. Sesja to najwyżej kilkadziesiąt
+# pozycji, ale limit istnieje, żeby żadne pojedyncze wejście do nauki nie mogło
+# zamienić się w wielominutową serię wywołań płatnego API.
+TOP_UP_LIMIT = 90
+
+
+def synthesize_for_items(item_ids: list[uuid.UUID], voice: str, limit: int = TOP_UP_LIMIT) -> int:
+    """Dogrywa brakujące nagrania dla podanych pozycji, w tle po odpowiedzi HTTP.
+
+    Istnieje po to, żeby świeży materiał sam dostawał głos wybrany przez
+    użytkownika. Bez tego każda nowa partia zwrotów odzywała się głosem
+    wbudowanym w telefon — innym, zwykle kobiecym, i bez żadnego wyjaśnienia,
+    bo brak nagrania nie jest błędem i nic go nie zgłaszało.
+
+    Otwiera własną sesję bazy: wołane jest po zamknięciu żądania, więc sesja
+    żądania już nie żyje.
+    """
+    if not item_ids or not tts.is_configured():
+        return 0
+
+    db = SessionLocal()
+    done = 0
+    try:
+        items = (
+            db.execute(
+                select(Item).options(selectinload(Item.examples)).where(Item.id.in_(item_ids))
+            )
+            .scalars()
+            .unique()
+            .all()
+        )
+        for item in items:
+            for text, speed in texts_with_speeds(item):
+                if done >= limit:
+                    return done
+                clean = tts.normalize_text(text)
+                if not clean or tts.lookup(db, clean, voice, speed) is not None:
+                    continue
+                try:
+                    tts.speak(db, clean, voice=voice, speed=speed)
+                    db.commit()
+                    done += 1
+                except (tts.TTSLimitReached, tts.TTSNotConfigured):
+                    db.rollback()
+                    return done
+                except tts.TTSError:
+                    # Pojedyncze hasło potrafi paść na sieci. Reszta partii
+                    # nie ma z tym nic wspólnego i ma się nagrać.
+                    db.rollback()
+    finally:
+        db.close()
+    return done

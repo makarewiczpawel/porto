@@ -4,7 +4,7 @@ import httpx
 import pytest
 
 from app.config import settings
-from app.models import AudioAsset, Item, UserItemState
+from app.models import AudioAsset, Example, Item, UserItemState
 from app.services import task_builder as tb
 from app.services import tts
 from app.services import voice_library as vl
@@ -417,3 +417,88 @@ def test_sample_still_refuses_a_brazilian_voice(db, registered, client, monkeypa
     response = client.post("/api/audio/sample?voice=pt-BR-Wavenet-A")
     assert response.status_code == 422
     assert response.json()["error"]["code"] == "TTS_FAILED"
+
+
+# ── nagrania nadążają za treścią ──────────────────────────────────────────
+def test_everything_the_app_plays_is_on_the_recording_list(db):
+    """Regresja: lista „do nagrania" pomijała odpowiedzi rozmówcy, choć
+    aplikacja je odtwarza. Skutek był mylący — odpowiedzi czytał głos telefonu,
+    inny niż wybrany, i żadne kliknięcie „Nagraj brakujące" tego nie naprawiało,
+    bo tych tekstów w ogóle nie było na liście."""
+    item = Item(
+        pt="quanto custa?", pl="ile to kosztuje?", type="phrase", cefr_level="A1",
+        source="seed", verified=True, reply_pt="São dois euros.", reply_pl="Dwa euro.",
+    )
+    db.add(item)
+    db.flush()
+    db.add(Example(item_id=item.id, pt="Quanto custa o bilhete?", pl="Ile kosztuje bilet?"))
+    db.commit()
+
+    played = set(vl.spoken_texts(item).values())
+    recorded = {text for text, _ in vl.planned(db)}
+    assert played <= recorded, f"aplikacja odtworzy, czego nikt nie nagra: {played - recorded}"
+    assert "São dois euros." in recorded
+
+
+def test_the_slow_take_covers_the_headword_only(db):
+    """Wolniejsze podejście jest pod przytrzymanie głośnika przy haśle. Zdania
+    i odpowiedzi nikt tak nie odtwarza, a każde nagranie kosztuje."""
+    item = Item(pt="bom dia", pl="dzień dobry", type="phrase", cefr_level="A1",
+                source="seed", verified=True, reply_pt="Bom dia!", reply_pl="Dzień dobry!")
+    db.add(item)
+    db.commit()
+
+    speeds = {}
+    for text, speed in vl.texts_with_speeds(item):
+        speeds.setdefault(text, set()).add(speed)
+    assert speeds["bom dia"] == {1.0, tb.SLOW_SPEED}
+    assert speeds["Bom dia!"] == {1.0}
+
+
+def test_new_material_is_recorded_in_the_voice_you_chose(db, monkeypatch):
+    """Sedno zgłoszenia: nowe zwroty odzywały się nie tym głosem, co trzeba."""
+    provider = FakeProvider()
+    monkeypatch.setattr(tts, "get_provider", lambda: provider)
+    monkeypatch.setattr(settings, "google_tts_api_key", "test-key")
+
+    item = Item(pt="a conta, se faz favor", pl="poproszę rachunek", type="phrase",
+                cefr_level="A1", source="seed", verified=True,
+                reply_pt="Já trago.", reply_pl="Już przynoszę.")
+    db.add(item)
+    db.commit()
+
+    made = vl.synthesize_for_items([item.id], "pt-PT-Wavenet-B")
+
+    assert made == 3, "hasło, jego wolniejsza wersja i odpowiedź rozmówcy"
+    voices = {voice for _, voice, _ in provider.calls}
+    assert voices == {"pt-PT-Wavenet-B"}, "nagrania mają iść w wybranym głosie, nie domyślnym"
+
+
+def test_top_up_skips_what_already_exists(db, monkeypatch):
+    provider = FakeProvider()
+    monkeypatch.setattr(tts, "get_provider", lambda: provider)
+    monkeypatch.setattr(settings, "google_tts_api_key", "test-key")
+
+    item = Item(pt="olá", pl="cześć", type="phrase", cefr_level="A1", source="seed", verified=True)
+    db.add(item)
+    db.commit()
+
+    first = vl.synthesize_for_items([item.id], "pt-PT-Wavenet-B")
+    second = vl.synthesize_for_items([item.id], "pt-PT-Wavenet-B")
+    assert (first, second) == (2, 0)
+    assert len(provider.calls) == 2, "drugie wejście nie może płacić drugi raz"
+
+
+def test_starting_a_session_orders_the_missing_recordings(db, registered, client, monkeypatch):
+    """Nowa treść ma dostać wybrany głos bez klikania czegokolwiek."""
+    provider = FakeProvider()
+    monkeypatch.setattr(tts, "get_provider", lambda: provider)
+    monkeypatch.setattr(settings, "google_tts_api_key", "test-key")
+    make_items(db, count=3)
+
+    response = client.post("/api/study/sessions", json={"new_limit": 3})
+    assert response.status_code == 201, response.text
+
+    # Zadanie w tle odpala się przy zamknięciu odpowiedzi przez TestClient.
+    assert provider.calls, "sesja nie zamówiła brakujących nagrań"
+    assert {voice for _, voice, _ in provider.calls} == {"pt-PT-Wavenet-A"}

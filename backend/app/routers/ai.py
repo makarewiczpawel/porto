@@ -25,9 +25,8 @@ from app.db import SessionLocal, get_db
 from app.deps import RateLimiter, get_current_user
 from app.errors import bad_request, not_found, too_many, unprocessable
 from app.models import AiJob, Deck, DeckItem, Example, Item, User
-from app.services import ai, tts
+from app.services import ai, tts, voice_library
 from app.services.lexicon import slugify, split_article
-from app.services.task_builder import SLOW_SPEED, spoken_texts
 
 # Dwadzieścia wywołań na godzinę. Ekran generowania da się kliknąć raz na
 # kilkadziesiąt sekund, więc limit dotyka tylko pętli, która się zapętliła.
@@ -283,43 +282,6 @@ def get_job(
     )
 
 
-def _synthesize(item_ids: list[uuid.UUID], voice: str) -> None:
-    """Nagrania dla świeżo przyjętych pozycji, już po odpowiedzi HTTP.
-
-    Wymowa nie może kazać czekać na przegląd — a zestaw bez nagrań i tak
-    działa, tylko głośnik odzywa się głosem przeglądarki, dopóki nagrania nie
-    dojdą.
-
-    Wyczerpany limit znaków przerywa całą pętlę, bo każde kolejne hasło
-    skończy się tak samo. Pojedyncza usterka sieci nie przerywa — reszta
-    zestawu ma się nagrać mimo jednego hasła, które się nie udało.
-    """
-    if not tts.is_configured():
-        return
-    db = SessionLocal()
-    try:
-        items = (
-            db.execute(select(Item).options(selectinload(Item.examples)).where(Item.id.in_(item_ids)))
-            .scalars()
-            .unique()
-            .all()
-        )
-        for item in items:
-            for slot, text in spoken_texts(item).items():
-                speeds = [1.0, SLOW_SPEED] if slot == "pt" else [1.0]
-                for speed in speeds:
-                    try:
-                        tts.speak(db, text, voice=voice, speed=speed)
-                        db.commit()
-                    except (tts.TTSLimitReached, tts.TTSNotConfigured):
-                        db.rollback()
-                        return
-                    except tts.TTSError:
-                        db.rollback()
-    finally:
-        db.close()
-
-
 @router.post("/jobs/{job_id}/accept", response_model=AcceptOut)
 def accept(
     job_id: uuid.UUID,
@@ -418,7 +380,7 @@ def accept(
     db.commit()
 
     if created:
-        background.add_task(_synthesize, created, user.settings.tts_voice)
+        background.add_task(voice_library.synthesize_for_items, created, user.settings.tts_voice)
 
     return AcceptOut(
         deck_id=deck.id,
@@ -509,5 +471,5 @@ def accept_example(
     item = _item_or_404(db, body.item_id)
     db.add(Example(item_id=item.id, pt=body.pt.strip(), pl=body.pl.strip(), source="ai"))
     db.commit()
-    background.add_task(_synthesize, [item.id], user.settings.tts_voice)
+    background.add_task(voice_library.synthesize_for_items, [item.id], user.settings.tts_voice)
     return {"item_id": str(item.id), "ok": True}

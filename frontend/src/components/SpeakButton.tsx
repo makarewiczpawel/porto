@@ -33,6 +33,11 @@ export function SpeakButton({
   const [playing, setPlaying] = useState(false);
   const [slow, setSlow] = useState(false);
   const [available, setAvailable] = useState(() => Boolean(url) || browserCanSpeakPortuguese());
+  // Brak nagrania znaczy, że odezwie się głos wbudowany w telefon — inny niż
+  // wybrany w ustawieniach i zwykle innej płci. To nie jest awaria, ale
+  // udawanie, że to ten sam głos, wprowadza w błąd: „czemu nowe zwroty mówi
+  // kobieta?" jest wtedy pytaniem bez odpowiedzi na ekranie.
+  const systemVoice = !url;
   const holdTimer = useRef<number | null>(null);
   const heldRef = useRef(false);
   const playedRef = useRef<string | null>(null);
@@ -93,7 +98,11 @@ export function SpeakButton({
     <button
       type="button"
       aria-label={`Posłuchaj: ${text}`}
-      title="Tapnij, żeby posłuchać · przytrzymaj, żeby wolniej"
+      title={
+        systemVoice
+          ? "Głosem telefonu — nagranie w Twoim głosie jeszcze nie powstało"
+          : "Tapnij, żeby posłuchać · przytrzymaj, żeby wolniej"
+      }
       onPointerDown={startHold}
       onPointerUp={endHold}
       onPointerLeave={() => {
@@ -107,7 +116,9 @@ export function SpeakButton({
         "inline-grid shrink-0 place-content-center rounded-full border transition select-none touch-manipulation",
         playing
           ? "border-accent-line bg-accent-soft text-accent"
-          : "border-line-strong bg-surface text-ink-2 hover:text-ink",
+          : systemVoice
+            ? "border-dashed border-line-strong bg-surface text-ink-3 hover:text-ink-2"
+            : "border-line-strong bg-surface text-ink-2 hover:text-ink",
         dimensions,
         className,
       )}
