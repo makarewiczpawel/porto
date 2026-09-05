@@ -103,6 +103,11 @@ class GeneratedItem(BaseModel):
     )
     example_pt: str = Field(description="Zdanie przykładowe po portugalsku europejskim, z tym hasłem.")
     example_pl: str = Field(description="Tłumaczenie zdania przykładowego na polski.")
+    reply_pt: str | None = Field(
+        description="Najbardziej prawdopodobna odpowiedź rozmówcy po portugalsku europejskim. "
+        "null, jeśli pozycja nie jest zwrotem kierowanym do kogoś."
+    )
+    reply_pl: str | None = Field(description="Tłumaczenie tej odpowiedzi na polski; null razem z nią.")
 
 
 class GeneratedSet(BaseModel):
@@ -192,7 +197,10 @@ SET_SYSTEM = """Jesteś lektorem portugalskiego europejskiego, który przygotowu
 {rules}
 
 Zasady doboru materiału:
-- Każda pozycja to słowo, utarty zwrot albo całe zdanie — realnie używane, nie słownikowa ciekawostka.
+- **Domyślnie dajesz gotowe zwroty, nie pojedyncze słowa.** Pozycja ma być czymś, co uczeń może powiedzieć na głos obcej osobie jeszcze tego samego dnia. „Quanto custa?" jest dobrą pozycją, „cena" nie jest — bo samego rzeczownika nie da się użyć do niczego, dopóki nie obrośnie zdaniem. Pojedyncze słowo dopuszczasz tylko wtedy, gdy użytkownik wprost o nie poprosił.
+- Ustaw `type` na „phrase" dla utartego zwrotu i „sentence" dla całego zdania. „word" tylko wtedy, gdy naprawdę chodzi o pojedynczy wyraz.
+- Do zwrotu kierowanego do kogoś dołóż `reply_pt` i `reply_pl` — najbardziej prawdopodobną odpowiedź, jaką uczeń usłyszy. To jest połowa umiejętności: „Quanto custa?" nic nie daje, jeśli „São dois e cinquenta" odbija się od ucha. Przy pozycji, na którą nikt nie odpowiada, zostaw null.
+- W notatce napisz, **kiedy i do kogo** tego się mówi, jeśli to nieoczywiste: forma grzecznościowa czy na ty, sytuacja, pułapka wobec polskiego.
 - Przy rzeczowniku zawsze podaj rodzajnik określony („o" / „a") i rodzaj („m" / „f"). To nie jest pole opcjonalne dla rzeczownika.
 - W polu `pt` nie umieszczaj rodzajnika — on ma własne pole.
 - Do każdej pozycji dołącz jedno krótkie zdanie przykładowe po portugalsku wraz z tłumaczeniem na polski. Zdanie ma pokazywać hasło w użyciu, a nie je definiować.
@@ -497,6 +505,7 @@ def generate_set(
     lines = [
         f"Przygotuj {count} pozycji do nauki na temat: {topic}",
         f"Docelowy poziom: {level}.",
+        "Mają to być gotowe zwroty do użycia w tej sytuacji, nie lista słówek.",
     ]
     if avoid:
         # Słowa, które uczeń już ma. Wysłanie ich do modelu jest tańsze niż

@@ -45,6 +45,10 @@ def upsert_item(db: Session, spec: dict) -> Item:
     item.ipa = spec.get("ipa")
     item.cefr_level = spec.get("level", "A1")
     item.notes = spec.get("notes")
+    # `reply` w JSON-ie to para [portugalski, polski] — to, co usłyszysz po
+    # wypowiedzeniu zwrotu. Przy pojedynczych słowach zostaje puste.
+    reply = spec.get("reply")
+    item.reply_pt, item.reply_pl = (reply[0].strip(), reply[1].strip()) if reply else (None, None)
     item.variant = spec.get("variant", "pt-PT")
     item.source = "seed"
     # Everything in the seed has been read through by hand; anything uncertain

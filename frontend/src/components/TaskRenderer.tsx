@@ -500,6 +500,7 @@ export function Feedback({
   heading,
   speak,
   explain,
+  reply,
   onNext,
 }: {
   isCorrect: boolean;
@@ -519,6 +520,8 @@ export function Feedback({
   };
   /** Dane do pytania „dlaczego źle?"; brak = przycisku nie ma. */
   explain?: { itemId: string; userAnswer: string; expected: string };
+  /** Co usłyszysz po wypowiedzeniu tego zwrotu. */
+  reply?: { pt: string; pl: string } | null;
   onNext: () => void;
 }) {
   // Enter przechodzi dalej — ale dopiero ten Enter, który zaczął się już przy
@@ -627,6 +630,19 @@ export function Feedback({
         )}
         {note && <div className="mt-1 text-[12.5px] text-ink-3">{note}</div>}
       </div>
+
+      {reply && (
+        // Zwrot bez odpowiedzi to połowa umiejętności — „Quanto custa?" nic nie
+        // daje, jeśli „São dois e cinquenta" odbija się od ucha. Pokazujemy ją
+        // dopiero przy ocenie, gdy poprawna wersja i tak jest już na ekranie.
+        <div className="rounded-xl border border-line bg-surface px-3 py-2">
+          <div className="text-[10.5px] font-bold uppercase tracking-[0.08em] text-ink-3">
+            Usłyszysz w odpowiedzi
+          </div>
+          <div className="pt mt-0.5 text-[15px]">{reply.pt}</div>
+          <div className="text-[12px] text-ink-2">{reply.pl}</div>
+        </div>
+      )}
 
       {explain && !isCorrect && <WhyWrong {...explain} />}
 

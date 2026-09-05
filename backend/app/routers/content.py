@@ -242,6 +242,7 @@ def get_item(
     out = ItemDetailOut.model_validate(item)
     recordings = audio_index(db, [item], user.settings.tts_voice, include_slow=False).get(item.id, {})
     out.audio_url = recordings.get("pt")
+    out.reply_audio_url = recordings.get("reply")
     # Zdanie przykładowe ma własne nagranie — tego, jak słowo brzmi w zdaniu,
     # nie da się usłyszeć z wymowy samego hasła.
     for example in out.examples:

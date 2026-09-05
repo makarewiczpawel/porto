@@ -71,6 +71,8 @@ class ProposalOut(BaseModel):
     notes: str | None = None
     example_pt: str | None = None
     example_pl: str | None = None
+    reply_pt: str | None = None
+    reply_pl: str | None = None
 
 
 class GenerateOut(BaseModel):
@@ -230,6 +232,8 @@ def generate(
                 notes=entry.notes,
                 example_pt=entry.example_pt,
                 example_pl=entry.example_pl,
+                reply_pt=entry.reply_pt,
+                reply_pl=entry.reply_pl,
             )
         )
 
@@ -266,6 +270,8 @@ def get_job(
                 notes=entry.get("notes"),
                 example_pt=entry.get("example_pt"),
                 example_pl=entry.get("example_pl"),
+                reply_pt=entry.get("reply_pt"),
+                reply_pl=entry.get("reply_pl"),
             )
         )
     return GenerateOut(
@@ -377,6 +383,8 @@ def accept(
                 plural=entry.plural,
                 cefr_level=entry.cefr_level,
                 notes=entry.notes,
+                reply_pt=(entry.reply_pt or None),
+                reply_pl=(entry.reply_pl or None),
                 source="ai",
                 # Zweryfikowane, bo przeszły przez przegląd człowieka. Pozycja
                 # niezatwierdzona nie ma jak tu trafić.

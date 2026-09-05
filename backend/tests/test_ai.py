@@ -33,6 +33,8 @@ def _payload(**overrides) -> dict:
         "notes": None,
         "example_pt": "O autocarro está atrasado.",
         "example_pl": "Autobus jest spóźniony.",
+        "reply_pt": None,
+        "reply_pl": None,
     }
     base.update(overrides)
     return base

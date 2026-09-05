@@ -30,6 +30,11 @@ class Item(Base):
     article: Mapped[str | None] = mapped_column(String(8))
     plural: Mapped[str | None] = mapped_column(Text)
     ipa: Mapped[str | None] = mapped_column(Text)
+    # Co usłyszysz w odpowiedzi. Zwrot bez odpowiedzi to połowa umiejętności:
+    # „Quanto custa?" jest bezużyteczne, jeśli „São dois e cinquenta" odbija się
+    # od ucha. Puste dla zwykłych słów — nikt nie odpowiada na rzeczownik.
+    reply_pt: Mapped[str | None] = mapped_column(Text)
+    reply_pl: Mapped[str | None] = mapped_column(Text)
     cefr_level: Mapped[str] = mapped_column(String(2), nullable=False, default="A1", index=True)
     notes: Mapped[str | None] = mapped_column(Text)
     extra: Mapped[dict | None] = mapped_column(JSONB)

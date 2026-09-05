@@ -21,7 +21,14 @@ from app.models.study import (
     StudySession,
     UserItemState,
 )
-from app.models.user import ALL_MODES, DEFAULT_MODES, PHASE1_MODES, User, UserSettings
+from app.models.user import (
+    ALL_MODES,
+    CONTENT_FOCUS,
+    DEFAULT_MODES,
+    PHASE1_MODES,
+    User,
+    UserSettings,
+)
 
 __all__ = [
     "AI_KINDS",
@@ -33,6 +40,7 @@ __all__ = [
     "Base",
     "CARD_STATES",
     "CEFR_LEVELS",
+    "CONTENT_FOCUS",
     "DIRECTIONS",
     "DEFAULT_MODES",
     "DailyStat",
