@@ -98,6 +98,50 @@ export function SettingsPage() {
         />
       </Card>
 
+      <Label className="mb-2">Czego się uczyć</Label>
+      <Card className="grid gap-2">
+        <p className="text-[12.5px] text-ink-2">
+          Kolejka dobiera nowy materiał według tego ustawienia. Nic nie znika z bazy — zmienia
+          się tylko kolejność, w jakiej poznajesz materiał.
+        </p>
+        <div className="grid gap-2">
+          {(
+            [
+              ["phrases", "Gotowe zwroty", "całe zdania do powiedzenia od razu"],
+              ["mixed", "Po równo", "zwroty i słowa w kolejności talii"],
+              ["words", "Pojedyncze słowa", "budowanie słownika, jak dawniej"],
+            ] as const
+          ).map(([id, title, hint]) => {
+            const on = settings.content_focus === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                aria-pressed={on}
+                onClick={() => void patch({ content_focus: id })}
+                className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition ${
+                  on ? "border-accent bg-accent-soft" : "border-line bg-surface"
+                }`}
+              >
+                <span
+                  className={`grid h-[18px] w-[18px] flex-none place-content-center rounded-full border-2 ${
+                    on ? "border-accent" : "border-line-strong"
+                  }`}
+                >
+                  {on && <span className="h-[8px] w-[8px] rounded-full bg-accent" />}
+                </span>
+                <span className="min-w-0">
+                  <span className={`block text-[14px] font-semibold ${on ? "text-accent" : ""}`}>
+                    {title}
+                  </span>
+                  <span className="block text-[11.5px] text-ink-3">{hint}</span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </Card>
+
       <Label className="mb-2 mt-5">Tryby ćwiczeń</Label>
       <Card className="grid gap-0 py-1">
         {MODES.map((mode, index) => {

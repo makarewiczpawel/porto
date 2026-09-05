@@ -42,6 +42,24 @@ przesuwa żadnej karty. Pomyłki można jednym kliknięciem dorzucić do jutrzej
 | [`docs/PLAN.md`](docs/PLAN.md) | Plan wykonawczy z zadaniami i punktami kontrolnymi per faza |
 | [`docs/mockup.html`](docs/mockup.html) | Klikalny prototyp interfejsu (otwórz w przeglądarce) |
 
+## Podejście do nauki
+
+Materiałem są **gotowe zwroty**, nie pojedyncze słowa. Powód jest praktyczny:
+„quanto custa?" da się powiedzieć obcej osobie tego samego dnia, a „cena" nie da
+się użyć do niczego, dopóki nie obrośnie zdaniem. Baza startowa zaczyna się od
+dziesięciu talii sytuacyjnych — sklep, restauracja, kawiarnia, ulica, transport,
+praca, telefon, rozmowa, apteka, załatwianie spraw.
+
+Każdy zwrot niesie trzy rzeczy: co powiedzieć, **kiedy i do kogo** się tego
+używa, oraz **co usłyszysz w odpowiedzi**. Ta ostatnia jest połową umiejętności —
+„Quanto custa?" nic nie daje, jeśli „São dois e cinquenta" odbija się od ucha,
+dlatego odpowiedzi też mają nagraną wymowę.
+
+Talie słownikowe zostają w bazie i wracają po przestawieniu
+`Ustawienia → Czego się uczyć` na „pojedyncze słowa". Zmiana ustawienia nie
+kasuje żadnego postępu — przestawia tylko kolejność, w jakiej poznaje się
+materiał.
+
 ## Stack
 
 | Warstwa | Technologia |

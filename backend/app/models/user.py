@@ -24,6 +24,8 @@ ALL_MODES = [
     "translate_ai",
 ]
 PHASE1_MODES = ["flashcard", "mcq_pt_pl", "mcq_pl_pt"]
+# Czego dokłada kolejka przy nowym materiale.
+CONTENT_FOCUS = ("phrases", "mixed", "words")
 # What a new account starts with — every mode. `listening` is safe to have on
 # even before anything is recorded: an item with no audio simply gets a
 # different form of the question instead of a silent player.
@@ -73,5 +75,10 @@ class UserSettings(Base):
     tts_speed: Mapped[float] = mapped_column(Numeric(3, 2), nullable=False, default=1.00)
     autoplay_audio: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     accent_strict: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    # Czego dokłada kolejka, gdy sięga po nowy materiał. „phrases" to całe
+    # zwroty gotowe do użycia, „words" to pojedyncze słowa, „mixed" po równo.
+    # Domyślnie zwroty: szybciej dają się powiedzieć na głos komuś obcemu, a o
+    # to w nauce języka chodzi wcześniej niż o rozmiar słownika.
+    content_focus: Mapped[str] = mapped_column(String(8), nullable=False, default="phrases")
 
     user: Mapped[User] = relationship(back_populates="settings")

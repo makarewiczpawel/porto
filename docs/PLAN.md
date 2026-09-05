@@ -398,6 +398,35 @@ Zostaje potwierdzenie harmonogramu kopii zapasowych w Railway — wymaga dostęp
 
 ---
 
+## Faza 6 — zwroty zamiast słówek
+
+**Cel fazy:** materiał, który da się powiedzieć obcej osobie tego samego dnia.
+
+Zmiana wyszła z obserwacji użytkownika: pojedynczy rzeczownik nie daje się użyć
+do niczego, dopóki nie obrośnie zdaniem, a „quanto custa?" działa od razu.
+Słowa zostają w bazie — zmienia się to, co kolejka podaje jako pierwsze.
+
+- [x] Dziesięć talii sytuacyjnych: sklep, restauracja, kawiarnia, ulica,
+      transport, praca, telefon, rozmowa, apteka, załatwianie spraw (153 zwroty)
+- [x] `reply_pt` / `reply_pl` — co usłyszysz w odpowiedzi. Zwrot bez odpowiedzi
+      to połowa umiejętności; nagranie odpowiedzi jest ważniejsze niż nagranie
+      własnego zwrotu, bo to ją słychać znienacka
+- [x] Notatka przy zwrocie mówi **kiedy i do kogo** się tego używa
+- [x] `content_focus` w ustawieniach: zwroty (domyślnie) / po równo / słowa
+- [x] Kolejka nowego materiału podaje najpierw zwroty; słowa czekają dalej
+- [x] Zwrot ćwiczy się jak zdanie — układanie z klocków i tłumaczenie całości,
+      nie przepisywanie jednego wyrazu
+- [x] Prompt AI domyślnie generuje gotowe zwroty z odpowiedzią rozmówcy
+- [x] Talie sytuacyjne prowadzą listę; słownikowe schodzą za nie
+
+### Definition of Done — Faza 6
+- [x] Nowe konto zaczyna od „bom dia, faz favor", nie od rzeczownika
+- [x] Zwroty z odpowiedzią pokazują ją przy ocenie i mają własne nagranie
+- [x] Przestawienie na „słowa" przywraca poprzednie zachowanie bez utraty danych
+- [x] Zero brazylizmów w nowych taliach (test na liście zakazanych)
+
+---
+
 ## Szacunek całości
 
 | Faza | Zakres | Czas |

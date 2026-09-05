@@ -35,6 +35,7 @@ interface Feedback {
   diff?: string;
   summary?: string;
   heading?: string;
+  reply?: { pt: string; pl: string } | null;
   /** Pozycja i to, co zostało wpisane — potrzebne, by zapytać „dlaczego źle?". */
   itemId?: string;
   userAnswer?: string;
@@ -147,6 +148,7 @@ export const useSession = create<SessionState>()(
           diff: localResult?.diff,
           summary: localResult?.summary,
           heading: localResult?.heading,
+          reply: task.reply ?? null,
           itemId: task.item_id,
           userAnswer: payload.user_answer ?? undefined,
         };

@@ -156,7 +156,16 @@ export function StudyPage() {
           <>
             <span className="mb-3 self-start rounded-full border border-accent-line bg-accent-soft px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-[0.08em] text-accent">
               {MODE_LABELS[task.mode] ??
-                (task.is_new ? "Nowe słowo" : task.direction === "recognition" ? "Rozpoznawanie" : "Produkcja")}
+                (task.is_new
+                  ? // „Nowe słowo" przy zwrocie „bom dia, faz favor" brzmi jak
+                    // pomyłka i podpowiada, że aplikacja uczy pojedynczych
+                    // wyrazów — a od tego właśnie odchodzimy.
+                    task.type === "word"
+                    ? "Nowe słowo"
+                    : "Nowy zwrot"
+                  : task.direction === "recognition"
+                    ? "Rozpoznawanie"
+                    : "Produkcja")}
             </span>
             <TaskRenderer
               task={task}
@@ -178,6 +187,7 @@ export function StudyPage() {
             diff={feedback.diff}
             summary={feedback.summary}
             heading={feedback.heading}
+            reply={feedback.reply}
             speak={speakOnFeedback}
             explain={
               feedback.userAnswer && feedback.itemId

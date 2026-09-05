@@ -185,9 +185,22 @@ export function ItemDetailPage() {
         </div>
       </Card>
 
+      {item.reply_pt && (
+        <Card className="mt-3">
+          <Label className="mb-1.5">Usłyszysz w odpowiedzi</Label>
+          <div className="flex items-start gap-2">
+            <div className="min-w-0 flex-1">
+              <div className="pt text-[16px]">{item.reply_pt}</div>
+              <div className="mt-0.5 text-[12.5px] text-ink-2">{item.reply_pl}</div>
+            </div>
+            <SpeakButton text={item.reply_pt} url={item.reply_audio_url} size="sm" />
+          </div>
+        </Card>
+      )}
+
       {item.notes && (
         <Card className="mt-3 border-accent-line bg-accent-soft">
-          <Label className="mb-1 text-accent">Uwaga</Label>
+          <Label className="mb-1 text-accent">Kiedy tego użyć</Label>
           <p className="text-[13.5px]">{item.notes}</p>
         </Card>
       )}

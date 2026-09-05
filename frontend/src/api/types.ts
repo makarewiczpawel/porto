@@ -27,6 +27,8 @@ export interface Settings {
   tts_speed: number;
   autoplay_audio: boolean;
   accent_strict: boolean;
+  /** Czym kolejka karmi się przy nowym materiale. */
+  content_focus: "phrases" | "mixed" | "words";
 }
 
 export interface AuthResponse {
@@ -64,11 +66,17 @@ export interface Item {
   article: string | null;
   plural: string | null;
   ipa: string | null;
+  /** Co usłyszysz w odpowiedzi. Puste przy pojedynczych słowach. */
+  reply_pt: string | null;
+  reply_pl: string | null;
   cefr_level: string;
   notes: string | null;
   source: string;
   verified: boolean;
   audio_url: string | null;
+  /** Nagranie odpowiedzi rozmówcy — jej rozpoznanie ze słuchu jest trudniejsze
+   *  niż wypowiedzenie własnego zwrotu. */
+  reply_audio_url?: string | null;
 }
 
 export interface CardState {
@@ -142,6 +150,8 @@ export interface Task {
   part_of_speech: string | null;
   notes: string | null;
   example: { pt: string; pl: string } | null;
+  /** Spodziewana odpowiedź rozmówcy — tylko przy zwrotach. */
+  reply?: { pt: string; pl: string } | null;
   /** multiple choice */
   question?: string;
   options?: string[];

@@ -33,6 +33,7 @@ class SettingsOut(ORMModel):
     tts_speed: float
     autoplay_audio: bool
     accent_strict: bool
+    content_focus: str
 
 
 class SettingsPatch(BaseModel):
@@ -45,6 +46,7 @@ class SettingsPatch(BaseModel):
     tts_speed: float | None = Field(default=None, ge=0.5, le=2.0)
     autoplay_audio: bool | None = None
     accent_strict: bool | None = None
+    content_focus: str | None = Field(default=None, pattern="^(phrases|mixed|words)$")
 
 
 class UserOut(ORMModel):
@@ -96,11 +98,16 @@ class ItemOut(ORMModel):
     ipa: str | None
     cefr_level: str
     notes: str | None
+    # Co usłyszysz w odpowiedzi. Puste przy pojedynczych słowach — nikt nie
+    # odpowiada na rzeczownik.
+    reply_pt: str | None
+    reply_pl: str | None
     source: str
     verified: bool
     # Wypełniane przez router, gdy nagranie istnieje — sam model nie wie nic
     # o syntezie mowy.
     audio_url: str | None = None
+    reply_audio_url: str | None = None
 
 
 class ItemDetailOut(ItemOut):

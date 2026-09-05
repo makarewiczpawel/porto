@@ -6,7 +6,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
-from sqlalchemy import and_, func, or_, select
+from sqlalchemy import and_, case, func, literal, or_, select
 from sqlalchemy.orm import Session
 
 from app.models import (
@@ -40,6 +40,9 @@ WORD_BANK_EXTRA = 3
 # different cache key, so it is synthesised once and then free. Definicja
 # mieszka przy bibliotece nagrań — sesja tylko z niej korzysta.
 SLOW_SPEED = voice_library.SLOW_SPEED
+# Typy pozycji, które są gotowym zwrotem do powiedzenia, a nie cegiełką do
+# zbudowania zdania. Decydują o doborze trybów i o kolejności nowego materiału.
+SPEAKABLE_TYPES = ("phrase", "sentence")
 
 
 @dataclass
@@ -114,11 +117,12 @@ def choose_mode(
     ):
         return "translate_ai"
 
-    # A whole sentence is worth rebuilding rather than retyping: word order is
-    # the thing being learned there, and it is the only mode that drills it.
+    # Cały zwrot wart jest ułożenia z klocków, nie przepisania: uczy się tu
+    # szyku, a to jedyny tryb, który go ćwiczy. Dotyczy zwrotów tak samo jak
+    # zdań — „se faz favor" na końcu to też szyk, którego trzeba się nauczyć.
     if (
         direction == "production"
-        and item.type == "sentence"
+        and item.type in SPEAKABLE_TYPES
         and "word_bank" in remaining
         and state is not None
         and state.state == "review"
@@ -251,7 +255,7 @@ def translation_pair(item: Item) -> tuple[str, str] | None:
     jest jego zdanie przykładowe, bo tłumaczenie jednego słowa niczego nie
     uczy o szyku ani o odmianie.
     """
-    if item.type == "sentence":
+    if item.type in SPEAKABLE_TYPES:
         return item.pl, item.pt
     example = _first_example(item)
     if example is not None:
@@ -269,7 +273,11 @@ def supports(mode: str, item: Item, has_audio: bool = False) -> bool:
         example = _first_example(item)
         return example is not None and cloze_parts(item, example) is not None
     if mode == "word_bank":
-        text = item.pt if item.type == "sentence" else (_first_example(item).pt if _first_example(item) else "")
+        text = (
+            item.pt
+            if item.type in SPEAKABLE_TYPES
+            else (_first_example(item).pt if _first_example(item) else "")
+        )
         return len(text.split()) >= 3
     if mode == "listening":
         # The question *is* the recording. Without one there is nothing to ask,
@@ -279,7 +287,11 @@ def supports(mode: str, item: Item, has_audio: bool = False) -> bool:
     if mode == "translate_ai":
         # Ocenę wystawia model, więc bez klucza tryb po prostu nie istnieje —
         # zamiast pytania bez oceny użytkownik dostaje zwykłe ćwiczenie.
-        return item.type == "sentence" and translation_pair(item) is not None and ai.is_configured()
+        return (
+            item.type in SPEAKABLE_TYPES
+            and translation_pair(item) is not None
+            and ai.is_configured()
+        )
     return True
 
 
@@ -294,6 +306,11 @@ def spoken_texts(item: Item) -> dict[str, str]:
     example = _first_example(item)
     if example is not None:
         texts["example"] = example.pt
+    # Odpowiedź rozmówcy trzeba przede wszystkim *rozpoznać ze słuchu* — to ona
+    # pada w sklepie szybko i bez ostrzeżenia. Nagranie jest tu ważniejsze niż
+    # przy samym haśle, które i tak się wypowiada samemu.
+    if item.reply_pt:
+        texts["reply"] = item.reply_pt
     return texts
 
 
@@ -330,7 +347,7 @@ def audio_index(
 
 def _word_bank(db: Session, item: Item) -> dict:
     """Bricks to rebuild a sentence from, plus a few plausible wrong ones."""
-    if item.type == "sentence":
+    if item.type in SPEAKABLE_TYPES:
         sentence, translation = item.pt, item.pl
     else:
         example = _first_example(item)
@@ -379,6 +396,9 @@ def build_task(
         "part_of_speech": item.part_of_speech,
         "notes": item.notes,
         "example": {"pt": example.pt, "pl": example.pl} if example else None,
+        # Zwrot bez spodziewanej odpowiedzi to połowa umiejętności — pokazujemy
+        # ją przy ocenie, gdy poprawna wersja i tak jest już na ekranie.
+        "reply": {"pt": item.reply_pt, "pl": item.reply_pl} if item.reply_pt else None,
         "audio": audio or {},
     }
 
@@ -505,10 +525,21 @@ def due_states(
 
 
 def new_items(
-    db: Session, user: User, limit: int, deck_ids: list[uuid.UUID] | None
+    db: Session,
+    user: User,
+    limit: int,
+    deck_ids: list[uuid.UUID] | None,
+    focus: str = "phrases",
 ) -> list[Item]:
     """Items the user has never seen. Only recognition cards are created for
-    them — production unlocks later, so the daily load grows gently."""
+    them — production unlocks later, so the daily load grows gently.
+
+    `focus` decyduje, czym kolejka karmi się w pierwszej kolejności. Przy
+    „phrases" idą całe zwroty: „quanto custa?" da się powiedzieć obcej osobie
+    jeszcze tego samego dnia, a „cena" nie da się użyć do niczego, dopóki nie
+    obrośnie zdaniem. Pojedyncze słowa dochodzą dopiero, gdy zwroty się skończą
+    — nie znikają z bazy, po prostu czekają w kolejce dalej.
+    """
     if limit <= 0:
         return []
     seen = select(UserItemState.item_id).where(UserItemState.user_id == user.id)
@@ -524,7 +555,17 @@ def new_items(
     )
     if deck_ids:
         query = query.where(DeckItem.deck_id.in_(deck_ids))
-    query = query.order_by(Deck.position.asc(), DeckItem.position.asc()).limit(limit * 3)
+
+    if focus == "phrases":
+        speakable_first = case((Item.type.in_(SPEAKABLE_TYPES), 0), else_=1)
+    elif focus == "words":
+        speakable_first = case((Item.type.in_(SPEAKABLE_TYPES), 1), else_=0)
+    else:
+        speakable_first = literal(0)
+
+    query = query.order_by(
+        speakable_first, Deck.position.asc(), DeckItem.position.asc()
+    ).limit(limit * 3)
 
     out: list[Item] = []
     seen_ids: set[uuid.UUID] = set()
@@ -632,7 +673,7 @@ def build_session(
     unlock_production(db, user, now)
 
     states = due_states(db, user, now, review_cap, resolved_decks)
-    fresh = new_items(db, user, new_cap, resolved_decks)
+    fresh = new_items(db, user, new_cap, resolved_decks, user_settings.content_focus)
 
     tasks: list[Task] = []
 
