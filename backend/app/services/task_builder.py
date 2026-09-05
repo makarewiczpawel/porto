@@ -43,6 +43,9 @@ SLOW_SPEED = voice_library.SLOW_SPEED
 # Typy pozycji, które są gotowym zwrotem do powiedzenia, a nie cegiełką do
 # zbudowania zdania. Decydują o doborze trybów i o kolejności nowego materiału.
 SPEAKABLE_TYPES = ("phrase", "sentence")
+# Co w aplikacji brzmi — definicja mieszka przy bibliotece nagrań, żeby
+# odtwarzanie i lista „do nagrania" nie mogły się rozejść.
+spoken_texts = voice_library.spoken_texts
 
 
 @dataclass
@@ -293,25 +296,6 @@ def supports(mode: str, item: Item, has_audio: bool = False) -> bool:
             and ai.is_configured()
         )
     return True
-
-
-def spoken_texts(item: Item) -> dict[str, str]:
-    """Which strings of this item are worth hearing.
-
-    The Portuguese side with its article (`a casa`, not `casa`) and the example
-    sentence, because hearing a word inside a sentence is where the rhythm of
-    the language lives.
-    """
-    texts = {"pt": item.display_pt}
-    example = _first_example(item)
-    if example is not None:
-        texts["example"] = example.pt
-    # Odpowiedź rozmówcy trzeba przede wszystkim *rozpoznać ze słuchu* — to ona
-    # pada w sklepie szybko i bez ostrzeżenia. Nagranie jest tu ważniejsze niż
-    # przy samym haśle, które i tak się wypowiada samemu.
-    if item.reply_pt:
-        texts["reply"] = item.reply_pt
-    return texts
 
 
 def audio_index(

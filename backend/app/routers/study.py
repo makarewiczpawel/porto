@@ -2,7 +2,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -25,6 +25,7 @@ from app.schemas import (
 from app.services import grader
 from app.services import scheduler as sched
 from app.services import stats as stats_service
+from app.services import voice_library
 from app.services.task_builder import build_session, queue_counts
 
 router = APIRouter(prefix="/api/study", tags=["study"])
@@ -60,7 +61,10 @@ def queue_summary(user: User = Depends(get_current_user), db: Session = Depends(
 
 @router.post("/sessions", response_model=SessionOut, status_code=201)
 def create_session(
-    body: SessionCreateIn, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+    body: SessionCreateIn,
+    background: BackgroundTasks,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ) -> SessionOut:
     open_session = db.execute(
         select(StudySession).where(
@@ -101,6 +105,15 @@ def create_session(
     db.add(session)
     db.commit()
     db.refresh(session)
+
+    # Świeży materiał sam dostaje głos wybrany w ustawieniach. Bez tego każda
+    # nowa partia zwrotów odzywała się głosem telefonu — innym niż wybrany — i
+    # trzeba było o tym wiedzieć oraz kliknąć „Nagraj brakujące" w ustawieniach.
+    background.add_task(
+        voice_library.synthesize_for_items,
+        [task.item_id for task in tasks],
+        user.settings.tts_voice,
+    )
 
     return SessionOut(
         id=session.id,
