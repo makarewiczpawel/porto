@@ -444,6 +444,7 @@ Kody: `400` błędne żądanie, `401` brak/wygasły token, `403` cudzy zasób, `
 | POST | `/api/ai/jobs/{id}/approve` | `{accepted_items: [...], deck_name?}` → tworzy pozycje i talię, kolejkuje audio | ✓ |
 | POST | `/api/ai/jobs/{id}/reject` | Odrzuca job | ✓ |
 | POST | `/api/ai/examples` | `{item_id, count}` → zdania przykładowe PT-PT dla istniejącej pozycji | ✓ |
+| POST | `/api/ai/breakdown` | `{item_id, text}` → rozbiór zwrotu na słowa: znaczenie w kontekście, forma podstawowa, opis formy, dosłowne tłumaczenie całości. `text` musi należeć do pozycji | ✓ |
 | POST | `/api/ai/explain` | `{item_id, user_answer}` → krótkie wyjaśnienie po polsku, dlaczego odpowiedź jest błędna | ✓ |
 | POST | `/api/ai/grade-translation` | `{example_id, user_answer}` → `{score 0-100, feedback, corrected}` dla tłumaczenia zdania PL→PT | ✓ |
 | GET | `/api/ai/usage` | Koszty i liczba wywołań w bieżącym miesiącu | ✓ |
@@ -648,7 +649,7 @@ Motyw: jasny i ciemny, przełącznik plus tryb systemowy. Duże cele dotykowe (m
 | Reakcja na odpowiedź | < 100 ms — ocena lokalna na froncie, synchronizacja z serwerem asynchroniczna |
 | Rozmiar bundla JS (initial) | < 250 kB gzip |
 | Dostępność API | > 99% |
-| Bezpieczeństwo | HTTPS wszędzie, Argon2id na hasłach, JWT (access 15 min / refresh 30 dni w httpOnly+SameSite=Strict cookie), CORS ograniczony do domeny frontu, walidacja Pydantic na każdym wejściu, rate limiting na `/api/auth/*` (10/min) i `/api/ai/*` (20/h) |
+| Bezpieczeństwo | HTTPS wszędzie, Argon2id na hasłach, JWT (access 15 min / refresh 30 dni w httpOnly+SameSite=Strict cookie), CORS ograniczony do domeny frontu, walidacja Pydantic na każdym wejściu, rate limiting na `/api/auth/*` (10/min), `/api/ai/*` (20/h) i `/api/ai/breakdown` (60/h) |
 | Ochrona kosztów | Twarde limity miesięczne dla TTS (znaki) i Claude API (USD); po przekroczeniu `429` z czytelnym komunikatem zamiast rosnącego rachunku |
 | Responsywność | **Mobile-first** (360–430 px projektowane najpierw), poprawne do 1920 px |
 | Offline | Sesja pobrana przed utratą sieci działa do końca; odpowiedzi w IndexedDB, synchronizacja przy powrocie online; brak sieci nie kasuje postępu |

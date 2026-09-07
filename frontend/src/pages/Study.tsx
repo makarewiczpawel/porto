@@ -122,6 +122,12 @@ export function StudyPage() {
         : { text: task.pt, url: task.audio?.pt, slowUrl: task.audio?.pt_slow }
       : undefined;
 
+  // Rozbiera się to samo, co się odtwarza — czyli zawsze stronę portugalską.
+  // Przy rozpoznawaniu poprawną odpowiedzią jest polskie tłumaczenie, a w nim
+  // nie ma czego stukać; przy dopasowywaniu par nie ma jednego zwrotu.
+  const breakdownOnFeedback =
+    task && speakOnFeedback ? { itemId: task.item_id, text: speakOnFeedback.text } : undefined;
+
   return (
     <div className="flex min-h-dvh flex-col">
       <div className="safe-top flex items-center gap-3 px-4 pb-2">
@@ -189,6 +195,7 @@ export function StudyPage() {
             heading={feedback.heading}
             reply={feedback.reply}
             speak={speakOnFeedback}
+            breakdown={breakdownOnFeedback}
             explain={
               feedback.userAnswer && feedback.itemId
                 ? {

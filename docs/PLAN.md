@@ -323,7 +323,8 @@ Do zrobienia raz, przed pisaniem kodu.
 - [x] `services/ai.py`: Anthropic SDK, model z `AI_MODEL`, timeouty i retry
 - [x] Model `ai_generation_jobs`; migracja
 - [x] Log tokenów i kosztu każdego wywołania; twardy limit `AI_MONTHLY_BUDGET_USD` → `429` z czytelnym komunikatem
-- [x] Rate limit `/api/ai/*` (20/h)
+- [x] Rate limit `/api/ai/*` (20/h; rozbiór zwrotu ma własny, 60/h — stuka się
+      w słowa dużo częściej, a jedno wywołanie jest najtańsze i opisuje cały zwrot)
 
 ### 4.2 Generowanie zestawów [~6 h]
 - [x] Prompt systemowy wymuszający PT-PT: jawna lista zakazanych brazylizmów, wymóg podania rodzajnika i rodzaju dla rzeczowników, zdanie przykładowe do każdej pozycji, wyjście jako ścisły JSON
@@ -418,12 +419,22 @@ Słowa zostają w bazie — zmienia się to, co kolejka podaje jako pierwsze.
       nie przepisywanie jednego wyrazu
 - [x] Prompt AI domyślnie generuje gotowe zwroty z odpowiedzią rozmówcy
 - [x] Talie sytuacyjne prowadzą listę; słownikowe schodzą za nie
+- [x] Cztery talie najkrótszych zwrotów na czele listy: „Jednym słowem",
+      „Krótkie reakcje", „Pytania w trzech słowach", „Zgoda i odmowa"
+      (68 pozycji, 65 z nich najwyżej trzy słowa)
+- [x] Stuknięcie w słowo zwrotu otwiera chmurkę: znaczenie w tym zdaniu, forma
+      podstawowa (przy czasowniku bezokolicznik), opis formy, dosłowne
+      tłumaczenie całości. Jedno wywołanie modelu opisuje cały zwrot i zostaje
+      w pamięci na stałe, więc pierwsze stuknięcie opłaca wszystkie następne
 
 ### Definition of Done — Faza 6
 - [x] Nowe konto zaczyna od „bom dia, faz favor", nie od rzeczownika
 - [x] Zwroty z odpowiedzią pokazują ją przy ocenie i mają własne nagranie
 - [x] Przestawienie na „słowa" przywraca poprzednie zachowanie bez utraty danych
 - [x] Zero brazylizmów w nowych taliach (test na liście zakazanych)
+- [x] Każde słowo zwrotu da się stuknąć przy ocenie i w słowniku; opis
+      podstawiony pod cudze słowo jest niemożliwy (lista słów sprawdzana
+      przed pokazaniem)
 
 ---
 

@@ -208,8 +208,8 @@ daje działającą wymowę offline.
 
 ## AI
 
-Funkcje AI — generowanie zestawów, „dlaczego źle?", ocena tłumaczenia, dogenerowanie zdań
-przykładowych — chodzą na Anthropic Messages API przez oficjalny SDK. Bez zmiennej
+Funkcje AI — generowanie zestawów, rozbiór zwrotu na słowa, „dlaczego źle?", ocena tłumaczenia,
+dogenerowanie zdań przykładowych — chodzą na Anthropic Messages API przez oficjalny SDK. Bez zmiennej
 `ANTHROPIC_API_KEY` po prostu ich nie ma: ekran generowania mówi, że jest wyłączony, przycisk
 „dlaczego źle?" się nie pokazuje, a tryb „przetłumacz zdanie" znika z sesji. Reszta aplikacji
 działa bez zmian.
@@ -220,8 +220,29 @@ Trzy zabezpieczenia przed rachunkiem:
   tokenów i kosztem. Zużycie w bieżącym miesiącu widać w `/ustawienia`.
 - **Twardy limit.** Po przekroczeniu `AI_MONTHLY_BUDGET_USD` (domyślnie 5 USD) funkcje AI
   zwracają `429` z komunikatem po polsku, zamiast wydawać dalej.
-- **Pamięć podręczna.** Ta sama pomyłka wyjaśniana jest raz; to samo tłumaczenie oceniane raz.
-  Klucz to skrót treści pytania, więc powtórka jest darmowa i natychmiastowa.
+- **Pamięć podręczna.** Ta sama pomyłka wyjaśniana jest raz; to samo tłumaczenie oceniane raz;
+  ten sam zwrot rozbierany raz. Klucz to skrót treści pytania, więc powtórka jest darmowa i
+  natychmiastowa.
+
+### Rozbiór zwrotu na słowa
+
+Zwrot uczy się szybciej niż pojedyncze słowo, ale zostawia pytanie, którego przy słowie nie
+było: *co tu właściwie robi każdy wyraz*. „Quanto custa?" wchodzi do głowy jako jeden dźwięk i
+tak zostaje — dopóki nie widać, że „custa" to forma „custar" i wróci w „quanto custam?".
+
+Dlatego przy ocenie i w słowniku każde słowo zwrotu da się stuknąć. Chmurka podaje znaczenie
+w tym konkretnym zdaniu, formę podstawową (przy czasowniku — bezokolicznik), opis formy
+i dosłowne tłumaczenie całości.
+
+Dwie rzeczy trzymają koszt w ryzach. Po pierwsze, **jedno wywołanie opisuje cały zwrot**:
+stuknięcie w pierwsze słowo opłaca wszystkie następne, a wynik zostaje w `ai_cache` na stałe —
+kluczowany treścią zwrotu, więc ten sam zwrot pod inną pozycją jest już opisany. Po drugie,
+pole `text` nie jest dowolne: serwer sprawdza, że napis należy do wskazanej pozycji, bo inaczej
+byłoby to darmowe wejście do płatnego modelu.
+
+Odpowiedź modelu przechodzi jeszcze jedno sito. Lista słów musi zgadzać się co do joty z tym,
+co wysłał serwer — inaczej wraca do poprawki, a nie na ekran. Chmurka podpisuje się pod
+konkretnym słowem i opis podstawiony pod cudze byłby gorszy niż jego brak.
 
 Nad tym wszystkim stoi zasada, której pilnują testy: **żadna treść z modelu nie trafia do
 słownika bez akceptacji człowieka**. Wygenerowany zestaw czeka w zadaniu, aż ktoś odznaczy to,

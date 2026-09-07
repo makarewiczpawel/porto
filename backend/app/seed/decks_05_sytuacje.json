@@ -4,7 +4,7 @@
     "name": "W sklepie",
     "icon": "🛒",
     "cefr_level": "A1",
-    "position": 1,
+    "position": 5,
     "description": "Wejść, zapytać, zapłacić, wyjść. Cała wizyta w jednej talii.",
     "items": [
       {"pt": "bom dia, faz favor", "pl": "dzień dobry, przepraszam", "type": "phrase", "pos": "expr", "level": "A1",
@@ -56,7 +56,7 @@
     "name": "W restauracji",
     "icon": "🍽️",
     "cefr_level": "A1",
-    "position": 2,
+    "position": 6,
     "description": "Od stolika do rachunku, w kolejności, w jakiej to się dzieje.",
     "items": [
       {"pt": "tem mesa para dois?", "pl": "czy jest stolik dla dwojga?", "type": "phrase", "pos": "expr", "level": "A1",
@@ -101,7 +101,7 @@
     "name": "W kawiarni",
     "icon": "☕",
     "cefr_level": "A1",
-    "position": 3,
+    "position": 7,
     "description": "Kawa po portugalsku to osobny język. Tu jest cały.",
     "items": [
       {"pt": "um café, se faz favor", "pl": "poproszę espresso", "type": "phrase", "pos": "expr", "level": "A1",
@@ -137,7 +137,7 @@
     "name": "Na ulicy: pytanie o drogę",
     "icon": "🧭",
     "cefr_level": "A1",
-    "position": 4,
+    "position": 8,
     "description": "Zapytać i — co trudniejsze — zrozumieć odpowiedź.",
     "items": [
       {"pt": "desculpe, pode ajudar-me?", "pl": "przepraszam, czy może mi pan pomóc?", "type": "phrase", "pos": "expr", "level": "A1",
@@ -173,7 +173,7 @@
     "name": "Autobus, metro, pociąg",
     "icon": "🚋",
     "cefr_level": "A1",
-    "position": 5,
+    "position": 9,
     "description": "Bilet, peron, przystanek — i pytania, które padają w kasie.",
     "items": [
       {"pt": "um bilhete para o Porto, se faz favor", "pl": "poproszę bilet do Porto", "type": "sentence", "pos": "expr", "level": "A1",

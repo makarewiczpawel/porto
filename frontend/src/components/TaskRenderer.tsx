@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { ApiError, api } from "@/api/client";
 import { diffHint, feedbackLabel, gradeAnswer } from "@/api/grade";
 import type { AiExplanation, MatchPair, Task } from "@/api/types";
+import { TappableText } from "@/components/WordBubble";
+import { countWords } from "@/api/words";
 import { Listening } from "./modes/Listening";
 import { Matching } from "./modes/Matching";
 import { SpeakButton } from "./SpeakButton";
@@ -501,6 +503,7 @@ export function Feedback({
   speak,
   explain,
   reply,
+  breakdown,
   onNext,
 }: {
   isCorrect: boolean;
@@ -522,6 +525,10 @@ export function Feedback({
   explain?: { itemId: string; userAnswer: string; expected: string };
   /** Co usłyszysz po wypowiedzeniu tego zwrotu. */
   reply?: { pt: string; pl: string } | null;
+  /** Portugalski napis do rozebrania na słowa. Kierunek zna wywołujący:
+   *  przy rozpoznawaniu poprawną odpowiedzią jest polskie tłumaczenie, a
+   *  polskich słów nie ma po co stukać. */
+  breakdown?: { itemId: string; text: string };
   onNext: () => void;
 }) {
   // Enter przechodzi dalej — ale dopiero ten Enter, który zaczął się już przy
@@ -631,6 +638,22 @@ export function Feedback({
         {note && <div className="mt-1 text-[12.5px] text-ink-3">{note}</div>}
       </div>
 
+      {breakdown && countWords(breakdown.text) > 1 && (
+        // Zwrot wchodzi do głowy jako jeden dźwięk i tak zostaje, dopóki nie
+        // widać, z czego jest złożony. Moment oceny jest na to najlepszy:
+        // poprawna wersja i tak stoi już na ekranie, a nauka nie czeka.
+        <div className="rounded-xl border border-line bg-surface px-3 py-2">
+          <div className="mb-1 text-[10.5px] font-bold uppercase tracking-[0.08em] text-ink-3">
+            Stuknij w słowo
+          </div>
+          <TappableText
+            itemId={breakdown.itemId}
+            text={breakdown.text}
+            className="pt text-[16px] leading-relaxed"
+          />
+        </div>
+      )}
+
       {reply && (
         // Zwrot bez odpowiedzi to połowa umiejętności — „Quanto custa?" nic nie
         // daje, jeśli „São dois e cinquenta" odbija się od ucha. Pokazujemy ją
@@ -639,7 +662,15 @@ export function Feedback({
           <div className="text-[10.5px] font-bold uppercase tracking-[0.08em] text-ink-3">
             Usłyszysz w odpowiedzi
           </div>
-          <div className="pt mt-0.5 text-[15px]">{reply.pt}</div>
+          {breakdown ? (
+            <TappableText
+              itemId={breakdown.itemId}
+              text={reply.pt}
+              className="pt mt-0.5 text-[15px] leading-relaxed"
+            />
+          ) : (
+            <div className="pt mt-0.5 text-[15px]">{reply.pt}</div>
+          )}
           <div className="text-[12px] text-ink-2">{reply.pl}</div>
         </div>
       )}

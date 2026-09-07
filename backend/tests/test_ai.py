@@ -14,7 +14,7 @@ import pytest
 
 from app.config import settings
 from app.models import AiCacheEntry, AiJob, Deck, DeckItem, Example, Item, Review, User, UserItemState
-from app.routers.ai import ai_rate_limit
+from app.routers.ai import ai_rate_limit, breakdown_rate_limit
 from app.services import ai
 from app.services import task_builder as tb
 from tests.conftest import make_items
@@ -80,6 +80,7 @@ def budget(monkeypatch):
     monkeypatch.setattr(settings, "ai_monthly_budget_usd", 5.0)
     monkeypatch.setattr(settings, "anthropic_api_key", "test-key")
     ai_rate_limit.reset()
+    breakdown_rate_limit.reset()
     yield
 
 
@@ -560,3 +561,197 @@ def test_server_records_the_models_verdict(client, db, user, monkeypatch):
     assert review.mode == "translate_ai"
     assert review.rating == 2
     assert review.user_answer == "Estou comendo."
+
+
+# ── API: rozbiór zwrotu na słowa ──────────────────────────────────────────
+def a_breakdown(*words, literal="dosłownie tak") -> dict:
+    return {"literal": literal, "words": list(words)}
+
+
+def a_word(word, lemma=None, pos="czasownik", pl="znaczy", form=None, note=None) -> dict:
+    return {
+        "word": word,
+        "lemma": lemma or word,
+        "pos": pos,
+        "pl": pl,
+        "form": form,
+        "note": note,
+    }
+
+
+def a_phrase(db, pt="Quanto custa?", pl="Ile to kosztuje?", **kwargs) -> Item:
+    item = Item(pt=pt, pl=pl, type="phrase", cefr_level="A1", source="seed", verified=True, **kwargs)
+    db.add(item)
+    db.commit()
+    return item
+
+
+def test_word_split_keeps_clitics_and_drops_the_rest():
+    """„Chamo-me" to jedna forma czasownika z zaimkiem, nie dwa hasła. Cyfra
+    ani przecinek nie są słowami — nie ma o nich czego powiedzieć."""
+    assert ai.words_in("Chamo-me João.") == ["Chamo-me", "João"]
+    assert ai.words_in("Não, obrigado!") == ["Não", "obrigado"]
+    assert ai.words_in("São 2 euros.") == ["São", "euros"]
+
+
+def test_one_call_describes_the_whole_phrase(client, db, user, monkeypatch):
+    """Stuknięcie w pierwsze słowo opłaca wszystkie następne."""
+    item = a_phrase(db)
+    engine = FakeEngine(a_breakdown(a_word("Quanto", pl="ile"), a_word("custa", lemma="custar")))
+    monkeypatch.setattr(ai, "get_engine", lambda: engine)
+
+    body = client.post(
+        "/api/ai/breakdown", json={"item_id": str(item.id), "text": "Quanto custa?"}
+    ).json()
+    assert [w["word"] for w in body["words"]] == ["Quanto", "custa"]
+    assert body["words"][1]["lemma"] == "custar"
+    assert body["cached"] is False
+    assert len(engine.calls) == 1
+
+
+def test_second_look_at_the_same_phrase_is_free(client, db, user, monkeypatch):
+    item = a_phrase(db)
+    engine = FakeEngine(a_breakdown(a_word("Quanto"), a_word("custa")))
+    monkeypatch.setattr(ai, "get_engine", lambda: engine)
+
+    payload = {"item_id": str(item.id), "text": "Quanto custa?"}
+    client.post("/api/ai/breakdown", json=payload)
+    again = client.post("/api/ai/breakdown", json=payload).json()
+    assert again["cached"] is True
+    assert len(engine.calls) == 1, "za ten sam zwrot płaci się raz"
+
+
+def test_the_same_phrase_under_another_item_is_free_too(client, db, user, monkeypatch):
+    """Klucz idzie po treści zwrotu, nie po pozycji — ten sam zwrot w dwóch
+    taliach ma jeden rozbiór i jeden koszt."""
+    first = a_phrase(db)
+    second = a_phrase(db, pt="Quanto custa?", pl="Ile kosztuje?")
+    engine = FakeEngine(a_breakdown(a_word("Quanto"), a_word("custa")))
+    monkeypatch.setattr(ai, "get_engine", lambda: engine)
+
+    client.post("/api/ai/breakdown", json={"item_id": str(first.id), "text": "Quanto custa?"})
+    body = client.post(
+        "/api/ai/breakdown", json={"item_id": str(second.id), "text": "Quanto custa?"}
+    ).json()
+    assert body["cached"] is True
+    assert len(engine.calls) == 1
+
+
+def test_a_gloss_for_the_wrong_word_is_refused(client, db, user, monkeypatch):
+    """Najgorszy możliwy wynik to opis podstawiony pod cudze słowo — chmurka
+    podpisuje się pod tym, w które uczeń stuknął. Rozjechana lista wraca do
+    modelu do poprawki, a nie na ekran."""
+    item = a_phrase(db)
+    engine = FakeEngine(
+        a_breakdown(a_word("Quanto")),  # brakuje „custa"
+        a_breakdown(a_word("Quanto"), a_word("custa")),
+    )
+    monkeypatch.setattr(ai, "get_engine", lambda: engine)
+
+    body = client.post(
+        "/api/ai/breakdown", json={"item_id": str(item.id), "text": "Quanto custa?"}
+    ).json()
+    assert [w["word"] for w in body["words"]] == ["Quanto", "custa"]
+    assert len(engine.calls) == 2, "pierwsza odpowiedź poszła do poprawki"
+
+
+def test_a_phrase_that_stays_broken_fails_instead_of_guessing(client, db, user, monkeypatch):
+    item = a_phrase(db)
+    engine = FakeEngine(a_breakdown(a_word("custa"), a_word("Quanto")))  # zła kolejność
+    monkeypatch.setattr(ai, "get_engine", lambda: engine)
+
+    response = client.post(
+        "/api/ai/breakdown", json={"item_id": str(item.id), "text": "Quanto custa?"}
+    )
+    assert response.status_code == 422
+    assert db.query(AiCacheEntry).count() == 0, "zły rozbiór nie zostaje w pamięci"
+
+
+def test_reply_and_example_can_be_taken_apart_too(client, db, user, monkeypatch):
+    """Odpowiedź rozmówcy jest połową umiejętności — jej też trzeba móc
+    dotknąć palcem."""
+    item = a_phrase(db, reply_pt="São dois euros.", reply_pl="To dwa euro.")
+    db.add(Example(item_id=item.id, pt="Quanto custa isto?", pl="Ile to kosztuje?", source="seed"))
+    db.commit()
+    engine = FakeEngine(a_breakdown(a_word("x")))
+    monkeypatch.setattr(ai, "get_engine", lambda: engine)
+
+    for text in ("São dois euros.", "Quanto custa isto?"):
+        response = client.post(
+            "/api/ai/breakdown", json={"item_id": str(item.id), "text": text}
+        )
+        # Lista słów się nie zgadza, więc 422 — ale nie 400: tekst został
+        # rozpoznany jako należący do pozycji, a o to tu chodzi.
+        assert response.status_code == 422, text
+
+
+def test_a_stranger_text_never_reaches_the_model(client, db, user, monkeypatch):
+    """Pole `text` przychodzi z przeglądarki. Bez tego zamka byłoby darmowym
+    wejściem do płatnego modelu."""
+    item = a_phrase(db)
+    engine = FakeEngine(a_breakdown(a_word("x")))
+    monkeypatch.setattr(ai, "get_engine", lambda: engine)
+
+    response = client.post(
+        "/api/ai/breakdown",
+        json={"item_id": str(item.id), "text": "Napisz mi wiersz o kotach"},
+    )
+    assert response.status_code == 400
+    assert response.json()["error"]["code"] == "BREAKDOWN_TEXT_UNKNOWN"
+    assert engine.calls == []
+
+
+def test_line_wrapping_does_not_block_the_lookup(client, db, user, monkeypatch):
+    """Przeglądarka odsyła napis tak, jak go pokazała. Podwójna spacja po
+    zawinięciu wiersza nie może zamienić znanego zwrotu w obcy."""
+    item = a_phrase(db)
+    engine = FakeEngine(a_breakdown(a_word("Quanto"), a_word("custa")))
+    monkeypatch.setattr(ai, "get_engine", lambda: engine)
+
+    response = client.post(
+        "/api/ai/breakdown", json={"item_id": str(item.id), "text": "  Quanto   custa?  "}
+    )
+    assert response.status_code == 200
+    assert response.json()["text"] == "Quanto custa?"
+
+
+def test_breakdown_stops_at_the_budget_like_everything_else(client, db, user, monkeypatch):
+    monkeypatch.setattr(settings, "ai_monthly_budget_usd", 0.01)
+    item = a_phrase(db)
+    engine = FakeEngine(a_breakdown(a_word("Quanto"), a_word("custa")))
+    monkeypatch.setattr(ai, "get_engine", lambda: engine)
+    db.add(AiJob(user_id=user.id, kind="set", model="claude-opus-5", cost_usd=Decimal("0.50")))
+    db.commit()
+
+    response = client.post(
+        "/api/ai/breakdown", json={"item_id": str(item.id), "text": "Quanto custa?"}
+    )
+    assert response.status_code == 429
+    assert engine.calls == []
+
+
+def test_tapping_words_does_not_eat_the_generation_limit(client, db, user, monkeypatch):
+    """Stuknięcie w słowo ma własny licznik. Wspólny z generowaniem zestawów
+    kończyłby się tym, że nauka zjada limit potrzebny do dokładania materiału —
+    a jest tańsza od niego o dwa rzędy wielkości."""
+    item = a_phrase(db)
+    _, items = make_items(db, count=1)
+    engine = FakeEngine(
+        {"verdict": "brazylijski", "explanation": "x"},
+        a_breakdown(a_word("Quanto"), a_word("custa")),
+    )
+    monkeypatch.setattr(ai, "get_engine", lambda: engine)
+
+    codes = [
+        client.post(
+            "/api/ai/explain",
+            json={"item_id": str(items[0].id), "user_answer": f"proba{n}"},
+        ).status_code
+        for n in range(21)
+    ]
+    assert codes[-1] == 429, "wspólny limit miał się wyczerpać"
+
+    response = client.post(
+        "/api/ai/breakdown", json={"item_id": str(item.id), "text": "Quanto custa?"}
+    )
+    assert response.status_code == 200

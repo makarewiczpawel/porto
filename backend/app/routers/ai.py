@@ -37,6 +37,13 @@ from app.services.lexicon import slugify, split_article
 ai_rate_limit = RateLimiter(limit=20, window_seconds=3600, code="AI_RATE_LIMITED")
 COSTS_MONEY = [Depends(ai_rate_limit)]
 
+# Rozbiór zwrotu ma własny, luźniejszy limit. Stuka się w słowa dużo częściej,
+# niż generuje zestawy — kilkanaście razy w jednej sesji nauki — a pojedyncze
+# wywołanie jest najtańsze z wszystkich i opisuje od razu cały zwrot. Wspólny
+# limit dwudziestu na godzinę odcinałby naukę w połowie sesji. Twardym hamulcem
+# jest tu i tak budżet miesięczny, nie ten licznik.
+breakdown_rate_limit = RateLimiter(limit=60, window_seconds=3600, code="AI_RATE_LIMITED")
+
 router = APIRouter(prefix="/api/ai", tags=["ai"])
 
 
@@ -135,6 +142,30 @@ class ExampleOut(BaseModel):
 class ExamplesOut(BaseModel):
     item_id: uuid.UUID
     examples: list[ExampleOut]
+    cached: bool
+
+
+class BreakdownIn(BaseModel):
+    item_id: uuid.UUID
+    # Sam napis, a nie numer „slotu": to samo zdanie bywa hasłem jednej pozycji
+    # i przykładem drugiej. Serwer i tak sprawdza, że napis należy do pozycji —
+    # inaczej byłoby to darmowe pole tekstowe do płatnego modelu.
+    text: str = Field(min_length=1, max_length=300)
+
+
+class WordOut(BaseModel):
+    word: str
+    lemma: str
+    pos: str
+    pl: str
+    form: str | None = None
+    note: str | None = None
+
+
+class BreakdownOut(BaseModel):
+    text: str
+    literal: str
+    words: list[WordOut]
     cached: bool
 
 
@@ -473,3 +504,54 @@ def accept_example(
     db.commit()
     background.add_task(voice_library.synthesize_for_items, [item.id], user.settings.tts_voice)
     return {"item_id": str(item.id), "ok": True}
+
+
+def _known_texts(item: Item) -> dict[str, str | None]:
+    """Napisy tej pozycji, które wolno rozebrać — i ich polskie znaczenie.
+
+    Rozbiór dostaje gotowy napis od przeglądarki, więc bez tego zamka pole
+    `text` byłoby darmowym wejściem do płatnego modelu. Klucz jest po treści
+    złożonej z pojedynczych spacji, żeby zawijanie wiersza po drodze niczego
+    nie zablokowało.
+    """
+    known: dict[str, str | None] = {}
+
+    def add(pt: str | None, pl: str | None) -> None:
+        if pt and pt.strip():
+            known.setdefault(" ".join(pt.split()).casefold(), pl)
+
+    add(item.display_pt, item.pl)
+    add(item.pt, item.pl)
+    add(item.reply_pt, item.reply_pl)
+    for example in item.examples:
+        add(example.pt, example.pl)
+    return known
+
+
+@router.post("/breakdown", response_model=BreakdownOut, dependencies=[Depends(breakdown_rate_limit)])
+def breakdown(
+    body: BreakdownIn, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+) -> BreakdownOut:
+    """Rozbiór zwrotu na słowa — co znaczy każde i skąd się wzięła jego forma.
+
+    Jedno wywołanie opisuje cały zwrot, więc stuknięcie w pierwsze słowo
+    opłaca też wszystkie następne, a powrót do tego zwrotu jest darmowy.
+    """
+    item = _item_or_404(db, body.item_id)
+    text = " ".join(body.text.split())
+    known = _known_texts(item)
+    if text.casefold() not in known:
+        raise bad_request("BREAKDOWN_TEXT_UNKNOWN", "Ten tekst nie należy do tej pozycji.")
+
+    try:
+        payload, was_cached = ai.breakdown(
+            db, user, text=text, meaning=known[text.casefold()]
+        )
+    except ai.AIError as exc:
+        raise _fail(exc) from exc
+    return BreakdownOut(
+        text=text,
+        literal=payload["literal"],
+        words=[WordOut(**word) for word in payload["words"]],
+        cached=was_cached,
+    )
