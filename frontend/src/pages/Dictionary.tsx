@@ -5,6 +5,8 @@ import { Link, useParams } from "react-router-dom";
 import { ApiError, api } from "@/api/client";
 import type { ItemDetail, Page, Item } from "@/api/types";
 import { SpeakButton } from "@/components/SpeakButton";
+import { TappableText } from "@/components/WordBubble";
+import { countWords } from "@/api/words";
 import { Button, Card, EmptyState, Label, Pill, Spinner, cx } from "@/components/ui";
 
 const LEVELS = ["A1", "A2", "B1"];
@@ -164,10 +166,21 @@ export function ItemDetailPage() {
       </Link>
 
       <Card className="text-center">
-        <div className="pt text-3xl leading-tight">
-          {item.article && <span className="text-[0.62em] text-ink-3">{item.article} </span>}
-          {item.pt}
-        </div>
+        {countWords(item.display_pt) < 2 ? (
+          <div className="pt text-3xl leading-tight">
+            {item.article && <span className="text-[0.62em] text-ink-3">{item.article} </span>}
+            {item.pt}
+          </div>
+        ) : (
+          // Zwrot da się rozebrać na słowa. Pojedyncze słowo ma o sobie cały
+          // ten ekran — rodzajnik, rodzaj, notatkę, wymowę — więc chmurka nie
+          // miałaby czego dodać, a kosztowałaby wywołanie modelu.
+          <TappableText
+            itemId={item.id}
+            text={item.display_pt}
+            className="pt text-3xl leading-tight"
+          />
+        )}
         <div className="mt-1 text-base text-ink-2">{item.pl}</div>
         <div className="mt-3 flex flex-wrap justify-center gap-2">
           {item.part_of_speech && (
@@ -190,7 +203,11 @@ export function ItemDetailPage() {
           <Label className="mb-1.5">Usłyszysz w odpowiedzi</Label>
           <div className="flex items-start gap-2">
             <div className="min-w-0 flex-1">
-              <div className="pt text-[16px]">{item.reply_pt}</div>
+              <TappableText
+                itemId={item.id}
+                text={item.reply_pt}
+                className="pt text-[16px] leading-relaxed"
+              />
               <div className="mt-0.5 text-[12.5px] text-ink-2">{item.reply_pl}</div>
             </div>
             <SpeakButton text={item.reply_pt} url={item.reply_audio_url} size="sm" />
@@ -212,7 +229,11 @@ export function ItemDetailPage() {
             <Card key={example.id}>
               <div className="flex items-start gap-2">
                 <div className="min-w-0 flex-1">
-                  <div className="pt text-[16px]">{example.pt}</div>
+                  <TappableText
+                    itemId={item.id}
+                    text={example.pt}
+                    className="pt text-[16px] leading-relaxed"
+                  />
                   <div className="mt-0.5 text-[12.5px] text-ink-2">{example.pl}</div>
                 </div>
                 <SpeakButton text={example.pt} url={example.audio_url} size="sm" />

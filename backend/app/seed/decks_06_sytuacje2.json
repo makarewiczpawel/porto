@@ -4,7 +4,7 @@
     "name": "W pracy",
     "icon": "💼",
     "cefr_level": "A2",
-    "position": 6,
+    "position": 10,
     "description": "Biuro, spotkania, maile. Zwroty, które padają codziennie.",
     "items": [
       {"pt": "bom dia a todos", "pl": "dzień dobry wszystkim", "type": "phrase", "pos": "expr", "level": "A1",
@@ -41,7 +41,7 @@
     "name": "Przez telefon",
     "icon": "📞",
     "cefr_level": "A2",
-    "position": 7,
+    "position": 11,
     "description": "Bez twarzy i gestów — dlatego warto mieć te zdania gotowe.",
     "items": [
       {"pt": "estou sim?", "pl": "halo?", "type": "phrase", "pos": "expr", "level": "A1",
@@ -70,7 +70,7 @@
     "name": "Zagadać i podtrzymać rozmowę",
     "icon": "👋",
     "cefr_level": "A1",
-    "position": 8,
+    "position": 12,
     "description": "Pierwsze trzydzieści sekund z sąsiadem, kolegą, obcym.",
     "items": [
       {"pt": "tudo bem?", "pl": "wszystko w porządku?", "type": "phrase", "pos": "expr", "level": "A1",
@@ -108,7 +108,7 @@
     "name": "Apteka i lekarz",
     "icon": "💊",
     "cefr_level": "A2",
-    "position": 9,
+    "position": 13,
     "description": "Powiedzieć, co boli — po portugalsku, bez tłumacza w telefonie.",
     "items": [
       {"pt": "preciso de alguma coisa para a garganta", "pl": "potrzebuję czegoś na gardło", "type": "sentence", "pos": "expr", "level": "A2",
@@ -140,7 +140,7 @@
     "name": "Załatwianie spraw",
     "icon": "🏛️",
     "cefr_level": "A2",
-    "position": 10,
+    "position": 14,
     "description": "Urząd, bank, fryzjer, hydraulik. Sytuacje, w których trzeba się dogadać.",
     "items": [
       {"pt": "venho tratar de uma coisa", "pl": "przychodzę załatwić pewną sprawę", "type": "sentence", "pos": "expr", "level": "B1",

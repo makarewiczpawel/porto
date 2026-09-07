@@ -22,6 +22,7 @@ człowieka i dopiero zaakceptowane stają się pozycjami do nauki.
 from __future__ import annotations
 
 import hashlib
+import re
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -55,6 +56,9 @@ TIMEOUT_SECONDS = 120.0
 # tokenach. Poniżej progu, przy którym dokumentacja zaleca strumieniowanie.
 MAX_TOKENS_SET = 16000
 MAX_TOKENS_SHORT = 2000
+# Rozbiór zwrotu to sześć krótkich pól razy kilka słów — mieści się
+# swobodnie, ale nie w limicie liczonym na dwa zdania.
+MAX_TOKENS_BREAKDOWN = 4000
 
 
 class AIError(RuntimeError):
@@ -135,6 +139,35 @@ class ExampleSentence(BaseModel):
 
 class ExampleSet(BaseModel):
     examples: list[ExampleSentence]
+
+
+class WordGloss(BaseModel):
+    """Jedno słowo ze zwrotu, opisane tak, jak wyjaśniłby je lektor."""
+
+    word: str = Field(description="Słowo dokładnie w tej formie, w jakiej stoi w zwrocie.")
+    lemma: str = Field(
+        description="Forma podstawowa: bezokolicznik czasownika, liczba pojedyncza "
+        "rzeczownika, rodzaj męski przymiotnika. Przy słowie nieodmiennym powtórz je."
+    )
+    pos: str = Field(description="Część mowy po polsku, jednym słowem, np. „czasownik”.")
+    pl: str = Field(description="Co to słowo znaczy w tym konkretnym zwrocie. Kilka słów.")
+    form: str | None = Field(
+        description="Opis formy po polsku, np. „3. os. l.poj., czas teraźniejszy” albo "
+        "„rodzaj żeński, l.mn.”. null, jeśli słowo stoi w formie podstawowej."
+    )
+    note: str | None = Field(
+        description="Jedno zdanie, tylko gdy coś jest nieoczywiste: słowo jest częścią "
+        "utartego zwrotu, jest fałszywym przyjacielem polskiego, wymawia się niespodziewanie. "
+        "W przeciwnym razie null."
+    )
+
+
+class PhraseBreakdown(BaseModel):
+    literal: str = Field(
+        description="Dosłowne tłumaczenie całego zwrotu, słowo po słowie — nawet jeśli "
+        "brzmi po polsku dziwnie. To ono pokazuje, jak zwrot jest zbudowany."
+    )
+    words: list[WordGloss]
 
 
 # ── prompty ───────────────────────────────────────────────────────────────
@@ -226,6 +259,20 @@ EXAMPLES_SYSTEM = """Jesteś lektorem portugalskiego europejskiego.
 {rules}
 
 Układasz krótkie zdania przykładowe pokazujące podane hasło w codziennym użyciu, każde z tłumaczeniem na polski. Zdanie ma być na tyle proste, żeby uczeń na tym poziomie je zrozumiał, i pokazywać hasło w naturalnym kontekście, a nie je definiować."""
+
+BREAKDOWN_SYSTEM = """Jesteś lektorem portugalskiego europejskiego. Uczeń stuknął w słowo w zwrocie i pyta, co ono tam robi.
+
+{rules}
+
+Rozbierasz zwrot na słowa i opisujesz każde z osobna, po polsku.
+
+- Opisujesz **wszystkie** podane słowa, w tej samej kolejności i w tej samej formie, w jakiej je dostałeś. Żadnego nie pomijasz, żadnego nie dodajesz, żadnego nie sklejasz z sąsiednim.
+- `pl` to znaczenie **w tym zwrocie**, nie pierwsze ze słownika. „Bom” w „bom dia” to „dobry”, a nie „dobrze”.
+- `lemma` przy czasowniku to bezokolicznik i nic więcej — „é” ma lemmę „ser”, „custa” ma „custar”. Przy formie ściągniętej z przyimkiem podaj oba człony, np. „do” → „de + o”.
+- `form` wypełniasz tylko wtedy, gdy słowo faktycznie stoi w formie odmienionej. Przy przyimku, spójniku czy nieodmiennym przysłówku zostaw null.
+- `note` zostaw null, dopóki naprawdę nie masz czego powiedzieć. Uczeń czyta chmurkę w trakcie nauki — notatka przy każdym słowie zamienia ją w ścianę tekstu.
+- Gdy słowo samo z siebie nic nie znaczy i działa dopiero w parze (np. „faz favor”, „por favor”), napisz to w `note` i podaj znaczenie całej pary.
+- `literal` to tłumaczenie słowo po słowie, świadomie niezgrabne. Ma pokazywać budowę zwrotu — od tłumaczenia ładnego jest osobne pole gdzie indziej."""
 
 
 # ── silnik ────────────────────────────────────────────────────────────────
@@ -653,3 +700,85 @@ def make_examples(
     remember(db, key, "examples", payload)
     db.commit()
     return list(payload["examples"]), False
+
+
+# ── rozbiór zwrotu na słowa ───────────────────────────────────────────────
+# Myślnik i apostrof zostają w środku słowa, bo w portugalskim spinają jedną
+# całość: „chamo-me" to jedna forma czasownika z zaimkiem, a nie dwa hasła.
+# Cyfry i znaki interpunkcyjne wypadają — nie ma czego o nich powiedzieć.
+WORD_RE = re.compile(r"[^\W\d_]+(?:[’'\-][^\W\d_]+)*", re.UNICODE)
+
+
+def words_in(text: str) -> list[str]:
+    """Słowa zwrotu w kolejności — te, które da się stuknąć.
+
+    Ta sama reguła stoi po stronie przeglądarki (`frontend/src/api/words.ts`).
+    Gdyby się rozjechały, część słów zostałaby bez opisu — dlatego chmurka
+    szuka opisu po treści słowa, a nie po jego numerze, i sama mówi, gdy
+    czegoś nie zna. Rozjazd jest wtedy widoczny, a nie podstawia cudzy opis.
+    """
+    return WORD_RE.findall(text)
+
+
+def breakdown(
+    db: Session,
+    user: User,
+    *,
+    text: str,
+    meaning: str | None = None,
+    engine: Engine | None = None,
+) -> tuple[dict, bool]:
+    """Opis każdego słowa zwrotu — jedno wywołanie na cały zwrot.
+
+    Liczy się raz i zostaje w pamięci podręcznej na zawsze, więc stuknięcie w
+    pierwsze słowo opłaca od razu wszystkie pozostałe. Klucz jest po treści
+    zwrotu, nie po pozycji: ten sam zwrot w dwóch taliach ma jeden rozbiór.
+    """
+    clean = " ".join(text.split()).strip()
+    tokens = words_in(clean)
+    if not tokens:
+        raise AIError("Nie ma tu słowa do opisania.")
+
+    key = cache_key("breakdown", clean)
+    hit = cached(db, key)
+    if hit is not None:
+        return hit, True
+
+    lines = [f"Zwrot portugalski: {clean}"]
+    if meaning:
+        lines.append(f"Znaczenie całości po polsku: {meaning}")
+    numbered = "\n".join(f"{n}. {word}" for n, word in enumerate(tokens, start=1))
+    lines.append(f"Opisz kolejno te słowa, wszystkie i tylko te:\n{numbered}")
+    prompt = "\n".join(lines)
+
+    def check(result: PhraseBreakdown) -> None:
+        # Chmurka podpisuje się pod konkretnym słowem. Opis, który przyszedł
+        # dla innego słowa niż stuknięte, byłby gorszy niż jego brak — dlatego
+        # niezgodność listy jest błędem, a nie drobiazgiem do naprawienia po
+        # cichu. `run` daje modelowi jedną poprawkę z tym komunikatem.
+        got = [gloss.word.strip().lower() for gloss in result.words]
+        want = [word.lower() for word in tokens]
+        if got != want:
+            raise ValueError(
+                "lista słów się nie zgadza — oczekiwano " + ", ".join(want) + ", przyszło " + (", ".join(got) or "nic")
+            )
+
+    result, _ = run(
+        db,
+        user=user,
+        kind="breakdown",
+        system=BREAKDOWN_SYSTEM.format(rules=pt_pt_rules()),
+        prompt=prompt,
+        schema=PhraseBreakdown,
+        # Gramatyka jest tu całą wartością: „é" ma wyjść jako forma „ser", a nie
+        # jako osobne słowo. Na tym warto dać modelowi pomyśleć — a że wynik
+        # zostaje w pamięci na stałe, płaci się za niego raz.
+        effort="medium",
+        max_tokens=MAX_TOKENS_BREAKDOWN,
+        engine=engine,
+        validate=check,
+    )
+    payload = result.model_dump()
+    remember(db, key, "breakdown", payload)
+    db.commit()
+    return payload, False
