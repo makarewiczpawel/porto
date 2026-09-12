@@ -60,6 +60,38 @@ Talie słownikowe zostają w bazie i wracają po przestawieniu
 kasuje żadnego postępu — przestawia tylko kolejność, w jakiej poznaje się
 materiał.
 
+### Kolejność kart w sesji
+
+Materiał układa się w taliach tematycznie: pory roku obok siebie, kolory obok
+siebie, liczebniki po kolei. Wyłożony w tej kolejności podpowiada odpowiedź —
+po „wiośnie" następne pytanie na pewno jest o inną porę roku, więc wybiera się
+z czterech, zanim cokolwiek się przypomni. Powtórki mają ten sam problem o dzień
+później: karty wprowadzone razem dostają prawie identyczne terminy, więc
+sortowanie po terminie odtwarza tamtą kolejność.
+
+Dlatego sesja rozsuwa sąsiadów, zanim je pokaże. Trzy rzeczy kłócą się ze sobą,
+w kolejności wagi: ta sama pozycja pytana drugi raz (raz PL→PT, raz PT→PL), dwie
+pozycje leżące w talii tuż obok siebie, dwie pozycje z tej samej talii. Nie
+zmienia to, **które** karty wchodzą do sesji — to zostaje po stronie programu
+nauki i FSRS — wyłącznie kolejność wykładania.
+
+### Nadrabianie po przerwie
+
+Po dwóch tygodniach przerwy zaległych powtórek potrafi być trzysta. Sesja bierze
+z nich dzienną porcję, a ekran „Dziś" mówi, ile zostało i na kiedy.
+
+Plan ma zapisany termin i punkt startu, więc **liczba dni faktycznie się
+zmniejsza**. Pierwsza wersja liczyła porcję jako `zaległości / 7` i pisała „w 7
+dni wrócisz na bieżąco"; nazajutrz liczyła to samo z mniejszej liczby i znowu
+pisała siedem. Wczorajsza praca nie zostawiała śladu.
+
+Termin bierze się z tempa, które użytkownik sam sobie ustawił (`daily_goal`), a
+nie ze stałej w kodzie — komu wystarcza dziesięć kart dziennie, ten nie dostanie
+planu po pięćdziesiąt. Dzień opuszczony lekko podnosi porcję; tydzień przerwy w
+środku nadrabiania zakłada nowy plan, zamiast wystawiać rachunek za cały
+opuszczony tydzień. Nic z tego nie rusza terminów w bazie — FSRS ma prawo
+uważać, że te karty są na dziś, i ma rację; opóźnienie jest częścią odpowiedzi.
+
 ## Stack
 
 | Warstwa | Technologia |

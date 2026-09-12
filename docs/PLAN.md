@@ -369,7 +369,10 @@ zweryfikować bez wywołania płatnego API.
 - [x] Test poziomujący: 30 pytań A1–B1, wynik ustawia poziom startowy i oznacza znane pozycje jako `review` z krótkim interwałem (3 dni — klik w teście to słabszy dowód niż przypomnienie z głowy)
 - [x] Quiz na czas (limit na cały test; limit na pojedyncze pytanie odpadł — przy teście na 5 pytań dwa zegary naraz to więcej stresu niż informacji)
 - [x] Historia podejść quizu z wykresem
-- [x] Tryb „nadrabianie" po przerwie: rozkłada nawis `due` na 7 dni zamiast wywalać 300 kart naraz (ryzyko #4). Bez ruszania terminów w bazie — zmienia się porcja na sesję i komunikat, FSRS dalej liczy opóźnienie jako część odpowiedzi
+- [x] Tryb „nadrabianie" po przerwie: rozkłada nawis `due` zamiast wywalać 300 kart naraz (ryzyko #4). Bez ruszania terminów w bazie — zmienia się porcja na sesję i komunikat, FSRS dalej liczy opóźnienie jako część odpowiedzi
+- [x] Plan nadrabiania ma zapisany termin i punkt startu (`catch_up_until`, `catch_up_from`), więc liczba dni maleje, a ekran pokazuje przebytą drogę. Wersja bez stanu liczyła `nawis / 7` i codziennie wychodziło jej siedem dni
+- [x] Długość planu z dziennego celu użytkownika, nie ze stałej; przerwa w środku nadrabiania zakłada nowy plan zamiast wystawiać rachunek za cały opuszczony tydzień
+- [x] Kolejność wykładania kart rozsuwa sąsiadów: tę samą pozycję w obu kierunkach, pozycje leżące w talii tuż obok siebie i pozycje z jednej talii. Dobór kart zostaje po stronie FSRS
 
 ### 5.4 Polish [~4 h]
 - [x] Lighthouse mobile: raport z wdrożonej aplikacji (87 / 92 / 100 / 82) przerobiony punkt po punkcie — patrz niżej. Wynik po poprawkach do potwierdzenia kolejnym uruchomieniem

@@ -120,9 +120,19 @@ export interface DeckDetail extends Deck {
 }
 
 export interface CatchUp {
+  /** Ile zaległych powtórek zostało. */
   backlog: number;
+  /** Ile ich było, gdy plan ruszał — od tego liczy się przebyta droga. */
+  started_from: number;
+  done: number;
+  /** Porcja na dzisiejszą sesję. */
   today: number;
-  days: number;
+  days_left: number;
+  /** Dzień, na który ma być czysto (ISO). */
+  until: string;
+  last_day: boolean;
+  /** Nawis właśnie zszedł poniżej progu — ostatnie pokazanie kafelka. */
+  finished: boolean;
 }
 
 export interface QueueSummary {

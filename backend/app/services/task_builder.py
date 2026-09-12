@@ -1,6 +1,5 @@
 """Builds a study session: which cards, in what order, asked in which form."""
 
-import math
 import random
 import uuid
 from dataclasses import dataclass
@@ -20,6 +19,8 @@ from app.models import (
     UserSettings,
 )
 from app.services import ai
+from app.services import catch_up
+from app.services import stats as stats_service
 from app.services import scheduler as sched
 from app.services import tts
 from app.services import voice_library
@@ -563,6 +564,104 @@ def new_items(
     return out
 
 
+# Ile ostatnio wyłożonych kart bierze pod uwagę rozsuwanie. Trzy wystarczą:
+# zgaduje się z tego, co się właśnie widziało, a nie sprzed dziesięciu pytań.
+SPREAD_WINDOW = 3
+# Dwa pytania o tę samą pozycję pod rząd (raz PL→PT, raz PT→PL) to nie
+# powtórka, tylko przepisanie odpowiedzi, którą ma się przed oczami. Stąd kara
+# o dwa rzędy wielkości większa niż za powtórzony temat.
+SAME_ITEM_COST = 100
+# Pozycje leżące w talii tak blisko siebie są prawie na pewno z jednego gniazda
+# tematycznego — pory roku, kolory, dni tygodnia układa się obok siebie.
+NEAR_IN_DECK = 2
+NEAR_COST = 5
+
+
+def _clash(recent: list[tuple], candidate: tuple) -> int:
+    """Ile kosztuje postawienie tej karty teraz, patrząc na kilka poprzednich.
+
+    Trzy rzeczy kłócą się ze sobą, w kolejności wagi: ta sama pozycja pytana
+    drugi raz, dwie pozycje leżące w talii tuż obok siebie i dwie pozycje z tej
+    samej talii. Środkowa jest tu najważniejsza dla samej nauki — to w niej
+    siedzą „pory roku": gniazdo tematyczne poznaje się po sąsiedztwie w talii,
+    nie po tym, że talia jest ta sama.
+    """
+    cost = 0
+    window = recent[-SPREAD_WINDOW:]
+    for back, previous in enumerate(reversed(window), start=1):
+        # Im bliżej, tym drożej — sąsiad waży więcej niż karta sprzed trzech.
+        weight = SPREAD_WINDOW + 1 - back
+        item, deck, spot = candidate
+        was_item, was_deck, was_spot = previous
+        if was_item == item:
+            cost += weight * SAME_ITEM_COST
+        elif was_deck is not None and was_deck == deck:
+            near = spot is not None and was_spot is not None and abs(spot - was_spot) <= NEAR_IN_DECK
+            cost += weight * (NEAR_COST if near else 1)
+    return cost
+
+
+def spread(entries: list, key, rng: random.Random) -> list:
+    """Rozsuwa karty z tej samej talii — i dwie strony tej samej pozycji.
+
+    Kolejność w talii jest tematyczna, bo tak się układa materiał: pory roku
+    leżą obok siebie, kolory obok siebie, liczebniki po kolei. Podana wprost
+    robi z nauki zgadywankę — po „wiośnie" następne pytanie na pewno jest o
+    inną porę roku, więc odpowiedź wybiera się z czterech, nie z całego
+    słownika. To samo dotyczy powtórek: karty wprowadzone razem mają prawie
+    identyczne terminy, więc sortowanie po terminie odtwarza tamtą kolejność
+    dzień w dzień.
+
+    Nie zmienia tego, *które* karty wchodzą do sesji — to zostaje po stronie
+    programu nauki i FSRS. Zmienia wyłącznie kolejność wykładania.
+
+    Zachłannie, nie przez tasowanie do skutku: z puli bierze się za każdym
+    razem kartę najmniej kłócącą się z ostatnio wyłożonymi. Przy jednej talii
+    w sesji nie ma czego rozsuwać i zostaje samo potasowanie — ale i ono
+    rozrywa sąsiedztwo pozycji leżących w talii obok siebie.
+    """
+    pool = list(entries)
+    rng.shuffle(pool)
+    out: list = []
+    recent: list[tuple] = []
+    while pool:
+        best = 0
+        best_cost = None
+        for index, entry in enumerate(pool):
+            cost = _clash(recent, key(entry))
+            if best_cost is None or cost < best_cost:
+                best, best_cost = index, cost
+            if cost == 0:
+                break
+        chosen = pool.pop(best)
+        out.append(chosen)
+        recent.append(key(chosen))
+    return out
+
+
+def placement(db: Session, item_ids: list[uuid.UUID]) -> dict[uuid.UUID, tuple]:
+    """Gdzie każda pozycja leży: w której talii i na którym miejscu w niej.
+
+    Jednym zapytaniem, bo rozsuwanie pyta o to każdą kartę w sesji. Gdy pozycja
+    należy do kilku talii, bierze się pierwszą — rozstrzygane tutaj, nie w
+    bazie: `min()` po kolumnie UUID Postgres odrzuca, a do rozsuwania wystarczy
+    dowolna stała etykieta. Chodzi o to, żeby dwie pozycje z jednej talii
+    dostały tę samą, nie o to, którą konkretnie.
+    """
+    if not item_ids:
+        return {}
+    rows = db.execute(
+        select(DeckItem.item_id, DeckItem.deck_id, DeckItem.position)
+        .join(Deck, Deck.id == DeckItem.deck_id)
+        .where(DeckItem.item_id.in_(item_ids))
+        .order_by(Deck.position.asc(), DeckItem.deck_id.asc())
+    ).all()
+    found: dict[uuid.UUID, tuple] = {}
+    for item_id, deck_id, spot in rows:
+        found.setdefault(item_id, (deck_id, spot))
+    return found
+
+
 def interleave(reviews: list, news: list) -> list[tuple[bool, object]]:
     """Weave new material between reviews instead of front-loading it.
 
@@ -629,8 +728,10 @@ def build_session(
     review_limit: int | None = None,
     modes: list[str] | None = None,
     now: datetime | None = None,
+    rng: random.Random | None = None,
 ) -> tuple[list[Task], list[uuid.UUID] | None]:
     now = now or datetime.now(timezone.utc)
+    rng = rng or random.Random()
     resolved_decks = _resolve_decks(db, user, deck_ids)
     enabled = modes or list(user_settings.enabled_modes or [])
     if not enabled:
@@ -648,16 +749,28 @@ def build_session(
     # przed chwilą pokazał ekran „Dziś". Inaczej porcja rosłaby po drodze i
     # zapowiedź rozmijałaby się z tym, co faktycznie dostaje uczeń.
     if review_limit is None:
-        plan = catch_up_plan(
-            queue_counts(db, user, now, resolved_decks)["due"], user_settings.review_limit
-        )
-        if plan is not None:
-            review_cap = plan["today"]
+        plan = queue_counts(db, user, now, resolved_decks)["catch_up"]
+        if plan is not None and not plan.finished:
+            review_cap = plan.today
 
     unlock_production(db, user, now)
 
     states = due_states(db, user, now, review_cap, resolved_decks)
     fresh = new_items(db, user, new_cap, resolved_decks, user_settings.content_focus)
+
+    # Wybór kart jest już zrobiony — zostaje kolejność wykładania. Obie listy
+    # przychodzą tu posortowane tematycznie: nowe po pozycji w talii, powtórki
+    # po terminie, który u kart wprowadzonych razem jest prawie identyczny.
+    # W obu wypadkach daje to ten sam efekt: pory roku pod rząd, kolory pod
+    # rząd, a odpowiedź do zgadnięcia z sąsiedztwa zamiast z pamięci.
+    spots = placement(db, [s.item_id for s in states] + [item.id for item in fresh])
+
+    def where(item_id: uuid.UUID) -> tuple:
+        deck_id, spot = spots.get(item_id, (None, None))
+        return (item_id, deck_id, spot)
+
+    states = spread(states, lambda s: where(s.item_id), rng)
+    fresh = spread(fresh, lambda item: where(item.id), rng)
 
     tasks: list[Task] = []
 
@@ -716,7 +829,20 @@ def build_session(
     return tasks, resolved_decks
 
 
-def queue_counts(db: Session, user: User, now: datetime, deck_ids: list[uuid.UUID] | None = None) -> dict:
+def queue_counts(
+    db: Session,
+    user: User,
+    now: datetime,
+    deck_ids: list[uuid.UUID] | None = None,
+    *,
+    record_catch_up: bool = False,
+) -> dict:
+    """Ile czeka w kolejce — i czy nawis jest na tyle duży, żeby go rozłożyć.
+
+    `record_catch_up` zapisuje stan planu nadrabiania. Robi to tylko ekran
+    „Dziś": to on pokazuje postęp i domknięcie planu, a wejście prosto w naukę
+    nie ma zamykać planu w tle i zabierać użytkownikowi tej wiadomości.
+    """
     due_q = (
         select(func.count())
         .select_from(UserItemState)
@@ -753,33 +879,11 @@ def queue_counts(db: Session, user: User, now: datetime, deck_ids: list[uuid.UUI
         "due": due_count,
         "new_available": db.execute(new_q).scalar_one(),
         "next_due_at": next_due,
-        "catch_up": catch_up_plan(due_count, user.settings.review_limit),
-    }
-
-
-# Powyżej tylu zaległych powtórek kolejka przestaje być kolejką, a zaczyna być
-# ścianą. Po dwóch tygodniach przerwy potrafi ich być trzysta — a trzysta kart
-# naraz to nie nauka, tylko powód, żeby przestać.
-BACKLOG_THRESHOLD = 60
-CATCH_UP_DAYS = 7
-
-
-def catch_up_plan(due: int, review_limit: int) -> dict | None:
-    """Rozłożenie nawisu na tydzień, gdy zaległości urosły ponad próg.
-
-    Nic tu nie przestawia terminów w bazie — FSRS ma prawo uważać, że te karty
-    są na dziś, i ma rację. Zmienia się tylko *porcja na jedno posiedzenie* i
-    to, co widzi użytkownik: zamiast „300 powtórek" dostaje „dziś 43 z 300,
-    nadrobisz w tydzień". Karty, które przez ten tydzień poczekają dłużej,
-    FSRS i tak policzy poprawnie — ich opóźnienie jest częścią odpowiedzi.
-    """
-    if due <= BACKLOG_THRESHOLD:
-        return None
-    portion = max(1, math.ceil(due / CATCH_UP_DAYS))
-    return {
-        "backlog": due,
-        "today": min(portion, review_limit),
-        "days": CATCH_UP_DAYS,
+        # Dzień liczony w strefie użytkownika, tak samo jak seria i dzienny cel:
+        # plan nadrabiania ma się domykać wtedy, kiedy dla niego kończy się dzień.
+        "catch_up": catch_up.refresh(
+            db, user, due_count, today=stats_service.local_day(user, now), record=record_catch_up
+        ),
     }
 
 

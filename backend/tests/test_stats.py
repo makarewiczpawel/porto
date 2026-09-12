@@ -8,13 +8,13 @@ endpoint odpowiada.
 import csv
 import io
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from sqlalchemy import select
 
 from app.models import DailyStat, Review, UserItemState
+from app.services import catch_up as cu
 from app.services import stats as stats_service
-from app.services import task_builder as tb
 from tests.conftest import make_items
 
 
@@ -151,20 +151,110 @@ def test_hardest_skips_words_answered_correctly(db, registered, client):
 
 
 # ── nadrabianie po przerwie ───────────────────────────────────────────────
-def test_small_queue_is_not_a_backlog():
-    assert tb.catch_up_plan(due=tb.BACKLOG_THRESHOLD, review_limit=100) is None
+DAY = date(2026, 3, 2)
 
 
-def test_backlog_is_spread_over_a_week():
-    plan = tb.catch_up_plan(due=300, review_limit=100)
-    assert plan == {"backlog": 300, "today": 43, "days": 7}
-    # Siedem dni po tyle wystarczy, żeby nawis zniknął.
-    assert plan["today"] * plan["days"] >= 300
+def _user(db, registered):
+    from app.models import User
+
+    return db.get(User, registered["user"]["id"])
 
 
-def test_catch_up_never_exceeds_the_users_own_limit():
-    plan = tb.catch_up_plan(due=3000, review_limit=100)
-    assert plan["today"] == 100
+def test_small_queue_is_not_a_backlog(db, registered):
+    user = _user(db, registered)
+    assert cu.refresh(db, user, cu.BACKLOG_THRESHOLD, today=DAY) is None
+
+
+def test_a_new_plan_is_cut_to_the_pace_the_user_set_himself(db, registered):
+    """Plan liczy się z dziennego celu użytkownika, nie ze stałej w kodzie.
+
+    Komu wystarcza dziesięć kart dziennie, ten nie ma dostać po pięćdziesiąt
+    tylko dlatego, że tak wychodzi z podzielenia nawisu przez siedem."""
+    user = _user(db, registered)
+    user.settings.daily_goal = 25
+    plan = cu.refresh(db, user, 290, today=DAY)
+    assert plan.today <= round(25 * cu.COMFORT)
+    assert plan.days_left * plan.today >= 290, "plan ma nawis domykać, nie tylko wyglądać"
+
+    user.settings.daily_goal = 10
+    user.settings.catch_up_until = None
+    slower = cu.refresh(db, user, 290, today=DAY)
+    assert slower.today < plan.today
+    assert slower.days_left > plan.days_left
+
+
+def test_the_promise_gets_closer_every_day(db, registered):
+    """To jest cały powód istnienia zapisanego terminu.
+
+    Pierwsza wersja liczyła porcję jako `zaległości / 7` i pisała „w 7 dni
+    wrócisz na bieżąco". Nazajutrz liczyła to samo z mniejszej liczby i znowu
+    pisała siedem — obietnica stała w miejscu, choć praca była zrobiona.
+    """
+    user = _user(db, registered)
+    backlog = 290
+    shown = []
+    for offset in range(4):
+        plan = cu.refresh(db, user, backlog, today=DAY + timedelta(days=offset))
+        shown.append(plan.days_left)
+        backlog -= plan.today  # uczeń robi dzisiejszą porcję i wraca nazajutrz
+
+    assert shown == [8, 7, 6, 5], shown
+
+
+def test_the_screen_can_show_the_road_already_walked(db, registered):
+    user = _user(db, registered)
+    cu.refresh(db, user, 290, today=DAY)
+    later = cu.refresh(db, user, 206, today=DAY + timedelta(days=2))
+    assert (later.started_from, later.done) == (290, 84)
+
+
+def test_a_backlog_that_grew_never_shows_progress_running_backwards(db, registered):
+    """Wczorajsze karty wracają — „nadrobione" nie ma od tego zejść poniżej zera."""
+    user = _user(db, registered)
+    cu.refresh(db, user, 200, today=DAY)
+    plan = cu.refresh(db, user, 240, today=DAY + timedelta(days=1))
+    assert plan.done == 0
+    assert plan.started_from == 240
+
+
+def test_a_plan_no_longer_doable_is_replaced_instead_of_becoming_a_wall(db, registered):
+    """Przerwa w środku nadrabiania nie ma kończyć się porcją nie do zrobienia.
+
+    Bez tego ostatni dzień planu pokazywał całą resztę nawisu jako porcję na
+    dziś — czyli dokładnie tę ścianę, przed którą plan miał chronić."""
+    user = _user(db, registered)
+    user.settings.review_limit = 100
+    cu.refresh(db, user, 290, today=DAY)
+    late = cu.refresh(db, user, 290, today=DAY + timedelta(days=20))
+    assert late.today <= round(user.settings.daily_goal * cu.COMFORT)
+    assert late.days_left >= cu.MIN_DAYS
+
+
+def test_the_portion_never_exceeds_the_users_own_review_limit(db, registered):
+    user = _user(db, registered)
+    user.settings.review_limit = 30
+    user.settings.daily_goal = 100
+    plan = cu.refresh(db, user, 3000, today=DAY)
+    assert plan.today <= 30
+
+
+def test_finishing_the_plan_says_so_once_and_then_forgets_it(db, registered):
+    """Tydzień pracy nie ma się kończyć zniknięciem kafelka bez słowa."""
+    user = _user(db, registered)
+    cu.refresh(db, user, 290, today=DAY)
+    done = cu.refresh(db, user, 12, today=DAY + timedelta(days=6))
+    assert done.finished is True
+    assert done.started_from == 290
+    assert cu.refresh(db, user, 12, today=DAY + timedelta(days=6)) is None
+
+
+def test_reading_the_plan_does_not_change_it(db, registered):
+    """Wejście prosto w naukę nie ma zamykać planu w tle — inaczej ekran
+    „Dziś" nigdy nie zdążyłby pokazać, że nawis zszedł."""
+    user = _user(db, registered)
+    cu.refresh(db, user, 290, today=DAY)
+    cu.refresh(db, user, 12, today=DAY + timedelta(days=3), record=False)
+    assert user.settings.catch_up_until is not None
 
 
 def test_session_after_a_break_takes_only_todays_portion(db, registered, client):
@@ -182,12 +272,14 @@ def test_session_after_a_break_takes_only_todays_portion(db, registered, client)
     summary = client.get("/api/study/queue/summary").json()
     assert summary["due"] == 80
     assert summary["catch_up"]["backlog"] == 80
-    assert summary["catch_up"]["today"] == 12
+    assert summary["catch_up"]["started_from"] == 80
+    portion = summary["catch_up"]["today"]
+    assert 1 <= portion < 80, "ze ściany ma zostać porcja"
 
     session = client.post("/api/study/sessions", json={"new_limit": 0}).json()
     # Pytań jest mniej niż kart, bo rozgrzewka pakuje pięć par w jedno pytanie.
     # Istotne jest to, że ze ściany 80 kart zrobiła się dzienna porcja.
-    assert 1 <= session["planned_count"] <= 12
+    assert 1 <= session["planned_count"] <= portion
 
 
 # ── eksport ───────────────────────────────────────────────────────────────
@@ -319,3 +411,23 @@ def test_placement_does_not_overwrite_existing_progress(db, registered, client):
         )
     ).scalar_one()
     assert kept.reps == 9 and kept.stability == 90.0
+
+
+def test_the_last_portion_announces_itself(db, registered):
+    """Plan kończy się tam, gdzie kolejka przestaje być ścianą — i ma o tym
+    powiedzieć, zamiast po cichu zniknąć nazajutrz."""
+    user = _user(db, registered)
+    cu.refresh(db, user, 290, today=DAY)
+    plan = cu.refresh(db, user, 90, today=DAY + timedelta(days=6))
+    assert plan.last_day is True
+    assert plan.backlog - plan.today <= cu.BACKLOG_THRESHOLD
+
+
+def test_a_day_skipped_raises_the_portion_but_never_into_a_wall(db, registered):
+    user = _user(db, registered)
+    user.settings.daily_goal = 25
+    cu.refresh(db, user, 290, today=DAY)
+    ceiling = round(25 * cu.COMFORT * cu.OVERRUN)
+    for offset in range(1, 8):
+        plan = cu.refresh(db, user, 250, today=DAY + timedelta(days=offset))
+        assert plan.today <= ceiling, (offset, plan.today)

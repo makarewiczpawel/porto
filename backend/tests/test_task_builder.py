@@ -1,6 +1,9 @@
+import random
 from datetime import datetime, timedelta, timezone
 
-from app.models import Example, Item, User, UserItemState, UserSettings
+from sqlalchemy import select
+
+from app.models import DeckItem, Example, Item, User, UserItemState, UserSettings
 from app.services import task_builder as tb
 from tests.conftest import make_items
 
@@ -260,3 +263,104 @@ def test_cloze_finds_the_word_despite_accents_and_case(db):
     parts = tb.cloze_parts(item, item.examples[0])
     assert parts is not None
     assert parts["answer"] == "Almoço", "the sentence's own casing is kept"
+
+
+# ── kolejność wykładania kart ─────────────────────────────────────────────
+def test_spread_pulls_apart_cards_from_the_same_deck():
+    """Kolejność w talii jest tematyczna, więc podana wprost podpowiada odpowiedź.
+
+    Po „wiośnie" następne pytanie jest o inną porę roku — wybór zawęża się do
+    czterech, zanim uczeń cokolwiek sobie przypomni."""
+    rng = random.Random(7)
+    pory = [(f"pora{i}", "pory-roku", i) for i in range(4)]
+    kolory = [(f"kolor{i}", "kolory", i) for i in range(4)]
+    liczby = [(f"liczba{i}", "liczby", i) for i in range(4)]
+
+    out = tb.spread(pory + kolory + liczby, lambda e: e, rng)
+    sasiedzi = sum(1 for a, b in zip(out, out[1:], strict=False) if a[1] == b[1])
+    assert sasiedzi == 0, [e[1] for e in out]
+
+
+def test_spread_pulls_apart_neighbours_from_one_shelf_of_a_deck():
+    """Gniazdo tematyczne poznaje się po sąsiedztwie w talii, nie po nazwie talii.
+
+    „Pory roku" nie są osobną talią — leżą obok siebie w środku większej, więc
+    sama talia nie odróżnia ich od reszty. Odróżnia je miejsce w kolejności."""
+    rng = random.Random(9)
+    entries = [(f"slowo{i}", "jedna-talia", i) for i in range(14)]
+
+    out = tb.spread(entries, lambda e: e, rng)
+    blisko = sum(
+        1 for a, b in zip(out, out[1:], strict=False) if abs(a[2] - b[2]) <= tb.NEAR_IN_DECK
+    )
+    assert blisko == 0, [e[2] for e in out]
+
+
+def test_spread_never_asks_about_the_same_item_twice_in_a_row():
+    """PL→PT tuż po PT→PL to nie powtórka, tylko przepisanie odpowiedzi,
+    którą ma się przed oczami."""
+    rng = random.Random(3)
+    # Cztery pozycje z jednej talii, każda w obu kierunkach.
+    entries = [(f"slowo{i}", "jedna-talia", i, kier) for i in range(4) for kier in ("r", "p")]
+
+    out = tb.spread(entries, lambda e: (e[0], e[1], e[2]), rng)
+    assert all(a[0] != b[0] for a, b in zip(out, out[1:], strict=False)), out
+
+
+def test_spread_keeps_every_card():
+    rng = random.Random(11)
+    entries = [(i, i % 3, i) for i in range(30)]
+    assert sorted(tb.spread(entries, lambda e: e, rng)) == sorted(entries)
+
+
+def test_spread_shuffles_even_when_there_is_nothing_to_pull_apart():
+    """Przy jednej talii w sesji nie ma czego rozsuwać — ale i wtedy kolejność
+    z talii ma się rozejść, bo to w niej pory roku leżą obok siebie."""
+    entries = [(i, "jedna-talia", i) for i in range(20)]
+    out = tb.spread(entries, lambda e: e, random.Random(5))
+    assert out != entries
+
+
+def test_a_session_does_not_hand_out_one_deck_at_a_time(db):
+    """Test na całej sesji, nie na samej funkcji: kolejka podaje nowy materiał
+    po kolei z talii, więc bez rozsuwania cała talia szła jednym ciągiem."""
+    user = a_user(db)
+    # Osobne pozycje talii, jak w bazie startowej — bez tego kolejka i tak
+    # przeplatałaby talie przypadkiem i test nie sprawdzałby niczego.
+    for spot, (name, prefix) in enumerate(
+        (("Pory roku", "pora"), ("Kolory", "cor"), ("Liczby", "num")), start=1
+    ):
+        make_items(
+            db, count=6, deck_name=name, prefix=prefix, pl_prefix=f"{prefix}-pl", position=spot
+        )
+
+    tasks, _ = tb.build_session(
+        db, user, user.settings, new_limit=12, review_limit=0, rng=random.Random(42)
+    )
+    miejsca = [
+        db.execute(
+            select(DeckItem.deck_id, DeckItem.position).where(DeckItem.item_id == t.item_id)
+        ).first()
+        for t in tasks
+    ]
+    pod_rzad = sum(
+        1
+        for a, b in zip(miejsca, miejsca[1:], strict=False)
+        if a[0] == b[0] and abs(a[1] - b[1]) <= tb.NEAR_IN_DECK
+    )
+    assert pod_rzad == 0, f"materiał z jednej półki talii nadal idzie ciągiem: {miejsca}"
+
+
+def test_spreading_does_not_change_which_cards_the_session_takes(db):
+    """Rozsuwanie dotyczy kolejności, nie doboru. Program nauki i FSRS
+    decydują, co wchodzi do sesji — to zostaje nietknięte."""
+    user = a_user(db)
+    make_items(db, count=30, deck_name="Jedna")
+
+    wybrane = set()
+    for seed in (1, 2, 3):
+        tasks, _ = tb.build_session(
+            db, user, user.settings, new_limit=8, review_limit=0, rng=random.Random(seed)
+        )
+        wybrane.add(frozenset(t.item_id for t in tasks))
+    assert len(wybrane) == 1, "za każdym razem inny materiał, nie tylko inna kolejność"

@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
@@ -202,11 +202,21 @@ class DeckDetailOut(DeckOut):
 
 # ── study ─────────────────────────────────────────────────────────────────
 class CatchUpOut(BaseModel):
-    """Plan nadrabiania po przerwie: ile zaległości i ile z nich na dziś."""
+    """Plan nadrabiania po przerwie — z tym, co się w nim zmienia z dnia na dzień.
+
+    `started_from` i `done` są tu po to, żeby ekran mógł pokazać przebytą drogę,
+    a nie samą górę do przejścia. Bez nich komunikat wyglądał każdego ranka tak
+    samo, choć praca z poprzedniego dnia była już zrobiona.
+    """
 
     backlog: int
+    started_from: int
+    done: int
     today: int
-    days: int
+    days_left: int
+    until: date
+    last_day: bool
+    finished: bool
 
 
 class QueueSummaryOut(BaseModel):
