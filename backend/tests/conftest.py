@@ -90,16 +90,29 @@ def registered(client):
     return body
 
 
-def make_items(db, count: int = 12, deck_name: str = "Test", level: str = "A1", pos: str = "noun"):
-    """A deck of `count` simple nouns, enough to build sessions from."""
-    deck = Deck(slug=f"deck-{uuid.uuid4().hex[:8]}", name=deck_name, position=1, is_shared=True)
+def make_items(
+    db,
+    count: int = 12,
+    deck_name: str = "Test",
+    level: str = "A1",
+    pos: str = "noun",
+    prefix: str = "palavra",
+    pl_prefix: str = "slowo",
+    position: int = 1,
+):
+    """A deck of `count` simple nouns, enough to build sessions from.
+
+    `prefix` keeps two decks in one test from colliding on `uq_items_pt_pl` —
+    items are unique by their text, not by which deck they sit in.
+    """
+    deck = Deck(slug=f"deck-{uuid.uuid4().hex[:8]}", name=deck_name, position=position, is_shared=True)
     db.add(deck)
     db.flush()
     items = []
     for i in range(count):
         item = Item(
-            pt=f"palavra{i}",
-            pl=f"slowo{i}",
+            pt=f"{prefix}{i}",
+            pl=f"{pl_prefix}{i}",
             article="a",
             gender="f",
             part_of_speech=pos,
@@ -110,7 +123,14 @@ def make_items(db, count: int = 12, deck_name: str = "Test", level: str = "A1", 
         )
         db.add(item)
         db.flush()
-        db.add(Example(item_id=item.id, pt=f"Esta é a palavra{i}.", pl=f"To jest slowo{i}.", source="seed"))
+        db.add(
+            Example(
+                item_id=item.id,
+                pt=f"Esta é a {prefix}{i}.",
+                pl=f"To jest {pl_prefix}{i}.",
+                source="seed",
+            )
+        )
         db.add(DeckItem(deck_id=deck.id, item_id=item.id, position=i))
         items.append(item)
     db.commit()

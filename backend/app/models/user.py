@@ -1,7 +1,7 @@
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, Numeric, String
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -80,5 +80,12 @@ class UserSettings(Base):
     # Domyślnie zwroty: szybciej dają się powiedzieć na głos komuś obcemu, a o
     # to w nauce języka chodzi wcześniej niż o rozmiar słownika.
     content_focus: Mapped[str] = mapped_column(String(8), nullable=False, default="phrases")
+    # Plan nadrabiania po przerwie: dzień, na który ma być czysto, i wysokość
+    # nawisu, gdy plan ruszał. Bez tych dwóch liczb komunikat „w 7 dni wrócisz
+    # na bieżąco" powtarzał się codziennie tak samo — obietnica liczona od nowa
+    # nigdy się nie przybliżała, a wczorajsza praca nie zostawiała śladu.
+    # Puste, dopóki zaległości nie przekroczą progu; czyszczone, gdy spadną.
+    catch_up_until: Mapped[date | None] = mapped_column(Date, nullable=True)
+    catch_up_from: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     user: Mapped[User] = relationship(back_populates="settings")

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 
 import { ApiError, api } from "@/api/client";
-import type { QueueSummary, StudySession } from "@/api/types";
+import type { CatchUp, QueueSummary, StudySession } from "@/api/types";
 import { Button, Card, ErrorNote, Label, Pill, ProgressRing, Spinner, plural } from "@/components/ui";
 import { useAuth } from "@/store/auth";
 import { useSession } from "@/store/session";
@@ -119,19 +119,7 @@ export function TodayPage() {
           </div>
         </div>
 
-        {data.catch_up && (
-          // Trzysta zaległych powtórek to nie kolejka, tylko ściana. Tydzień
-          // nadrabiania jest do przejścia; „300 kart" nie jest.
-          <Card className="border-warm/40 bg-warm/10">
-            <div className="text-[14px] font-semibold text-warm">Nadrabianie po przerwie</div>
-            <p className="mt-1 text-[13px] text-ink-2">
-              Uzbierało się <b>{data.catch_up.backlog}</b>{" "}
-              {plural(data.catch_up.backlog, "powtórka", "powtórki", "powtórek")}. Zamiast
-              wszystkiego naraz sesja weźmie dziś <b>{data.catch_up.today}</b> —
-              w {data.catch_up.days} dni wrócisz na bieżąco.
-            </p>
-          </Card>
-        )}
+        {data.catch_up && <CatchUpCard plan={data.catch_up} />}
 
         {startError && <ErrorNote>{startError}</ErrorNote>}
 
@@ -231,5 +219,87 @@ function Shortcut({
         →
       </span>
     </Link>
+  );
+}
+
+
+/**
+ * Nadrabianie po przerwie — kafelek, który zmienia się w miarę nadrabiania.
+ *
+ * Poprzednia wersja pisała codziennie to samo: „uzbierało się N powtórek,
+ * dziś M, w 7 dni wrócisz na bieżąco". Siedem dni było stałą, więc obietnica
+ * nie przybliżała się ani o dzień, a wczorajsza praca nie zostawiała na
+ * ekranie żadnego śladu — jedynym ruchem było N spadające o kilkanaście.
+ *
+ * Teraz kafelek ma cztery postacie, po jednej na etap planu, i pasek pokazujący
+ * przebytą drogę. Zmienia się nie dlatego, że losuje formułki, tylko dlatego,
+ * że w każdym z tych stanów co innego jest warte powiedzenia.
+ */
+function CatchUpCard({ plan }: { plan: CatchUp }) {
+  if (plan.finished) {
+    return (
+      <Card className="border-good-line bg-good-soft">
+        <div className="text-[14px] font-semibold text-good">Nadrobione ✓</div>
+        <p className="mt-1 text-[13px] text-ink-2">
+          Z <b>{plan.started_from}</b>{" "}
+          {plural(plan.started_from, "zaległej powtórki", "zaległych powtórek", "zaległych powtórek")}{" "}
+          zostało {plan.backlog}. Kolejka znów jest na bieżąco — dalej idzie zwykłym tempem.
+        </p>
+      </Card>
+    );
+  }
+
+  const pace = Math.min(Math.round((plan.done / Math.max(plan.started_from, 1)) * 100), 100);
+
+  return (
+    <Card className="border-warm/40 bg-warm/10">
+      <div className="flex items-baseline justify-between gap-2">
+        <div className="text-[14px] font-semibold text-warm">
+          {plan.last_day ? "Ostatnia porcja" : "Nadrabianie po przerwie"}
+        </div>
+        {!plan.last_day && (
+          <div className="text-[12px] font-semibold text-ink-3 tnum">
+            {plan.days_left} {plural(plan.days_left, "dzień", "dni", "dni")}
+          </div>
+        )}
+      </div>
+
+      <p className="mt-1 text-[13px] text-ink-2">
+        {plan.last_day ? (
+          <>
+            Zostało <b>{plan.backlog}</b>{" "}
+            {plural(plan.backlog, "powtórka", "powtórki", "powtórek")}, dziś{" "}
+            <b>{plan.today}</b> — po tej sesji kolejka wraca do zwykłego tempa.
+          </>
+        ) : plan.done === 0 ? (
+          <>
+            Uzbierało się <b>{plan.backlog}</b>{" "}
+            {plural(plan.backlog, "powtórka", "powtórki", "powtórek")}. Zamiast wszystkiego naraz
+            sesja weźmie dziś <b>{plan.today}</b> — i tyle samo przez kolejne dni.
+          </>
+        ) : (
+          <>
+            Nadrobione <b>{plan.done}</b> z {plan.started_from}. Dziś kolejne{" "}
+            <b>{plan.today}</b>, reszta rozłożona na pozostałe dni.
+          </>
+        )}
+      </p>
+
+      {plan.done > 0 && !plan.last_day && (
+        <div
+          className="mt-2.5 h-[6px] overflow-hidden rounded-full bg-warm/20"
+          role="progressbar"
+          aria-valuenow={pace}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label="Postęp nadrabiania"
+        >
+          <div
+            className="h-full rounded-full bg-warm transition-[width] duration-500"
+            style={{ width: `${Math.max(pace, 3)}%` }}
+          />
+        </div>
+      )}
+    </Card>
   );
 }

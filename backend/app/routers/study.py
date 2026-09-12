@@ -45,7 +45,9 @@ def _tasks(session: StudySession) -> list[dict]:
 @router.get("/queue/summary", response_model=QueueSummaryOut)
 def queue_summary(user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> QueueSummaryOut:
     now = datetime.now(timezone.utc)
-    counts = queue_counts(db, user, now)
+    # Jedyne miejsce, które prowadzi stan planu nadrabiania: tu widać postęp
+    # i tu plan może się domknąć. Wejście prosto w naukę go tylko odczytuje.
+    counts = queue_counts(db, user, now, record_catch_up=True)
     today = stats_service.today_stat(db, user, now)
     return QueueSummaryOut(
         due=counts["due"],
@@ -55,7 +57,7 @@ def queue_summary(user: User = Depends(get_current_user), db: Session = Depends(
         goal_met=bool(today and today.goal_met),
         streak=stats_service.streak(db, user, stats_service.local_day(user, now)),
         next_due_at=counts["next_due_at"],
-        catch_up=counts.get("catch_up"),
+        catch_up=counts["catch_up"].as_dict() if counts["catch_up"] else None,
     )
 
 
