@@ -42,6 +42,8 @@ const SettingsPage = lazy(() =>
 );
 const StudyPage = lazy(() => import("@/pages/Study").then((m) => ({ default: m.StudyPage })));
 const SummaryPage = lazy(() => import("@/pages/Summary").then((m) => ({ default: m.SummaryPage })));
+const GrammarPage = lazy(() => import("@/pages/Grammar").then((m) => ({ default: m.GrammarPage })));
+const LessonPage = lazy(() => import("@/pages/Grammar").then((m) => ({ default: m.LessonPage })));
 import { AuthProvider, useAuth } from "@/store/auth";
 import { watchConnection } from "@/store/session";
 import "./index.css";
@@ -94,6 +96,8 @@ function Shell() {
         <Route path="/slownik/:itemId" element={<ItemDetailPage />} />
         <Route path="/talie" element={<DecksPage />} />
         <Route path="/talie/:deckId" element={<DeckDetailPage />} />
+        <Route path="/gramatyka" element={<GrammarPage />} />
+        <Route path="/gramatyka/:slug" element={<LessonPage />} />
         <Route path="/quizy" element={<QuizzesPage />} />
         <Route path="/postep" element={<ProgressPage />} />
         <Route path="/ustawienia" element={<SettingsPage />} />

@@ -1,0 +1,65 @@
+{
+  "slug": "czasowniki-nieregularne",
+  "title": "Najważniejsze czasowniki nieregularne",
+  "summary": "{ser}, {estar}, {ter}, {ir}, {fazer} i siedem innych, bez których nie da się rozmawiać",
+  "level": "A1",
+  "part": "Czasowniki",
+  "blocks": [
+    {"type": "p", "text": "Czasowników nieregularnych jest niewiele, ale to akurat te najczęstsze — w każdej rozmowie usłyszysz ich kilkanaście. Warto znać je na pamięć w czasie teraźniejszym."},
+
+    {"type": "table", "head": ["", "ser (być)", "estar (być)", "ter (mieć)", "ir (iść)"], "pt_cols": [1, 2, 3, 4],
+     "rows": [
+       ["eu", "sou", "estou", "tenho", "vou"],
+       ["tu", "és", "estás", "tens", "vais"],
+       ["ele, ela", "é", "está", "tem", "vai"],
+       ["nós", "somos", "estamos", "temos", "vamos"],
+       ["eles, vocês", "são", "estão", "têm", "vão"]
+     ]},
+    {"type": "table", "head": ["", "fazer (robić)", "poder (móc)", "querer (chcieć)", "dizer (mówić)"], "pt_cols": [1, 2, 3, 4],
+     "rows": [
+       ["eu", "faço", "posso", "quero", "digo"],
+       ["tu", "fazes", "podes", "queres", "dizes"],
+       ["ele, ela", "faz", "pode", "quer", "diz"],
+       ["nós", "fazemos", "podemos", "queremos", "dizemos"],
+       ["eles, vocês", "fazem", "podem", "querem", "dizem"]
+     ]},
+    {"type": "table", "head": ["", "ver (widzieć)", "vir (przyjść)", "dar (dawać)", "saber (wiedzieć)"], "pt_cols": [1, 2, 3, 4],
+     "rows": [
+       ["eu", "vejo", "venho", "dou", "sei"],
+       ["tu", "vês", "vens", "dás", "sabes"],
+       ["ele, ela", "vê", "vem", "dá", "sabe"],
+       ["nós", "vemos", "vimos", "damos", "sabemos"],
+       ["eles, vocês", "veem", "vêm", "dão", "sabem"]
+     ]},
+    {"type": "tip", "tone": "info", "title": "Nieregularność siedzi głównie w „eu”",
+     "text": "{Faço}, {posso}, {digo}, {vejo}, {sei} — reszta form często wygląda już zupełnie zwyczajnie. Jeśli zapamiętasz formę dla {eu}, pozostałe przyjdą szybciej."},
+    {"type": "tip", "tone": "pt", "title": "Tem i têm brzmią w Portugalii inaczej",
+     "text": "{Tem} („ma”) i {têm} („mają”) różnią się nie tylko daszkiem. W Portugalii {têm} wymawia się jak podwojone {tem} — z dwiema nosowymi sylabami. Tak samo {vem} i {vêm}."},
+    {"type": "tip", "tone": "trap", "title": "Ir i vir",
+     "text": "{Ir} to „iść, jechać” (stąd), {vir} — „przychodzić, przyjeżdżać” (tutaj). Na początku łatwo je pomylić: {vou} — idę, {venho} — przychodzę. Okrzyk {Vamos!} znaczy „chodźmy!” albo „jedziemy!”."},
+
+    {"type": "examples", "items": [
+      {"pt": "Sou polaco.", "pl": "Jestem Polakiem. (kobieta: Sou polaca.)"},
+      {"pt": "Tenho trinta anos.", "pl": "Mam trzydzieści lat."},
+      {"pt": "Vou ao supermercado.", "pl": "Idę do supermarketu."},
+      {"pt": "Posso pagar com cartão?", "pl": "Mogę zapłacić kartą?"},
+      {"pt": "O que fazes no fim de semana?", "pl": "Co robisz w weekend?"},
+      {"pt": "Não sei.", "pl": "Nie wiem."},
+      {"pt": "Ele diz que vem amanhã.", "pl": "Mówi, że przyjdzie jutro."}
+    ]},
+    {"type": "tip", "tone": "pt", "title": "Polaco w Portugalii, polonês w Brazylii",
+     "text": "W Portugalii „Polak” to {polaco}, „Polka” — {polaca}. W Brazylii mówi się {polonês}, a {polaco} bywa tam odbierane źle. W Portugalii to zwykłe, neutralne słowo."}
+  ],
+  "check": [
+    {"q": "{eu} + {ter}", "options": ["{tenho}", "{tero}", "{tem}"], "answer": 0,
+     "why": "{Ter} jest nieregularny: {tenho}, {tens}, {tem}, {temos}, {têm}."},
+    {"q": "{nós} + {ir}", "options": ["{imos}", "{vamos}", "{vimos}"], "answer": 1,
+     "why": "{Vamos}. Uwaga: {vimos} to „przychodzimy” (od {vir}) albo „widzieliśmy” (od {ver})."},
+    {"q": "{eu} + {fazer}", "options": ["{fazo}", "{faço}", "{faz}"], "answer": 1,
+     "why": "{Faço} — z cedyllą, żeby {c} brzmiało jak {s}."},
+    {"q": "Mam trzydzieści lat.", "options": ["{Sou trinta anos.}", "{Estou trinta anos.}", "{Tenho trinta anos.}"], "answer": 2,
+     "why": "Wiek wyraża się czasownikiem {ter} — dosłownie „mam trzydzieści lat”, jak po polsku."},
+    {"q": "Oni przychodzą:", "options": ["{eles vêm}", "{eles vem}", "{eles vimos}"], "answer": 0,
+     "why": "Liczba mnoga ma daszek: {vêm}. {Vem} to „on przychodzi”."}
+  ]
+}

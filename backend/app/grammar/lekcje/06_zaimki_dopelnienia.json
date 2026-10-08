@@ -1,0 +1,75 @@
+{
+  "slug": "zaimki-dopelnienia",
+  "title": "Zaimki „mnie, cię, go” i gdzie je postawić",
+  "summary": "{chamo-me} czy {me chamo}? Najbardziej portugalska zasada w całej gramatyce",
+  "level": "A2",
+  "part": "Zaimki",
+  "blocks": [
+    {"type": "p", "text": "„Widzę **go**”, „daję **ci**”, „nazywam **się**” — te krótkie zaimki to po portugalsku osobna, mała grupa. Ważniejsze od samych form jest to, **gdzie stoją**. W Portugalii domyślnie **po czasowniku, z łącznikiem**: {Chamo-me Paweł}, {Dá-me isso}, {Vejo-te amanhã}."},
+
+    {"type": "table", "head": ["", "kogo? co?", "komu?", "się"],
+     "rows": [
+       ["ja", "{me}", "{me}", "{me}"],
+       ["ty", "{te}", "{te}", "{te}"],
+       ["on, ona, pan, pani", "{o}, {a}", "{lhe}", "{se}"],
+       ["my", "{nos}", "{nos}", "{nos}"],
+       ["wy, państwo ({vocês})", "{vos}", "{vos}", "{se}"],
+       ["oni, one", "{os}, {as}", "{lhes}", "{se}"]
+     ]},
+    {"type": "tip", "tone": "info", "title": "Najwięcej różni się trzecia osoba",
+     "text": "„Kogo?” to {o} / {a} (jak rodzajnik), „komu?” to {lhe}. {Vejo-o} — „widzę go”, {Dou-lhe} — „daję mu / jej / panu”. Pozostałe osoby mają jedną formę na wszystko."},
+
+    {"type": "h", "text": "Zasada domyślna: po czasowniku"},
+    {"type": "examples", "items": [
+      {"pt": "Chamo-me Ana.", "pl": "Nazywam się Ana."},
+      {"pt": "Ajuda-me, por favor.", "pl": "Pomóż mi, proszę."},
+      {"pt": "Dou-lhe o recibo já.", "pl": "Zaraz dam panu paragon."},
+      {"pt": "Sentem-se, por favor.", "pl": "Proszę usiąść. (do kilku osób)"}
+    ]},
+    {"type": "tip", "tone": "trap", "title": "Zdania nie zaczyna się od zaimka",
+     "text": "W Brazylii zaimek stoi prawie zawsze przed czasownikiem: {Me chamo Ana}. W Portugalii zdanie zaczynające się od {me}, {te} czy {se} brzmi obco i słychać to od razu. Po europejsku: {Chamo-me Ana}."},
+
+    {"type": "h", "text": "Kiedy zaimek przeskakuje przed czasownik"},
+    {"type": "p", "text": "Wystarczy, że przed czasownikiem stoi jedno z tych słów — i zaimek idzie przed niego, już bez łącznika:"},
+    {"type": "table", "head": ["słowo przed czasownikiem", "przykład", "znaczenie"],
+     "rows": [
+       ["przeczenie: {não}, {nunca}, {ninguém}", "{Não me lembro.}", "Nie pamiętam."],
+       ["pytajnik: {como}, {onde}, {quem}, {o que}…", "{Como se diz isto?}", "Jak się to mówi?"],
+       ["spójnik: {que}, {quando}, {se}…", "{Acho que se chama Rui.}", "Chyba ma na imię Rui."],
+       ["niektóre przysłówki: {já}, {ainda}, {também}, {só}, {sempre}", "{Também me parece.}", "Też mi się tak wydaje."]
+     ]},
+    {"type": "examples", "items": [
+      {"pt": "Não me lembro.", "pl": "Nie pamiętam."},
+      {"pt": "Como se diz isto em português?", "pl": "Jak się to mówi po portugalsku?"},
+      {"pt": "Já te disse.", "pl": "Już ci mówiłem."}
+    ]},
+
+    {"type": "h", "text": "O, a po bezokoliczniku zmieniają kształt"},
+    {"type": "p", "text": "Po bezokoliczniku {o} i {a} zamieniają się w {lo} i {la}, a z bezokolicznika znika końcowe {-r}. Żeby akcent został na swoim miejscu, pojawia się znak nad samogłoską:"},
+    {"type": "table", "head": ["bezokolicznik", "+ go / ją", "znaczenie"], "pt_cols": [0, 1],
+     "rows": [
+       ["comprar", "comprá-lo", "kupić go"],
+       ["ver", "vê-la", "zobaczyć ją"],
+       ["fazer", "fazê-lo", "zrobić to"],
+       ["abrir", "abri-la", "otworzyć ją"]
+     ]},
+    {"type": "examples", "items": [
+      {"pt": "Vou comprá-lo amanhã.", "pl": "Kupię go jutro."},
+      {"pt": "Posso abri-la?", "pl": "Mogę ją otworzyć? (np. okno)"}
+    ]},
+    {"type": "tip", "tone": "info", "title": "Na początek wystarczy rozpoznawać",
+     "text": "Nie musisz od razu tak mówić — ale warto rozpoznawać. {Vê-lo}, {fazê-lo}, {comprá-la} to zwykły bezokolicznik z zaimkiem, a nie nowe słowo do nauczenia."}
+  ],
+  "check": [
+    {"q": "Nazywam się Paweł.", "options": ["{Chamo-me Paweł.}", "{Me chamo Paweł.}"], "answer": 0,
+     "why": "W Portugalii zaimek stoi po czasowniku, a zdania nie zaczyna się od {me}."},
+    {"q": "Nie pamiętam.", "options": ["{Não lembro-me.}", "{Não me lembro.}"], "answer": 1,
+     "why": "{Não} przyciąga zaimek przed czasownik."},
+    {"q": "Jak się to mówi?", "options": ["{Como se diz isto?}", "{Como diz-se isto?}"], "answer": 0,
+     "why": "Pytajnik ({como}, {onde}, {o que}…) też przyciąga zaimek przed czasownik."},
+    {"q": "Kupię go jutro.", "options": ["{Vou comprar-o amanhã.}", "{Vou comprá-lo amanhã.}"], "answer": 1,
+     "why": "Po bezokoliczniku {o} zmienia się w {lo}, a {-r} znika: {comprar + o → comprá-lo}."},
+    {"q": "{Dou-___ o recibo.} (daję panu paragon)", "options": ["{o}", "{lhe}", "{se}"], "answer": 1,
+     "why": "„Komu?” to {lhe}. Forma {o} odpowiada na pytanie „kogo? co?”."}
+  ]
+}

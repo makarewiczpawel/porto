@@ -1,0 +1,72 @@
+{
+  "slug": "przeszlosc-perfeito",
+  "title": "Przeszłość: pretérito perfeito",
+  "summary": "„Zjadłem”, „poszłam”, „kupiliśmy” — zdarzenie, które się zamknęło",
+  "level": "A2",
+  "part": "Czasowniki",
+  "blocks": [
+    {"type": "p", "text": "Pretérito perfeito to podstawowy czas przeszły: zdarzenie, które się wydarzyło i skończyło. Najczęściej odpowiada polskiemu czasownikowi dokonanemu — „zjadłem”, „poszłam”, „kupiliśmy”."},
+
+    {"type": "table", "head": ["", "falar", "comer", "abrir"], "pt_cols": [1, 2, 3],
+     "rows": [
+       ["eu", "falei", "comi", "abri"],
+       ["tu", "falaste", "comeste", "abriste"],
+       ["ele, ela", "falou", "comeu", "abriu"],
+       ["nós", "falámos", "comemos", "abrimos"],
+       ["eles, vocês", "falaram", "comeram", "abriram"]
+     ]},
+    {"type": "tip", "tone": "pt", "title": "Falámos z akcentem — tylko w Portugalii",
+     "text": "W czasownikach na {-ar} forma {nós} w przeszłym ({falámos}) różni się od teraźniejszej ({falamos}) akcentem w piśmie i otwartym {a} w wymowie. W Brazylii obie wyglądają i brzmią tak samo. W {-er} i {-ir} różnicy nie ma: {comemos} to i „jemy”, i „zjedliśmy”."},
+    {"type": "examples", "items": [
+      {"pt": "Ontem fui ao Porto.", "pl": "Wczoraj pojechałem do Porto."},
+      {"pt": "Comemos bacalhau ao jantar.", "pl": "Zjedliśmy dorsza na kolację."},
+      {"pt": "Não tive tempo.", "pl": "Nie miałem czasu."},
+      {"pt": "O que disseste?", "pl": "Co powiedziałeś?"},
+      {"pt": "Ela chegou há uma hora.", "pl": "Przyjechała godzinę temu."}
+    ]},
+
+    {"type": "h", "text": "Najważniejsze nieregularne"},
+    {"type": "table", "head": ["", "ser / ir", "ter", "estar", "fazer"], "pt_cols": [1, 2, 3, 4],
+     "rows": [
+       ["eu", "fui", "tive", "estive", "fiz"],
+       ["tu", "foste", "tiveste", "estiveste", "fizeste"],
+       ["ele, ela", "foi", "teve", "esteve", "fez"],
+       ["nós", "fomos", "tivemos", "estivemos", "fizemos"],
+       ["eles, vocês", "foram", "tiveram", "estiveram", "fizeram"]
+     ]},
+    {"type": "tip", "tone": "trap", "title": "Ser i ir wyglądają tu identycznie",
+     "text": "{Fui a Lisboa} to „pojechałem do Lizbony”, a {Fui feliz} — „byłem szczęśliwy”. Formy są te same, ale kontekst zawsze rozstrzyga — po {fui} idzie albo kierunek, albo opis."},
+    {"type": "table", "head": ["czasownik", "eu", "ele, ela"], "pt_cols": [1, 2],
+     "rows": [
+       ["{poder} — móc", "pude", "pôde"],
+       ["{querer} — chcieć", "quis", "quis"],
+       ["{dizer} — powiedzieć", "disse", "disse"],
+       ["{vir} — przyjść", "vim", "veio"],
+       ["{dar} — dać", "dei", "deu"],
+       ["{ver} — zobaczyć", "vi", "viu"],
+       ["{saber} — dowiedzieć się", "soube", "soube"],
+       ["{pôr} — położyć", "pus", "pôs"]
+     ]},
+
+    {"type": "h", "text": "Już, kiedyś, jeszcze nie"},
+    {"type": "p", "text": "Pytania „czy już…?” i „czy kiedyś…?” zadaje się po prostu w perfeito, ze słowem {já}: {Já comeste?} — „jadłeś już?”, {Já foste aos Açores?} — „byłeś kiedyś na Azorach?”. Odpowiedź przecząca to {ainda não}: „jeszcze nie”."},
+    {"type": "examples", "items": [
+      {"pt": "Já falaste com ele?", "pl": "Rozmawiałeś już z nim?"},
+      {"pt": "Ainda não.", "pl": "Jeszcze nie."}
+    ]},
+    {"type": "tip", "tone": "trap", "title": "Tenho comido to nie „zjadłem”",
+     "text": "Forma {tenho comido} istnieje, ale znaczy coś innego niż angielskie „I have eaten”: opisuje powtarzanie aż do teraz. {Tenho comido muito peixe} — „ostatnio jem dużo ryb”. Dla zamkniętego zdarzenia zawsze perfeito: {Já comi}."}
+  ],
+  "check": [
+    {"q": "{eu} + {falar} (przeszły)", "options": ["{falei}", "{falo}", "{falava}"], "answer": 0,
+     "why": "Perfeito dla {eu} w grupie {-ar} kończy się na {-ei}."},
+    {"q": "„Rozmawialiśmy” — pisownia z Portugalii:", "options": ["{falamos}", "{falámos}"], "answer": 1,
+     "why": "Akcent odróżnia przeszły {falámos} od teraźniejszego {falamos}."},
+    {"q": "Wczoraj pojechałem do Lizbony.", "options": ["{Ontem fui a Lisboa.}", "{Ontem foi a Lisboa.}", "{Ontem ia a Lisboa.}"], "answer": 0,
+     "why": "{Fui} — forma {eu} od {ir}. {Foi} to „on pojechał”."},
+    {"q": "Nie miałem czasu.", "options": ["{Não tenho tido tempo.}", "{Não tive tempo.}"], "answer": 1,
+     "why": "Zamknięte zdarzenie — perfeito. {Não tenho tido tempo} to „ostatnio nie mam czasu”."},
+    {"q": "Jadłeś już?", "options": ["{Já comeste?}", "{Já tens comido?}"], "answer": 0,
+     "why": "„Już” z perfeito: {já} + {comeste}."}
+  ]
+}

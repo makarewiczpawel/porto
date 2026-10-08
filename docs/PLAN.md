@@ -430,6 +430,12 @@ Słowa zostają w bazie — zmienia się to, co kolejka podaje jako pierwsze.
       tłumaczenie całości. Jedno wywołanie modelu opisuje cały zwrot i zostaje
       w pamięci na stałe, więc pierwsze stuknięcie opłaca wszystkie następne
 
+- [x] Lekcje gramatyki: 16 lekcji po polsku w czterech częściach (rzeczowniki,
+      zaimki, czasowniki, budowa zdania i słów), z tabelami, przykładami
+      nagranymi wybranym głosem i „Sprawdź się" na koniec. Treść w
+      `backend/app/grammar/lekcje/`, walidowana schematem; osobna zakładka
+      w nawigacji; dostępne bez zasięgu (NetworkFirst w service workerze)
+
 ### Definition of Done — Faza 6
 - [x] Nowe konto zaczyna od „bom dia, faz favor", nie od rzeczownika
 - [x] Zwroty z odpowiedzią pokazują ją przy ocenie i mają własne nagranie

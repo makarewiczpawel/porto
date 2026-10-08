@@ -32,6 +32,16 @@ const TABS = [
     ),
   },
   {
+    to: "/gramatyka",
+    label: "Gramatyka",
+    icon: (
+      <>
+        <path d="M12 6.5C10.3 5 7.6 4.5 4 4.5v13c3.6 0 6.3.5 8 2 1.7-1.5 4.4-2 8-2v-13c-3.6 0-6.3.5-8 2z" />
+        <path d="M12 6.5v13" />
+      </>
+    ),
+  },
+  {
     to: "/quizy",
     label: "Quizy",
     icon: (
@@ -71,7 +81,7 @@ export function AppLayout() {
         <Outlet />
       </main>
       <nav
-        className="safe-bottom fixed inset-x-0 bottom-0 z-20 mx-auto grid max-w-[560px] grid-cols-5 border-t border-line bg-surface pt-2"
+        className="safe-bottom fixed inset-x-0 bottom-0 z-20 mx-auto grid max-w-[560px] grid-cols-6 border-t border-line bg-surface pt-2"
         aria-label="Nawigacja główna"
       >
         {TABS.map((tab) => {
@@ -83,7 +93,7 @@ export function AppLayout() {
               to={tab.to}
               aria-current={active ? "page" : undefined}
               className={cx(
-                "grid justify-items-center gap-0.5 rounded-lg py-1 text-[11px] font-semibold",
+                "grid min-w-0 justify-items-center gap-0.5 rounded-lg py-1 text-[10.5px] font-semibold tracking-[-0.01em]",
                 active ? "text-accent" : "text-ink-3",
               )}
             >

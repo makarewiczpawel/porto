@@ -1,0 +1,55 @@
+{
+  "slug": "przyszlosc",
+  "title": "Przyszłość i plany",
+  "summary": "{vou fazer}, {faço amanhã}, {farei} — który sposób kiedy",
+  "level": "A2",
+  "part": "Czasowniki",
+  "blocks": [
+    {"type": "p", "text": "O przyszłości mówi się na trzy sposoby — a ten, który zna się z podręczników ({falarei}), jest w mowie najrzadszy."},
+    {"type": "table", "head": ["sposób", "kiedy", "przykład"],
+     "rows": [
+       ["czas teraźniejszy", "plany pewne i bliskie, zwykle z określeniem czasu", "{Amanhã trabalho até tarde.} — Jutro pracuję do późna."],
+       ["{ir} + bezokolicznik", "zamiar — najczęstsza forma w rozmowie", "{Vou comprar um carro.} — Kupię samochód."],
+       ["czas przyszły ({futuro})", "w piśmie, w prognozach, w obietnicach", "{Amanhã choverá no norte.} — Jutro na północy będzie padać."]
+     ]},
+
+    {"type": "h", "text": "Ir + bezokolicznik"},
+    {"type": "p", "text": "Odmieniasz tylko {ir} — {vou}, {vais}, {vai}, {vamos}, {vão} — i dokładasz bezokolicznik. **Bez żadnego słowa pomiędzy**: to nie {estar a}."},
+    {"type": "examples", "items": [
+      {"pt": "Vou ligar-te à noite.", "pl": "Zadzwonię do ciebie wieczorem."},
+      {"pt": "Vamos jantar fora?", "pl": "Zjemy na mieście?"},
+      {"pt": "O comboio vai chegar atrasado.", "pl": "Pociąg przyjedzie z opóźnieniem."},
+      {"pt": "Amanhã não trabalho.", "pl": "Jutro nie pracuję."}
+    ]},
+    {"type": "tip", "tone": "trap", "title": "Vou comprar, nie vou a comprar",
+     "text": "{Estou a comprar} — „właśnie kupuję” ma {a}. {Vou comprar} — „kupię” go nie ma. To jedna z najczęstszych pomyłek na początku."},
+    {"type": "tip", "tone": "info", "title": "Pojadę: vou ir?",
+     "text": "{Vou ir} usłyszysz, ale zwykle wystarcza samo {vou}: {Amanhã vou a Sintra} — „jutro jadę do Sintry”."},
+
+    {"type": "h", "text": "Czas przyszły — żeby rozpoznać"},
+    {"type": "p", "text": "Końcówki dokłada się do **całego bezokolicznika**. Nieregularne są tylko trzy: {fazer} → {farei}, {dizer} → {direi}, {trazer} → {trarei}."},
+    {"type": "table", "head": ["", "falar", "fazer"], "pt_cols": [1, 2],
+     "rows": [
+       ["eu", "falarei", "farei"],
+       ["tu", "falarás", "farás"],
+       ["ele, ela", "falará", "fará"],
+       ["nós", "falaremos", "faremos"],
+       ["eles, vocês", "falarão", "farão"]
+     ]},
+    {"type": "examples", "items": [
+      {"pt": "Logo se verá.", "pl": "Zobaczymy. / Czas pokaże."}
+    ]},
+    {"type": "tip", "tone": "info", "title": "Futuro jako przypuszczenie",
+     "text": "{Serão umas dez horas} — „jest pewnie koło dziesiątej”. Tak samo działa polskie „będzie”: „będzie z dziesięć osób”."}
+  ],
+  "check": [
+    {"q": "Kupię samochód (zamierzam).", "options": ["{Vou comprar um carro.}", "{Vou a comprar um carro.}"], "answer": 0,
+     "why": "Po {ir} bezokolicznik stoi bezpośrednio. {A} jest tylko w {estar a}."},
+    {"q": "Jutro pracuję.", "options": ["{Amanhã trabalho.}", "{Amanhã trabalhei.}"], "answer": 0,
+     "why": "Pewny plan z określeniem czasu — wystarczy czas teraźniejszy."},
+    {"q": "{eu} + {fazer} (czas przyszły)", "options": ["{fazerei}", "{farei}", "{faço}"], "answer": 1,
+     "why": "{Fazer} to jeden z trzech nieregularnych: {farei}."},
+    {"q": "Najczęstszy sposób mówienia o przyszłości w rozmowie:", "options": ["{falarei}", "{vou falar}"], "answer": 1,
+     "why": "{Ir} + bezokolicznik słychać najczęściej. {Falarei} to głównie język pisany."}
+  ]
+}

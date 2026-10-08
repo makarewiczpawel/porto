@@ -1,0 +1,59 @@
+{
+  "slug": "przyimki",
+  "title": "Przyimki i ich ściągnięcia",
+  "summary": "{do}, {na}, {ao}, {pelo} — kiedy przyimek zlewa się z rodzajnikiem",
+  "level": "A1",
+  "part": "Budowa zdania i słów",
+  "blocks": [
+    {"type": "p", "text": "Najczęstsze przyimki — {de}, {em}, {a}, {por} — zlewają się z rodzajnikiem w jedno słowo. To nie wyjątek, tylko obowiązek: nie mówi się {em o}, mówi się {no}."},
+
+    {"type": "table", "head": ["", "+ o", "+ a", "+ os", "+ as"], "pt_cols": [1, 2, 3, 4],
+     "rows": [
+       ["{de} — z, od", "do", "da", "dos", "das"],
+       ["{em} — w, na", "no", "na", "nos", "nas"],
+       ["{a} — do, ku", "ao", "à", "aos", "às"],
+       ["{por} — przez", "pelo", "pela", "pelos", "pelas"]
+     ]},
+    {"type": "p", "text": "Z rodzajnikiem nieokreślonym też: {em + um → num}, {em + uma → numa}. I z zaimkami wskazującymi: {de + este → deste}, {em + esse → nesse}, {em + aquele → naquele}."},
+    {"type": "examples", "items": [
+      {"pt": "Vamos ao cinema hoje?", "pl": "Idziemy dziś do kina?"},
+      {"pt": "A farmácia fica na esquina.", "pl": "Apteka jest na rogu."},
+      {"pt": "Este é o livro da Ana.", "pl": "To książka Any."},
+      {"pt": "Obrigado pelo jantar.", "pl": "Dziękuję za kolację."},
+      {"pt": "Moro num apartamento pequeno.", "pl": "Mieszkam w małym mieszkaniu."}
+    ]},
+
+    {"type": "h", "text": "Który przyimek do czego"},
+    {"type": "table", "head": ["przyimek", "do czego", "przykład"],
+     "rows": [
+       ["{em}", "gdzie jesteś: w, na", "{Estou em casa.} {Moro no Porto.}"],
+       ["{a}", "dokąd idziesz (na chwilę)", "{Vou à praia.} {Vou ao médico.}"],
+       ["{para}", "dokąd (na dłużej); dla kogo; po co", "{Vou para casa.} {É para ti.}"],
+       ["{de}", "skąd; z czego; czyje", "{Sou de Cracóvia.} {o carro do Rui}"],
+       ["{por}", "przez, którędy; za coś", "{Passo pelo parque.} {Obrigado pela ajuda.}"],
+       ["{com}", "z kim, z czym", "{Café com leite.}"]
+     ]},
+    {"type": "examples", "items": [
+      {"pt": "Este presente é para ti.", "pl": "Ten prezent jest dla ciebie."},
+      {"pt": "Vou à farmácia.", "pl": "Idę do apteki."}
+    ]},
+    {"type": "tip", "tone": "pt", "title": "Ir a czy ir para?",
+     "text": "{Vou ao Porto} — „jadę do Porto” (i wrócę). {Vou para o Porto} — „jadę do Porto” na dłużej, na przykład się przeprowadzam. W mowie granica bywa płynna, ale ten odcień warto słyszeć."},
+    {"type": "tip", "tone": "pt", "title": "À słychać",
+     "text": "{À} to {a + a}: {Vou à farmácia}. W Portugalii {à} brzmi otwarciej niż sam rodzajnik {a} — to jedno z miejsc, gdzie akcent zmienia wymowę."},
+    {"type": "tip", "tone": "trap", "title": "Moro no Porto, ale em Lisboa",
+     "text": "Niektóre miasta mają rodzajnik, inne nie: {o Porto} (więc {no Porto}, {do Porto}), ale {Lisboa} bez ({em Lisboa}, {de Lisboa}). Podobnie z krajami: {na Polónia}, ale {em Portugal}."}
+  ],
+  "check": [
+    {"q": "{em} + {o} =", "options": ["{no}", "{em o}", "{ao}"], "answer": 0,
+     "why": "Ściągnięcie jest obowiązkowe: {em + o → no}."},
+    {"q": "{de} + {a} =", "options": ["{da}", "{do}", "{dela}"], "answer": 0,
+     "why": "{De + a → da}. {Dela} to {de + ela} — „jej”."},
+    {"q": "Idę do apteki.", "options": ["{Vou na farmácia.}", "{Vou à farmácia.}"], "answer": 1,
+     "why": "„Dokąd” to {a}: {a + a → à}. {Vou na} usłyszysz w Brazylii."},
+    {"q": "Dziękuję za pomoc.", "options": ["{Obrigado para a ajuda.}", "{Obrigado pela ajuda.}"], "answer": 1,
+     "why": "Dziękuje się „przez” coś: {por + a → pela}."},
+    {"q": "Mieszkam w Porto.", "options": ["{Moro em Porto.}", "{Moro no Porto.}"], "answer": 1,
+     "why": "Porto ma rodzajnik ({o Porto}), więc {em + o → no}."}
+  ]
+}

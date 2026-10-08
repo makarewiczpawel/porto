@@ -92,6 +92,30 @@ planu po pięćdziesiąt. Dzień opuszczony lekko podnosi porcję; tydzień prze
 opuszczony tydzień. Nic z tego nie rusza terminów w bazie — FSRS ma prawo
 uważać, że te karty są na dziś, i ma rację; opóźnienie jest częścią odpowiedzi.
 
+### Lekcje gramatyki
+
+Zakładka „Gramatyka" to 16 lekcji po polsku, od rodzajników po przedrostki,
+ułożonych w cztery części: rzeczowniki i opisywanie, zaimki, czasowniki, budowa
+zdania i słów. Każda ma tabele odmiany, przykłady do odsłuchania, wskazówki —
+pułapki dla Polaka i to, czym Portugalia różni się od Brazylii — oraz krótkie
+„Sprawdź się" na koniec, z wyjaśnieniem przy każdej odpowiedzi.
+
+Treść mieszka w `backend/app/grammar/lekcje/*.json`, nie w bazie: nikt jej nie
+edytuje w aplikacji, a każda poprawka i tak przechodzi przez przegląd w
+repozytorium. Plik jest walidowany schematem przy starcie — literówka ma
+zatrzymać aplikację i testy, a nie wyrenderować pół lekcji. W tekście działają
+dwa znaczniki: `{...}` dla wstawki po portugalsku i `**...**` dla wyróżnienia.
+
+Przykłady brzmią głosem wybranym w ustawieniach, tak jak fiszki — biblioteka
+nagrań zna je z tego samego źródła co ekran, więc „Nagraj brakujące" obejmuje
+też lekcje. Brakujące nagrania dogrywają się w tle przy pierwszym otwarciu
+lekcji, a ekran mówi o tym wprost i podmienia głos telefonu na właściwy, gdy
+tylko nagrania są gotowe.
+
+Testy pilnują, że żaden przykład ani forma podana jako poprawna nie jest
+brazylijska. Formy brazylijskie wolno pokazać tylko w kolumnie tabeli
+oznaczonej jako kontrast (`br_cols`), wyciszonej na ekranie.
+
 ## Stack
 
 | Warstwa | Technologia |

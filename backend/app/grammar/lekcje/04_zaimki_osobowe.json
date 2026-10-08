@@ -1,0 +1,56 @@
+{
+  "slug": "zaimki-osobowe",
+  "title": "Zaimki osobowe i jak zwracać się do ludzi",
+  "summary": "{eu}, {tu}, {ele} — oraz kiedy {tu}, kiedy {o senhor}, a kiedy po imieniu",
+  "level": "A1",
+  "part": "Zaimki",
+  "blocks": [
+    {"type": "p", "text": "Zaimek w roli podmiotu jest w portugalskim często pomijany — tak jak po polsku. Końcówka czasownika i tak mówi, kto działa: {Falo português} to „mówię po portugalsku”, bez żadnego {eu}."},
+
+    {"type": "table", "head": ["", "liczba pojedyncza", "liczba mnoga"],
+     "rows": [
+       ["1. osoba", "{eu} — ja", "{nós} — my"],
+       ["2. osoba", "{tu} — ty", "{vocês} — wy"],
+       ["3. osoba", "{ele} — on, {ela} — ona", "{eles} — oni, {elas} — one"]
+     ]},
+    {"type": "tip", "tone": "info", "title": "A gdzie „wy” w drugiej osobie?",
+     "text": "Dawne {vós} znajdziesz w Biblii, w starych tekstach i czasem na północy kraju. W codziennej mowie zastąpiło je {vocês}, a czasownik stoi przy nim w trzeciej osobie liczby mnogiej: {vocês falam}."},
+
+    {"type": "h", "text": "Jak zwracać się do ludzi"},
+    {"type": "p", "text": "Tu Portugalia najbardziej różni się od Brazylii — i tu najłatwiej o niezręczność."},
+    {"type": "table", "head": ["forma", "do kogo", "czasownik"],
+     "rows": [
+       ["{tu}", "rodzina, przyjaciele, dzieci, rówieśnicy, często koledzy z pracy", "jak przy „ty”: {tu falas}"],
+       ["{o senhor}, {a senhora}", "obcy, starsi, klienci, urzędnicy — bezpieczny wybór", "jak przy „on/ona”: {o senhor fala}"],
+       ["imię albo tytuł", "znajomi, z którymi nie jesteś na ty", "jak przy „on/ona”: {A Ana quer um café?}"],
+       ["{vocês}", "każda grupa — formalnie i nieformalnie", "jak przy „oni”: {vocês falam}"]
+     ]},
+    {"type": "tip", "tone": "trap", "title": "Você — ostrożnie",
+     "text": "W Brazylii {você} to zwykłe „ty”. W Portugalii brzmi chłodno, a wobec starszych bywa wręcz niegrzeczne. Portugalczycy omijają je, zwracając się do kogoś po imieniu albo tytułem — w trzeciej osobie, prosto w oczy: {A Ana já comeu?} („Ana już jadła?” — do Any), {O senhor precisa de ajuda?}."},
+    {"type": "tip", "tone": "pt", "title": "Najprościej: bez zaimka",
+     "text": "Do obcej osoby wystarczy czasownik w trzeciej osobie — bez {você} i bez {o senhor}: {Pode repetir, por favor?} („Może pan powtórzyć?”). To grzeczne, neutralne i nikogo nie urazi. Portugalczycy robią tak cały czas."},
+    {"type": "examples", "items": [
+      {"pt": "De onde és?", "pl": "Skąd jesteś? (do kolegi)"},
+      {"pt": "De onde é o senhor?", "pl": "Skąd pan jest?"},
+      {"pt": "Pode repetir, por favor?", "pl": "Może pan / pani powtórzyć?"},
+      {"pt": "Vocês querem um café?", "pl": "Chcecie kawy? / Czy państwo chcą kawy?"},
+      {"pt": "A senhora pode esperar um momento?", "pl": "Czy może pani chwilę poczekać?"},
+      {"pt": "Nós moramos em Lisboa.", "pl": "Mieszkamy w Lizbonie."}
+    ]},
+
+    {"type": "h", "text": "A gente — potoczne „my”"},
+    {"type": "p", "text": "{A gente} dosłownie znaczy „ludzie”, ale w mowie często zastępuje {nós}. Czasownik stoi wtedy w **trzeciej osobie liczby pojedynczej**: {A gente vai à praia} — „idziemy na plażę”. W Portugalii jest mniej częste niż w Brazylii; {nós vamos} jest zawsze poprawne."}
+  ],
+  "check": [
+    {"q": "Do starszej pani przy kasie najbezpieczniej powiesz:", "options": ["{Você quer um saco?}", "{A senhora quer um saco?}", "{Tu queres um saco?}"], "answer": 1,
+     "why": "{O senhor} / {a senhora} to bezpieczna forma do obcych i starszych. Samo {Quer um saco?} też byłoby w porządku."},
+    {"q": "Do kolegi z pracy w twoim wieku:", "options": ["{Tu queres um café?}", "{O senhor quer um café?}"], "answer": 0,
+     "why": "Z rówieśnikami i kolegami w Portugalii zwykle jest się na ty."},
+    {"q": "{Vocês} to forma:", "options": ["tylko grzecznościowa", "tylko poufała", "do każdej grupy"], "answer": 2,
+     "why": "Liczba mnoga nie rozróżnia grzeczności: {vocês} pasuje i do przyjaciół, i do klientów."},
+    {"q": "Czy w Portugalii można do każdego mówić {você}?", "options": ["Tak, jak w Brazylii", "Lepiej nie — bywa odbierane jako chłodne albo niegrzeczne"], "answer": 1,
+     "why": "Bezpieczniej mówić po imieniu, tytułem albo samym czasownikiem w trzeciej osobie."},
+    {"q": "{A gente vai ao cinema} znaczy:", "options": ["idziemy do kina", "ludzie chodzą do kina", "idziecie do kina"], "answer": 0,
+     "why": "W mowie potocznej {a gente} to „my”, choć czasownik stoi w trzeciej osobie liczby pojedynczej."}
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "slug": "przymiotniki",
+  "title": "Przymiotniki",
+  "summary": "Zgoda z rzeczownikiem i miejsce w zdaniu — zwykle po nim",
+  "level": "A1",
+  "part": "Rzeczowniki i opisywanie",
+  "blocks": [
+    {"type": "p", "text": "Przymiotnik zgadza się z rzeczownikiem w rodzaju i liczbie — tak jak po polsku. Różnica jest jedna, ale ważna: **zwykle stoi po rzeczowniku**. {Um carro novo} to „nowy samochód”, {uma casa grande} — „duży dom”."},
+
+    {"type": "table", "head": ["wzór", "pojedyncza (m. / ż.)", "mnoga (m. / ż.)"], "pt_cols": [1, 2],
+     "rows": [
+       ["{-o} / {-a}", "novo / nova", "novos / novas"],
+       ["{-e}", "grande", "grandes"],
+       ["spółgłoska", "azul", "azuis"],
+       ["{-ês} (skąd ktoś jest)", "inglês / inglesa", "ingleses / inglesas"],
+       ["{-or}", "falador / faladora", "faladores / faladoras"]
+     ]},
+    {"type": "examples", "items": [
+      {"pt": "Lisboa é uma cidade bonita.", "pl": "Lizbona to ładne miasto."},
+      {"pt": "Gosto muito dos vinhos portugueses.", "pl": "Bardzo lubię portugalskie wina."},
+      {"pt": "Ela é muito simpática.", "pl": "Ona jest bardzo miła."},
+      {"pt": "Tenho um carro velho.", "pl": "Mam stary samochód."},
+      {"pt": "Quero a camisola azul.", "pl": "Chcę ten niebieski sweter."}
+    ]},
+    {"type": "tip", "tone": "info", "title": "Na -e: jedna forma dla obu rodzajów",
+     "text": "{Um homem grande}, {uma mulher grande} — przymiotniki na {-e} i większość zakończonych spółgłoską ({azul}, {feliz}) odmieniają się tylko przez liczbę. Wyjątkiem są {-ês} i {-or}, które mają formę żeńską: {português → portuguesa}, {falador → faladora} (gadatliwy). Przy {-ês} akcent w formie żeńskiej znika."},
+
+    {"type": "h", "text": "Przed czy po rzeczowniku?"},
+    {"type": "p", "text": "Kilka częstych przymiotników stoi przed rzeczownikiem — i wtedy zmienia znaczenie:"},
+    {"type": "table", "head": ["przed", "po"],
+     "rows": [
+       ["{um grande homem} — wielki człowiek", "{um homem grande} — duży, rosły mężczyzna"],
+       ["{um velho amigo} — dawny przyjaciel", "{um amigo velho} — przyjaciel w podeszłym wieku"],
+       ["{um pobre homem} — biedny, godny współczucia człowiek", "{um homem pobre} — biedny, bez pieniędzy"]
+     ]},
+    {"type": "p", "text": "Stale przed rzeczownikiem stoją {bom} (dobry) i {mau} (zły): {bom dia}, {uma boa ideia}, {um mau dia}. Ich formy: {bom}, {boa}, {bons}, {boas} i {mau}, {má}, {maus}, {más}."},
+
+    {"type": "tip", "tone": "trap", "title": "Muito: „bardzo” czy „dużo”?",
+     "text": "Przed przymiotnikiem {muito} znaczy „bardzo” i się nie odmienia: {muito bonita}, {muito caros}. Przed rzeczownikiem znaczy „dużo” i odmienia się jak przymiotnik: {muitas pessoas}, {muito trabalho}, {muitos turistas}."},
+    {"type": "tip", "tone": "pt", "title": "Camisola to w Portugalii sweter",
+     "text": "W Brazylii {camisola} to koszula nocna. W Portugalii — sweter albo bluza. Kolory, jak każdy przymiotnik, stoją po rzeczowniku: {a camisola azul}, {o carro vermelho}. Dwa się nie odmieniają: {cor-de-rosa} (różowy) i {laranja} (pomarańczowy)."}
+  ],
+  "check": [
+    {"q": "{uma casa} ___ (duża)", "options": ["{grande}", "{granda}", "{grandes}"], "answer": 0,
+     "why": "Przymiotniki na {-e} mają jedną formę dla obu rodzajów."},
+    {"q": "{os vinhos} ___ (portugalskie)", "options": ["{portuguesas}", "{portugueses}", "{portuguêses}"], "answer": 1,
+     "why": "Męska liczba mnoga: {portugueses}. Akcent z {português} w formach odmienionych znika."},
+    {"q": "Dużo ludzi:", "options": ["{muitas pessoas}", "{muito pessoas}", "{muitos pessoas}"], "answer": 0,
+     "why": "Przed rzeczownikiem {muito} odmienia się, a {pessoa} jest żeńska — nawet gdy mowa o mężczyznach."},
+    {"q": "„Wielki człowiek” (np. ktoś zasłużony):", "options": ["{um homem grande}", "{um grande homem}"], "answer": 1,
+     "why": "Przed rzeczownikiem {grande} znaczy „wielki”, po nim — „duży”."},
+    {"q": "Ona jest bardzo miła.", "options": ["{Ela é muito simpático.}", "{Ela é muito simpática.}", "{Ela é muita simpática.}"], "answer": 1,
+     "why": "Przymiotnik zgadza się z {ela}, a {muito} przed przymiotnikiem się nie odmienia."}
+  ]
+}

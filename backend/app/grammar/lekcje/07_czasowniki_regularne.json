@@ -1,0 +1,61 @@
+{
+  "slug": "czasowniki-regularne",
+  "title": "Czasowniki regularne: -ar, -er, -ir",
+  "summary": "Trzy wzory odmiany w czasie teraźniejszym — i 21 czasowników na start",
+  "level": "A1",
+  "part": "Czasowniki",
+  "blocks": [
+    {"type": "p", "text": "Bezokolicznik kończy się na **-ar**, **-er** albo **-ir** — to trzy wzory odmiany. Odcinasz końcówkę i dokładasz nową, zależnie od osoby: {falar} → {fal-} → {falo}, {falas}, {fala}…"},
+
+    {"type": "table", "head": ["", "falar (mówić)", "comer (jeść)", "abrir (otwierać)"], "pt_cols": [1, 2, 3],
+     "rows": [
+       ["eu", "falo", "como", "abro"],
+       ["tu", "falas", "comes", "abres"],
+       ["ele, ela, o senhor", "fala", "come", "abre"],
+       ["nós", "falamos", "comemos", "abrimos"],
+       ["eles, elas, vocês", "falam", "comem", "abrem"]
+     ]},
+    {"type": "tip", "tone": "info", "title": "Dwie rzeczy zapamiętasz od razu",
+     "text": "Forma dla {eu} kończy się na **-o**, a dla {nós} na **-mos** — we wszystkich trzech grupach. Grupy {-er} i {-ir} różnią się tylko przy {nós}: {comemos}, ale {abrimos}."},
+    {"type": "tip", "tone": "pt", "title": "Grzecznie to w trzeciej osobie",
+     "text": "Formy dla {ele}, {o senhor} i {você} są identyczne. Dlatego grzeczne pytanie do obcej osoby to po prostu trzecia osoba, nawet bez zaimka: {Fala inglês?} — „Mówi pan po angielsku?”."},
+    {"type": "examples", "items": [
+      {"pt": "Falo um pouco de português.", "pl": "Mówię trochę po portugalsku."},
+      {"pt": "Moramos em Lisboa há dois anos.", "pl": "Mieszkamy w Lizbonie od dwóch lat."},
+      {"pt": "A que horas abre a farmácia?", "pl": "O której otwierają aptekę?"},
+      {"pt": "Eles trabalham muito.", "pl": "Oni dużo pracują."},
+      {"pt": "Não bebo café à noite.", "pl": "Nie piję kawy wieczorem."},
+      {"pt": "Fala inglês?", "pl": "Mówi pan / pani po angielsku?"}
+    ]},
+
+    {"type": "h", "text": "Najczęstsze czasowniki regularne"},
+    {"type": "table", "head": ["-ar", "-er", "-ir"],
+     "rows": [
+       ["{falar} — mówić", "{comer} — jeść", "{abrir} — otwierać"],
+       ["{trabalhar} — pracować", "{beber} — pić", "{partir} — wyjeżdżać, łamać"],
+       ["{morar} — mieszkać", "{aprender} — uczyć się", "{decidir} — decydować"],
+       ["{gostar de} — lubić", "{viver} — żyć, mieszkać", "{assistir a} — oglądać"],
+       ["{precisar de} — potrzebować", "{correr} — biegać", "{dividir} — dzielić"],
+       ["{chegar} — przybywać", "{escrever} — pisać", "{discutir} — dyskutować, kłócić się"],
+       ["{comprar} — kupować", "{responder} — odpowiadać", "{existir} — istnieć"]
+     ]},
+    {"type": "tip", "tone": "trap", "title": "Gostar de, precisar de",
+     "text": "Te dwa czasowniki zawsze łączą się z {de}, choć po polsku nic tam nie stoi: {Gosto de café} — „lubię kawę”, {Preciso de ajuda} — „potrzebuję pomocy”. Przed rodzajnikiem {de} się z nim zlewa: {Gosto do Porto}."},
+    {"type": "examples", "items": [
+      {"pt": "Gosto muito de peixe.", "pl": "Bardzo lubię ryby."},
+      {"pt": "Precisamos de um táxi.", "pl": "Potrzebujemy taksówki."}
+    ]}
+  ],
+  "check": [
+    {"q": "{eu} + {falar}", "options": ["{falo}", "{fala}", "{falas}"], "answer": 0,
+     "why": "Forma dla {eu} zawsze kończy się na {-o}."},
+    {"q": "{nós} + {comer}", "options": ["{comemos}", "{comimos}", "{comamos}"], "answer": 0,
+     "why": "Czasowniki na {-er} mają przy {nós} końcówkę {-emos}."},
+    {"q": "{eles} + {abrir}", "options": ["{abrem}", "{abram}", "{abrim}"], "answer": 0,
+     "why": "Przy {eles} grupy {-er} i {-ir} mają tę samą końcówkę {-em}."},
+    {"q": "Mówi pan po angielsku?", "options": ["{Falas inglês?}", "{Fala inglês?}", "{Falam inglês?}"], "answer": 1,
+     "why": "Do obcej osoby trzecia osoba liczby pojedynczej — nawet bez zaimka."},
+    {"q": "Potrzebuję pomocy.", "options": ["{Preciso ajuda.}", "{Preciso de ajuda.}"], "answer": 1,
+     "why": "{Precisar} łączy się z {de} przed rzeczownikiem."}
+  ]
+}

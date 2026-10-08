@@ -1,0 +1,57 @@
+{
+  "slug": "ser-estar-ficar",
+  "title": "Ser, estar i ficar",
+  "summary": "Trzy portugalskie „być” — i dlaczego wybór zmienia sens zdania",
+  "level": "A1",
+  "part": "Czasowniki",
+  "blocks": [
+    {"type": "p", "text": "Polskie „być” ma po portugalsku dwa odpowiedniki — a przy mówieniu o położeniu nawet trzy. Wybór nie jest kwestią stylu: zmienia sens zdania."},
+
+    {"type": "table", "head": ["czasownik", "kiedy", "przykład"],
+     "rows": [
+       ["{ser}", "kim albo czym ktoś jest: tożsamość, zawód, pochodzenie, cechy stałe, godzina, dzień", "{Sou engenheiro.} {São três horas.}"],
+       ["{estar}", "jak jest teraz: stan, samopoczucie, położenie ludzi i rzeczy, pogoda", "{Estou cansado.} {Está calor.}"],
+       ["{ficar}", "gdzie coś stoi na stałe: budynki, ulice, miasta", "{O hotel fica perto da praia.}"]
+     ]},
+    {"type": "examples", "items": [
+      {"pt": "Sou da Polónia, mas estou em Lisboa.", "pl": "Jestem z Polski, ale (teraz) jestem w Lizbonie."},
+      {"pt": "Estás bem?", "pl": "Wszystko dobrze? / Jak się czujesz?"},
+      {"pt": "O jantar está pronto.", "pl": "Kolacja jest gotowa."},
+      {"pt": "Ele é muito simpático.", "pl": "On jest bardzo miły."}
+    ]},
+
+    {"type": "h", "text": "Ten sam przymiotnik, inne znaczenie"},
+    {"type": "table", "head": ["z ser — jaki ktoś jest", "z estar — jak jest teraz"],
+     "rows": [
+       ["{Ele é aborrecido.} — On jest nudny.", "{Ele está aborrecido.} — Jest znudzony albo zirytowany."],
+       ["{Sou nervoso.} — Jestem nerwowy (z natury).", "{Estou nervoso.} — Denerwuję się (teraz)."],
+       ["{Ela é bonita.} — Ona jest ładna.", "{Ela está bonita.} — Ładnie dziś wygląda."],
+       ["{A sopa é boa.} — Ta zupa jest dobra (w ogóle).", "{A sopa está boa.} — Zupa jest dobra (ta, którą jem)."]
+     ]},
+
+    {"type": "h", "text": "Gdzie coś jest: estar czy ficar?"},
+    {"type": "p", "text": "O tym, co się przemieszcza — ludziach, kluczach, samochodzie — mówi się {estar}: {As chaves estão na mesa}. O tym, co stoi w miejscu na stałe — budynkach, ulicach, miastach — Portugalczycy mówią {ficar}: {Onde fica a estação?} — „gdzie jest dworzec?”. W pytaniu o drogę usłyszysz też często {Onde é…?}."},
+    {"type": "examples", "items": [
+      {"pt": "Onde fica a estação?", "pl": "Gdzie jest dworzec?"},
+      {"pt": "A farmácia fica a dez minutos daqui.", "pl": "Apteka jest dziesięć minut stąd."},
+      {"pt": "Onde estão as minhas chaves?", "pl": "Gdzie są moje klucze?"}
+    ]},
+
+    {"type": "tip", "tone": "info", "title": "Pogoda z estar, godzina z ser",
+     "text": "{Está frio}, {Está sol}, {Está a chover} — pogoda to stan, który mija. {É meio-dia}, {São cinco horas}, {Hoje é segunda} — godzina i dzień to fakt."},
+    {"type": "tip", "tone": "pt", "title": "Ficar znaczy też „zostać” i „stać się”",
+     "text": "{Fico em casa} — „zostaję w domu”. {Fiquei contente} — „ucieszyłem się” (dosłownie: stałem się zadowolony). {Fica bem!} — „trzymaj się!” na pożegnanie."}
+  ],
+  "check": [
+    {"q": "Jestem zmęczony.", "options": ["{Sou cansado.}", "{Estou cansado.}"], "answer": 1,
+     "why": "Zmęczenie to stan, który minie — {estar}."},
+    {"q": "Jestem inżynierem.", "options": ["{Sou engenheiro.}", "{Estou engenheiro.}"], "answer": 0,
+     "why": "Zawód to część tego, kim jesteś — {ser}. Bez rodzajnika, jak po polsku."},
+    {"q": "Jest zimno.", "options": ["{É frio.}", "{Está frio.}"], "answer": 1,
+     "why": "Pogoda zawsze z {estar}."},
+    {"q": "{As chaves ___ na mesa.}", "options": ["{são}", "{estão}", "{ficam}"], "answer": 1,
+     "why": "Klucze leżą tam teraz, a jutro mogą leżeć gdzie indziej — {estar}."},
+    {"q": "{Ele está aborrecido} znaczy:", "options": ["On jest nudny.", "Jest znudzony albo zirytowany."], "answer": 1,
+     "why": "Z {estar} to stan. „Jest nudny” to {Ele é aborrecido}."}
+  ]
+}

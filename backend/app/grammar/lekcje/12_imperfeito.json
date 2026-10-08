@@ -1,0 +1,65 @@
+{
+  "slug": "imperfeito",
+  "title": "Imperfeito: tło, nawyki i grzeczne prośby",
+  "summary": "„Mieszkałem”, „chodziłam” — i dlaczego w kawiarni mówi się {queria}",
+  "level": "A2",
+  "part": "Czasowniki",
+  "blocks": [
+    {"type": "p", "text": "Imperfeito opisuje przeszłość, która trwała albo się powtarzała: tło, nawyki, „kiedyś bywało”. Najczęściej odpowiada polskiemu czasownikowi niedokonanemu — „jadłem”, „chodziłam”, „mieszkaliśmy”."},
+
+    {"type": "table", "head": ["", "falar", "comer", "abrir"], "pt_cols": [1, 2, 3],
+     "rows": [
+       ["eu", "falava", "comia", "abria"],
+       ["tu", "falavas", "comias", "abrias"],
+       ["ele, ela", "falava", "comia", "abria"],
+       ["nós", "falávamos", "comíamos", "abríamos"],
+       ["eles, vocês", "falavam", "comiam", "abriam"]
+     ]},
+    {"type": "p", "text": "Nieregularne są tylko cztery czasowniki: {ser} → {era}, {ter} → {tinha}, {vir} → {vinha}, {pôr} → {punha}. Cała reszta — nawet {ir} ({ia}) czy {fazer} ({fazia}) — idzie według wzoru."},
+    {"type": "table", "head": ["", "ser", "ter"], "pt_cols": [1, 2],
+     "rows": [
+       ["eu", "era", "tinha"],
+       ["tu", "eras", "tinhas"],
+       ["ele, ela", "era", "tinha"],
+       ["nós", "éramos", "tínhamos"],
+       ["eles, vocês", "eram", "tinham"]
+     ]},
+    {"type": "examples", "items": [
+      {"pt": "Quando era criança, morava em Gdańsk.", "pl": "Kiedy byłem dzieckiem, mieszkałem w Gdańsku."},
+      {"pt": "Antigamente havia aqui uma padaria.", "pl": "Kiedyś była tu piekarnia."},
+      {"pt": "Eu tinha um cão.", "pl": "Miałem psa."}
+    ]},
+
+    {"type": "h", "text": "Perfeito czy imperfeito?"},
+    {"type": "table", "head": ["imperfeito — tło, nawyk", "perfeito — zdarzenie"],
+     "rows": [
+       ["{Todos os dias ia à praia.} — Codziennie chodziłem na plażę.", "{Ontem fui à praia.} — Wczoraj poszedłem na plażę."],
+       ["{Morava em Varsóvia.} — Mieszkałem w Warszawie.", "{Mudei-me para Lisboa em 2020.} — Przeprowadziłem się do Lizbony w 2020."]
+     ]},
+    {"type": "p", "text": "Często oba czasy spotykają się w jednym zdaniu: imperfeito maluje tło, a perfeito mówi, co się w nim wydarzyło."},
+    {"type": "examples", "items": [
+      {"pt": "Estava a dormir quando o telefone tocou.", "pl": "Spałem, kiedy zadzwonił telefon."}
+    ]},
+
+    {"type": "h", "text": "Grzeczne prośby"},
+    {"type": "p", "text": "W Portugalii imperfeito to także **forma grzecznościowa**. {Queria um café} brzmi dużo milej niż {Quero um café} — tak jak polskie „chciałbym” zamiast „chcę”. Tak samo {Podia…?} — „Mógłby pan…?”."},
+    {"type": "examples", "items": [
+      {"pt": "Queria uma mesa para dois, se faz favor.", "pl": "Poproszę stolik dla dwóch osób."},
+      {"pt": "Podia falar mais devagar?", "pl": "Mógłby pan mówić wolniej?"}
+    ]},
+    {"type": "tip", "tone": "pt", "title": "Queria słyszysz w Portugalii na każdym kroku",
+     "text": "Przy ladzie, w restauracji, w urzędzie — prośba prawie zawsze zaczyna się od {queria}. {Quero} nie jest błędem, ale brzmi stanowczo, jak polskie „chcę”."}
+  ],
+  "check": [
+    {"q": "{eu} + {falar} (imperfeito)", "options": ["{falei}", "{falava}", "{falaria}"], "answer": 1,
+     "why": "Imperfeito w grupie {-ar}: {-ava}. {Falei} to perfeito."},
+    {"q": "{eu} + {ser} (imperfeito)", "options": ["{era}", "{fui}", "{sido}"], "answer": 0,
+     "why": "{Ser} to jeden z czterech nieregularnych: {era}, {eras}, {era}, {éramos}, {eram}."},
+    {"q": "Codziennie chodziłem na plażę.", "options": ["{Todos os dias fui à praia.}", "{Todos os dias ia à praia.}"], "answer": 1,
+     "why": "Nawyk w przeszłości to imperfeito."},
+    {"q": "Najgrzeczniej poprosisz o kawę:", "options": ["{Quero um café.}", "{Dá-me um café.}", "{Queria um café.}"], "answer": 2,
+     "why": "{Queria} to portugalskie „chciałbym”."},
+    {"q": "Spałem, kiedy zadzwonił telefon.", "options": ["{Dormi quando o telefone tocava.}", "{Estava a dormir quando o telefone tocou.}"], "answer": 1,
+     "why": "Tło (spanie) w imperfeito, zdarzenie, które je przerwało — w perfeito."}
+  ]
+}

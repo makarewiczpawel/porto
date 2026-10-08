@@ -3,12 +3,16 @@ from datetime import datetime, timedelta, timezone
 import httpx
 import pytest
 
+from app import grammar
 from app.config import settings
 from app.models import AudioAsset, Example, Item, UserItemState
 from app.services import task_builder as tb
 from app.services import tts
 from app.services import voice_library as vl
 from tests.conftest import make_items
+
+# Ile zdań dokładają lekcje gramatyki do biblioteki nagrań.
+LESSON_TEXTS = len({tts.normalize_text(text) for text in grammar.spoken_texts()})
 
 
 class FakeProvider:
@@ -346,10 +350,12 @@ def test_coverage_counts_what_is_missing_for_this_voice(db, registered, client):
     make_items(db, count=3)
     body = client.get("/api/audio/coverage").json()
 
-    # trzy hasła × (normalne + wolne) + trzy zdania przykładowe
-    assert body["planned"] == 9
+    # trzy hasła × (normalne + wolne) + trzy zdania przykładowe — i wszystkie
+    # zdania z lekcji gramatyki, bo one też brzmią wybranym głosem
+    expected = 9 + LESSON_TEXTS
+    assert body["planned"] == expected
     assert body["present"] == 0
-    assert body["missing"] == 9
+    assert body["missing"] == expected
     assert body["complete"] is False
 
 
@@ -378,7 +384,7 @@ def test_missing_recordings_are_filled_in_batches(db, registered, client, monkey
 
     first = client.post("/api/audio/synthesize-missing", json={"limit": 5}).json()
     assert first["done"] == 5
-    assert first["remaining"] == 7
+    assert first["remaining"] == 7 + LESSON_TEXTS
 
     while client.post("/api/audio/synthesize-missing", json={"limit": 5}).json()["remaining"]:
         pass
