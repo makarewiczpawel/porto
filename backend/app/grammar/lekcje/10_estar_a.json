@@ -1,0 +1,49 @@
+{
+  "slug": "estar-a",
+  "title": "Estar a + bezokolicznik",
+  "summary": "„Właśnie jem”, „właśnie pada” — po portugalsku, nie po brazylijsku",
+  "level": "A1",
+  "part": "Czasowniki",
+  "blocks": [
+    {"type": "p", "text": "Gdy coś dzieje się **właśnie teraz**, w Portugalii mówi się {estar a} + bezokolicznik: {Estou a trabalhar} — „(właśnie) pracuję”. To jedna z najbardziej słyszalnych różnic względem Brazylii."},
+    {"type": "table", "head": ["w Portugalii", "w Brazylii", "znaczenie"], "pt_cols": [0], "br_cols": [1],
+     "rows": [
+       ["Estou a comer.", "Estou comendo.", "Jem (teraz)."],
+       ["Está a chover.", "Está chovendo.", "Pada deszcz."],
+       ["O que estás a fazer?", "O que você está fazendo?", "Co robisz?"]
+     ]},
+
+    {"type": "h", "text": "Jak to zbudować"},
+    {"type": "p", "text": "Odmieniasz tylko {estar}. Drugi czasownik zostaje w bezokoliczniku, a pomiędzy nimi zawsze stoi {a}."},
+    {"type": "table", "head": ["", "estar a fazer"], "pt_cols": [1],
+     "rows": [
+       ["eu", "estou a fazer"],
+       ["tu", "estás a fazer"],
+       ["ele, ela", "está a fazer"],
+       ["nós", "estamos a fazer"],
+       ["eles, vocês", "estão a fazer"]
+     ]},
+    {"type": "examples", "items": [
+      {"pt": "Estou a aprender português.", "pl": "Uczę się portugalskiego."},
+      {"pt": "Está a chover outra vez.", "pl": "Znowu pada."},
+      {"pt": "Desculpe, estou a falar ao telefone.", "pl": "Przepraszam, rozmawiam przez telefon."},
+      {"pt": "Estamos a chegar.", "pl": "Zaraz będziemy. / Już dojeżdżamy."},
+      {"pt": "O que estás a ver?", "pl": "Co oglądasz?"}
+    ]},
+
+    {"type": "tip", "tone": "info", "title": "Po co, skoro jest czas teraźniejszy?",
+     "text": "{O que fazes?} może znaczyć „co robisz w życiu?” albo „co robisz w tej chwili?”. {O que estás a fazer?} to zawsze to drugie. {Estar a} usuwa dwuznaczność."},
+    {"type": "tip", "tone": "info", "title": "Działa też w przeszłości",
+     "text": "{Estava a dormir quando ligaste} — „spałem, kiedy zadzwoniłeś”. {Estava} to {estar} w czasie przeszłym ciągłym — o nim w lekcji o imperfeito."}
+  ],
+  "check": [
+    {"q": "Właśnie jem.", "options": ["{Estou comendo.}", "{Estou a comer.}", "{Estou comer.}"], "answer": 1,
+     "why": "W Portugalii: {estar a} + bezokolicznik. {Estou comendo} to wersja brazylijska."},
+    {"q": "Pada deszcz.", "options": ["{Está a chover.}", "{É a chover.}"], "answer": 0,
+     "why": "Konstrukcja zawsze opiera się na {estar}, nie na {ser}."},
+    {"q": "Co (teraz) robicie?", "options": ["{O que estão a fazer?}", "{O que estão fazer?}"], "answer": 0,
+     "why": "Między {estar} a bezokolicznikiem zawsze stoi {a}."},
+    {"q": "W {estou a fazer} odmienia się:", "options": ["tylko {estar}", "tylko {fazer}", "oba czasowniki"], "answer": 0,
+     "why": "Drugi czasownik zostaje w bezokoliczniku bez względu na osobę."}
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "slug": "rodzaj-i-rodzajniki",
+  "title": "Rodzaj i rodzajniki",
+  "summary": "{o}, {a}, {um}, {uma} — i jak po końcówce poznać rodzaj rzeczownika",
+  "level": "A1",
+  "part": "Rzeczowniki i opisywanie",
+  "blocks": [
+    {"type": "p", "text": "W portugalskim każdy rzeczownik jest **męski albo żeński** — rodzaju nijakiego nie ma. Rodzaj widać przede wszystkim po rodzajniku, czyli krótkim słówku przed rzeczownikiem. Po polsku go nie mamy, dlatego na początku łatwo o nim zapominać."},
+
+    {"type": "h", "text": "Rodzajnik określony: ten konkretny"},
+    {"type": "table", "head": ["", "męski", "żeński"], "pt_cols": [1, 2],
+     "rows": [["liczba pojedyncza", "o", "a"], ["liczba mnoga", "os", "as"]]},
+    {"type": "examples", "items": [
+      {"pt": "o livro", "pl": "(ta) książka"},
+      {"pt": "a casa", "pl": "(ten) dom"},
+      {"pt": "os amigos", "pl": "(ci) przyjaciele"},
+      {"pt": "as chaves", "pl": "(te) klucze"}
+    ]},
+    {"type": "p", "text": "Rodzajnika określonego używa się dużo częściej niż angielskiego „the”: przed imionami ({o Pedro}, {a Ana}), przed nazwami większości krajów ({a Polónia}, {o Brasil} — ale sama {Portugal}), przed zaimkami dzierżawczymi ({o meu carro}) i w zdaniach ogólnych: {A vida é bela} — „życie jest piękne”."},
+
+    {"type": "h", "text": "Rodzajnik nieokreślony: jakiś, jeden"},
+    {"type": "table", "head": ["", "męski", "żeński"], "pt_cols": [1, 2],
+     "rows": [["liczba pojedyncza", "um", "uma"], ["liczba mnoga", "uns", "umas"]]},
+    {"type": "examples", "items": [
+      {"pt": "Queria um café, se faz favor.", "pl": "Poproszę kawę."},
+      {"pt": "Tenho uma pergunta.", "pl": "Mam pytanie."},
+      {"pt": "Comprei umas laranjas.", "pl": "Kupiłem kilka pomarańczy."}
+    ]},
+    {"type": "tip", "tone": "info", "title": "„Jeden” i „jakiś” to to samo słowo",
+     "text": "{Um} i {uma} są też liczebnikiem: {um café} to „kawa” albo „jedna kawa”. Z kontekstu zawsze wiadomo, o które chodzi. W liczbie mnogiej {uns}, {umas} znaczą „kilka”, „jakieś”."},
+
+    {"type": "h", "text": "Jak poznać rodzaj po końcówce"},
+    {"type": "table", "head": ["końcówka", "rodzaj", "przykłady"],
+     "rows": [
+       ["{-o}", "zwykle męski", "{o livro}, {o carro}"],
+       ["{-a}", "zwykle żeński", "{a casa}, {a mesa}"],
+       ["{-ção}, {-são}", "żeński", "{a estação}, {a televisão}"],
+       ["{-dade}, {-tude}", "żeński", "{a cidade}, {a juventude}"],
+       ["{-agem}", "żeński", "{a viagem}, {a garagem}"],
+       ["{-ma} (słowa z greki)", "męski", "{o problema}, {o programa}"],
+       ["{-or}", "zwykle męski", "{o computador}, {o calor}"],
+       ["{-e} albo spółgłoska", "trzeba zapamiętać", "{o leite}, {a noite}, {o mar}, {a luz}"]
+     ]},
+    {"type": "tip", "tone": "trap", "title": "Pułapki, które warto znać od razu",
+     "text": "{O dia} (dzień) i {o mapa} (mapa) są męskie, choć kończą się na {-a}. {A mão} (ręka) jest żeńska, choć kończy się na {-o}. Żeńskie są też {a cor} (kolor), {a dor} (ból) i {a flor} (kwiat) — wbrew regule o {-or}."},
+    {"type": "tip", "tone": "info", "title": "Rodzaj nie pokrywa się z polskim",
+     "text": "{Leite} (mleko) jest po portugalsku rodzaju męskiego, {ponte} (most) — żeńskiego, a {sangue} (krew) — męskiego. Najlepiej uczyć się rzeczownika od razu z rodzajnikiem — dlatego słownik w aplikacji zawsze go pokazuje."}
+  ],
+  "check": [
+    {"q": "Który rodzajnik pasuje: ___ {problema}?", "options": ["{o}", "{a}"], "answer": 0,
+     "why": "Słowa greckie na {-ma} są męskie: {o problema}, {o sistema}, {o tema}."},
+    {"q": "___ {estação de comboios} (dworzec kolejowy)", "options": ["{o}", "{a}"], "answer": 1,
+     "why": "Wszystkie rzeczowniki na {-ção} są żeńskie."},
+    {"q": "Jak poprosisz o kawę?", "options": ["{Queria um café.}", "{Queria uma café.}", "{Queria o café.}"], "answer": 0,
+     "why": "{Café} jest męskie, a prosząc o coś, czego jeszcze nie ma na stole, używasz rodzajnika nieokreślonego."},
+    {"q": "Który rzeczownik jest żeński?", "options": ["{dia}", "{mão}", "{mapa}"], "answer": 1,
+     "why": "{A mão} kończy się na {-o}, a jest żeńska. {O dia} i {o mapa} — odwrotnie: męskie na {-a}."},
+    {"q": "Czy w codziennej mowie w Portugalii stawia się rodzajnik przed imieniem ({o Pedro})?", "options": ["Tak, zwykle", "Nie, nigdy"], "answer": 0,
+     "why": "{O Pedro está em casa}, {A Ana já chegou} — tak brzmi codzienny portugalski z Portugalii."}
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "slug": "pytania-i-przeczenia",
+  "title": "Pytania i przeczenia",
+  "summary": "{onde}, {porquê}, {é que} — i podwójne przeczenie, jak po polsku",
+  "level": "A1",
+  "part": "Budowa zdania i słów",
+  "blocks": [
+    {"type": "table", "head": ["słowo", "znaczenie", "przykład"],
+     "rows": [
+       ["{o que}", "co", "{O que é isto?}"],
+       ["{quem}", "kto", "{Quem é?}"],
+       ["{onde}", "gdzie", "{Onde fica a casa de banho?}"],
+       ["{para onde}", "dokąd", "{Para onde vais?}"],
+       ["{quando}", "kiedy", "{Quando chegas?}"],
+       ["{como}", "jak", "{Como se chama?}"],
+       ["{porque} / {porquê}", "dlaczego", "{Porque é que não vens?}"],
+       ["{qual}, {quais}", "który, jaki", "{Qual é o teu número?}"],
+       ["{quanto}, {quanta}, {quantos}, {quantas}", "ile", "{Quanto custa?} {Quantas pessoas?}"]
+     ]},
+
+    {"type": "h", "text": "É que — portugalska wstawka w pytaniu"},
+    {"type": "p", "text": "W mowie prawie każde pytanie z pytajnikiem dostaje wstawkę {é que}: {Onde é que fica?}, {O que é que disseste?}, {Quando é que chegas?}. Niczego nie zmienia w znaczeniu, a brzmi bardzo naturalnie — słychać ją w Portugalii wszędzie."},
+    {"type": "examples", "items": [
+      {"pt": "Onde é que fica a paragem do autocarro?", "pl": "Gdzie jest przystanek autobusowy?"},
+      {"pt": "Quanto é que custa?", "pl": "Ile to kosztuje?"},
+      {"pt": "Porque é que estás triste?", "pl": "Dlaczego jesteś smutny?"}
+    ]},
+    {"type": "tip", "tone": "pt", "title": "Porque czy porquê?",
+     "text": "Z akcentem, gdy stoi samo albo na końcu: {Porquê?}, {Não vens porquê?}. Na początku pytania — bez: {Porque é que não vens?}. Odpowiedź „bo” to też {porque}: {Porque estou cansado}."},
+
+    {"type": "h", "text": "Pytanie bez pytajnika"},
+    {"type": "p", "text": "Pytanie „tak / nie” ma ten sam szyk co zdanie twierdzące — różni się tylko intonacją: {Falas inglês.} / {Falas inglês?}. Odpowiada się zwykle nie „tak”, tylko **powtórzonym czasownikiem**."},
+    {"type": "examples", "items": [
+      {"pt": "— Gostas de bacalhau? — Gosto.", "pl": "— Lubisz dorsza? — Lubię."},
+      {"pt": "— Já comeste? — Já.", "pl": "— Jadłeś już? — Tak, już."}
+    ]},
+
+    {"type": "h", "text": "Przeczenia"},
+    {"type": "p", "text": "{Não} stoi przed czasownikiem. Pozostałe przeczenia działają jak po polsku — **podwójnie**: {Não sei nada} („nic nie wiem”), {Não vi ninguém} („nikogo nie widziałem”)."},
+    {"type": "table", "head": ["słowo", "znaczenie", "przykład"],
+     "rows": [
+       ["{nada}", "nic", "{Não comi nada.}"],
+       ["{ninguém}", "nikt", "{Não está ninguém.}"],
+       ["{nunca}", "nigdy", "{Nunca fui ao Algarve.}"],
+       ["{nenhum}, {nenhuma}", "żaden", "{Não tenho nenhuma ideia.}"],
+       ["{nem}", "ani; nawet nie", "{Nem eu.} — Ja też nie."],
+       ["{já não}", "już nie", "{Já não moro aqui.}"],
+       ["{ainda não}", "jeszcze nie", "{Ainda não sei.}"]
+     ]},
+    {"type": "examples", "items": [
+      {"pt": "Não percebo nada.", "pl": "Nic nie rozumiem."},
+      {"pt": "Ainda não sei.", "pl": "Jeszcze nie wiem."},
+      {"pt": "Ninguém sabe.", "pl": "Nikt nie wie."}
+    ]},
+    {"type": "tip", "tone": "trap", "title": "Gdy przeczenie stoi pierwsze, não znika",
+     "text": "{Ninguém sabe} — „nikt nie wie”, {Nunca bebo café} — „nigdy nie piję kawy”. Polskie „nie” zostaje, portugalskie {não} — nie."},
+    {"type": "tip", "tone": "pt", "title": "Perceber, nie entender",
+     "text": "„Rozumiem” to w Portugalii najczęściej {percebo}: {Não percebo} — „nie rozumiem”. {Entender} też jest poprawne, ale to {perceber} usłyszysz na co dzień."}
+  ],
+  "check": [
+    {"q": "Ile to kosztuje?", "options": ["{Quanto custa?}", "{Quantos custa?}", "{Qual custa?}"], "answer": 0,
+     "why": "Pytając o cenę, {quanto} się nie odmienia."},
+    {"q": "— Mówisz po angielsku? — Tak.", "options": ["{— Falas inglês? — Falo.}", "{— Falas inglês? — Sim falas.}"], "answer": 0,
+     "why": "Na pytanie tak/nie odpowiada się zwykle powtórzonym czasownikiem w swojej osobie."},
+    {"q": "Nikt nie wie.", "options": ["{Ninguém não sabe.}", "{Ninguém sabe.}"], "answer": 1,
+     "why": "Gdy przeczenie stoi przed czasownikiem, {não} znika."},
+    {"q": "Nic nie rozumiem.", "options": ["{Não percebo nada.}", "{Percebo nada.}"], "answer": 0,
+     "why": "{Nada} stoi po czasowniku, więc {não} jest potrzebne — podwójne przeczenie, jak po polsku."},
+    {"q": "„Dlaczego?” — samo, jako całe pytanie:", "options": ["{Porque?}", "{Porquê?}"], "answer": 1,
+     "why": "Samo albo na końcu zdania: {porquê}, z akcentem."}
+  ]
+}

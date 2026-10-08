@@ -1,0 +1,51 @@
+{
+  "slug": "zaimki-dzierzawcze",
+  "title": "Zaimki dzierżawcze",
+  "summary": "{o meu}, {a minha}, {dele} — czyje to jest, i dlaczego z rodzajnikiem",
+  "level": "A1",
+  "part": "Zaimki",
+  "blocks": [
+    {"type": "p", "text": "Zaimek dzierżawczy odmienia się przez rodzaj i liczbę **rzeczy, którą się posiada** — nie właściciela. {O meu carro} to „mój samochód”, {a minha casa} — „mój dom”, bez względu na to, czy mówi kobieta, czy mężczyzna. W Portugalii prawie zawsze stoi przed nim rodzajnik."},
+
+    {"type": "table", "head": ["", "pojedyncza (m. / ż.)", "mnoga (m. / ż.)"], "pt_cols": [1, 2],
+     "rows": [
+       ["mój", "o meu / a minha", "os meus / as minhas"],
+       ["twój", "o teu / a tua", "os teus / as tuas"],
+       ["pana, pani; jego, jej", "o seu / a sua", "os seus / as suas"],
+       ["nasz", "o nosso / a nossa", "os nossos / as nossas"],
+       ["wasz (do {vocês})", "o vosso / a vossa", "os vossos / as vossas"]
+     ]},
+    {"type": "examples", "items": [
+      {"pt": "Este é o meu marido.", "pl": "To mój mąż."},
+      {"pt": "As tuas chaves estão na mesa.", "pl": "Twoje klucze są na stole."},
+      {"pt": "A nossa casa fica perto do mar.", "pl": "Nasz dom jest blisko morza."},
+      {"pt": "Onde está a vossa bagagem?", "pl": "Gdzie jest wasz bagaż?"}
+    ]},
+    {"type": "tip", "tone": "pt", "title": "Vosso żyje w Portugalii",
+     "text": "Choć zaimek {vós} wyszedł z użycia, jego dzierżawcze {vosso} ma się dobrze: do grupy mówi się {a vossa casa}, {os vossos filhos}. W Brazylii w tym miejscu stoi {seu}."},
+
+    {"type": "h", "text": "Seu czy dele? Jak uniknąć dwuznaczności"},
+    {"type": "p", "text": "{Seu} może znaczyć „jego”, „jej”, „ich” — ale też „pana”, „pani”. Żeby było jasne, o kogo chodzi, mówi się **{dele}, {dela}, {deles}, {delas}**, stawiając je po rzeczowniku: {o carro dele} — „jego samochód”, {a casa dela} — „jej dom”. Wtedy {o seu} zostaje zwykle formą grzecznościową: {o seu passaporte, por favor} — „pana paszport, proszę”."},
+    {"type": "examples", "items": [
+      {"pt": "O carro dele é novo.", "pl": "Jego samochód jest nowy."},
+      {"pt": "Conheces a mãe dela?", "pl": "Znasz jej mamę?"},
+      {"pt": "O seu passaporte, por favor.", "pl": "Pana paszport, proszę."}
+    ]},
+    {"type": "tip", "tone": "trap", "title": "Dele odmienia się według właściciela",
+     "text": "To odwrotnie niż przy {meu} i {minha}. {O carro dela} — samochód jest męski, ale właścicielka jest kobietą, więc {dela}. {Dele} to po prostu {de + ele}: „od niego”, „jego”."},
+    {"type": "tip", "tone": "info", "title": "Kiedy bez rodzajnika",
+     "text": "Bez rodzajnika ({minha mãe}) mówi się przede wszystkim w Brazylii. W Portugalii rodzajnik jest normą: {a minha mãe}, {o meu pai}. Wyjątki to okrzyki i zwracanie się do kogoś: {Meu Deus!}, {minha senhora}."}
+  ],
+  "check": [
+    {"q": "Mój dom:", "options": ["{o meu casa}", "{a minha casa}", "{a meu casa}"], "answer": 1,
+     "why": "{Casa} jest żeńska, więc {a minha} — niezależnie od tego, kto mówi."},
+    {"q": "Jej samochód:", "options": ["{o carro dela}", "{a carro dela}", "{o carro dele}"], "answer": 0,
+     "why": "Rodzajnik zgadza się z samochodem ({o carro}), a {dela} — z właścicielką."},
+    {"q": "Urzędnik prosi o twój paszport:", "options": ["{O seu passaporte, por favor.}", "{O teu passaporte, por favor.}"], "answer": 0,
+     "why": "Do obcej osoby {o seu} — grzecznościowe „pana / pani”."},
+    {"q": "Nasze dzieci:", "options": ["{os nossos filhos}", "{as nossas filhos}", "{os nosso filhos}"], "answer": 0,
+     "why": "{Filhos} to męska liczba mnoga, więc {os nossos}."},
+    {"q": "Wasz bagaż (do grupy przyjaciół):", "options": ["{a vossa bagagem}", "{a vosso bagagem}", "{o vossa bagagem}"], "answer": 0,
+     "why": "{Bagagem} jest żeńska (końcówka {-agem}), a do grupy w Portugalii mówi się {vosso}."}
+  ]
+}

@@ -13,12 +13,14 @@ dogranie ich nie wymagało konsoli.
 
 from __future__ import annotations
 
+import threading
 import uuid
 from dataclasses import dataclass
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
+from app import grammar
 from app.db import SessionLocal
 from app.models import Item
 from app.services import tts
@@ -103,6 +105,13 @@ def planned(db: Session) -> list[tuple[str, float]]:
                 continue
             seen.add((clean, speed))
             wanted.append((clean, speed))
+    # Zdania z lekcji gramatyki. Tylko w zwykłym tempie — wolniejsze podejście
+    # jest pod przytrzymanie głośnika przy haśle, a tu nie ma hasła.
+    for text in grammar.spoken_texts():
+        clean = tts.normalize_text(text)
+        if clean and (clean, 1.0) not in seen:
+            seen.add((clean, 1.0))
+            wanted.append((clean, 1.0))
     return wanted
 
 
@@ -184,6 +193,29 @@ def synthesize_batch(
 TOP_UP_LIMIT = 90
 
 
+def _record_missing(db, pairs: list[tuple[str, float]], voice: str, limit: int) -> int:
+    """Dogrywa brakujące z listy (tekst, tempo); zwraca, ile nagrało."""
+    done = 0
+    for text, speed in pairs:
+        if done >= limit:
+            return done
+        clean = tts.normalize_text(text)
+        if not clean or tts.lookup(db, clean, voice, speed) is not None:
+            continue
+        try:
+            tts.speak(db, clean, voice=voice, speed=speed)
+            db.commit()
+            done += 1
+        except (tts.TTSLimitReached, tts.TTSNotConfigured):
+            db.rollback()
+            return done
+        except tts.TTSError:
+            # Pojedyncze hasło potrafi paść na sieci. Reszta partii
+            # nie ma z tym nic wspólnego i ma się nagrać.
+            db.rollback()
+    return done
+
+
 def synthesize_for_items(item_ids: list[uuid.UUID], voice: str, limit: int = TOP_UP_LIMIT) -> int:
     """Dogrywa brakujące nagrania dla podanych pozycji, w tle po odpowiedzi HTTP.
 
@@ -199,7 +231,6 @@ def synthesize_for_items(item_ids: list[uuid.UUID], voice: str, limit: int = TOP
         return 0
 
     db = SessionLocal()
-    done = 0
     try:
         items = (
             db.execute(
@@ -209,24 +240,37 @@ def synthesize_for_items(item_ids: list[uuid.UUID], voice: str, limit: int = TOP
             .unique()
             .all()
         )
-        for item in items:
-            for text, speed in texts_with_speeds(item):
-                if done >= limit:
-                    return done
-                clean = tts.normalize_text(text)
-                if not clean or tts.lookup(db, clean, voice, speed) is not None:
-                    continue
-                try:
-                    tts.speak(db, clean, voice=voice, speed=speed)
-                    db.commit()
-                    done += 1
-                except (tts.TTSLimitReached, tts.TTSNotConfigured):
-                    db.rollback()
-                    return done
-                except tts.TTSError:
-                    # Pojedyncze hasło potrafi paść na sieci. Reszta partii
-                    # nie ma z tym nic wspólnego i ma się nagrać.
-                    db.rollback()
+        pairs = [pair for item in items for pair in texts_with_speeds(item)]
+        return _record_missing(db, pairs, voice, limit)
     finally:
         db.close()
-    return done
+
+
+# Które partie nagrań właśnie się robią. Ekran lekcji dopytuje co kilka sekund,
+# czy nagrania już są — bez tej listy każde dopytanie odpalałoby kolejną,
+# równoległą partię tych samych zdań, a dwie partie ścigałyby się o zapis
+# tego samego nagrania. Jedna instancja aplikacji, więc pamięć procesu wystarcza.
+_in_flight: set[str] = set()
+_in_flight_lock = threading.Lock()
+
+
+def synthesize_texts(batch: str, texts: list[str], voice: str, limit: int = TOP_UP_LIMIT) -> int:
+    """Dogrywa brakujące nagrania dla gotowych zdań — w tle, najwyżej raz naraz.
+
+    `batch` nazywa partię (np. lekcję), żeby ta sama partia dla tego samego
+    głosu nie ruszyła drugi raz, zanim pierwsza skończy.
+    """
+    if not texts or not tts.is_configured():
+        return 0
+    key = f"{batch}|{voice}"
+    with _in_flight_lock:
+        if key in _in_flight:
+            return 0
+        _in_flight.add(key)
+    db = SessionLocal()
+    try:
+        return _record_missing(db, [(text, 1.0) for text in texts], voice, limit)
+    finally:
+        db.close()
+        with _in_flight_lock:
+            _in_flight.discard(key)

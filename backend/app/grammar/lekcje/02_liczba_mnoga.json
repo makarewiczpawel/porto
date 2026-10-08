@@ -1,0 +1,56 @@
+{
+  "slug": "liczba-mnoga",
+  "title": "Liczba mnoga",
+  "summary": "Prawie zawsze {-s} — ale końcówka słowa decyduje, jak dokładnie",
+  "level": "A1",
+  "part": "Rzeczowniki i opisywanie",
+  "blocks": [
+    {"type": "p", "text": "Liczbę mnogą tworzy się prawie zawsze przez dodanie **-s**. Końcówka słowa decyduje tylko o tym, jak dokładnie to zrobić. Rodzajnik też przechodzi w liczbę mnogą: {o} → {os}, {a} → {as}."},
+
+    {"type": "table", "head": ["słowo kończy się na", "co robisz", "przykład"],
+     "rows": [
+       ["samogłoskę", "+ {s}", "{o livro → os livros}, {a casa → as casas}"],
+       ["{-r}, {-z}", "+ {es}", "{a cor → as cores}, {a luz → as luzes}, {o rapaz → os rapazes}"],
+       ["{-m}", "{-m} → {-ns}", "{o homem → os homens}, {o jardim → os jardins}"],
+       ["{-al}, {-el}, {-ol}, {-ul}", "{-l} → {-is}", "{o animal → os animais}, {o hotel → os hotéis}, {o espanhol → os espanhóis}"],
+       ["{-ão}", "{-ões}, {-ães} albo {-ãos}", "{a estação → as estações}, {o pão → os pães}, {a mão → as mãos}"]
+     ]},
+    {"type": "examples", "items": [
+      {"pt": "Dois cafés, se faz favor.", "pl": "Dwie kawy, poproszę."},
+      {"pt": "Os comboios estão atrasados.", "pl": "Pociągi są opóźnione."},
+      {"pt": "Os hotéis aqui são caros.", "pl": "Hotele tutaj są drogie."},
+      {"pt": "Quantos pães quer?", "pl": "Ile bułek pan chce?"}
+    ]},
+
+    {"type": "tip", "tone": "trap", "title": "Słowa na -ão trzeba zapamiętać",
+     "text": "Najczęstsza jest {-ões} — tak kończą się wszystkie słowa na {-ção}: {as informações}, {as lições}. Ale {os pães}, {os cães}, {os alemães} oraz {as mãos}, {os irmãos} trzeba po prostu zapamiętać. Na szczęście najczęstszych jest kilka."},
+    {"type": "tip", "tone": "info", "title": "Akcent pilnuje wymowy",
+     "text": "W {hotéis} i {espanhóis} pojawia się akcent, którego nie było w liczbie pojedynczej. Nie zmienia sylaby akcentowanej — tylko ją zaznacza, bo inaczej słowo czytałoby się inaczej."},
+
+    {"type": "h", "text": "Grupy mieszane"},
+    {"type": "p", "text": "Gdy w grupie jest choć jeden mężczyzna, całość jest męska. Stąd kilka słów, które po polsku tłumaczy się inaczej, niż wyglądają:"},
+    {"type": "table", "head": ["słowo", "dosłownie", "naprawdę znaczy"], "pt_cols": [0],
+     "rows": [
+       ["os pais", "ojcowie", "rodzice"],
+       ["os irmãos", "bracia", "rodzeństwo (albo bracia)"],
+       ["os filhos", "synowie", "dzieci (czyjeś)"],
+       ["os avós", "dziadkowie", "dziadkowie (dziadek i babcia)"]
+     ]},
+    {"type": "examples", "items": [
+      {"pt": "Tenho dois irmãos.", "pl": "Mam dwoje rodzeństwa / dwóch braci."},
+      {"pt": "Os meus pais moram em Varsóvia.", "pl": "Moi rodzice mieszkają w Warszawie."}
+    ]}
+  ],
+  "check": [
+    {"q": "{o homem} → ?", "options": ["{os homems}", "{os homens}", "{os homes}"], "answer": 1,
+     "why": "Słowa na {-m} zmieniają je na {-ns}: {homem → homens}, {jardim → jardins}."},
+    {"q": "{o hotel} → ?", "options": ["{os hotels}", "{os hotéis}", "{os hoteles}"], "answer": 1,
+     "why": "{-l} zamienia się na {-is}, a akcent pilnuje, żeby słowo dalej czytało się tak samo."},
+    {"q": "{a luz} → ?", "options": ["{as luzs}", "{as luzes}", "{as luz}"], "answer": 1,
+     "why": "Po {-r} i {-z} dokłada się {-es}."},
+    {"q": "{o pão} → ?", "options": ["{os pãos}", "{os pães}", "{os pões}"], "answer": 1,
+     "why": "{Pão} należy do grupy {-ães} — razem z {cão} i {alemão}. Trzeba zapamiętać."},
+    {"q": "{Os meus pais} to:", "options": ["moi rodzice", "moi ojcowie", "moi bracia"], "answer": 0,
+     "why": "Męska liczba mnoga obejmuje grupę mieszaną: {os pais} to mama i tata razem."}
+  ]
+}

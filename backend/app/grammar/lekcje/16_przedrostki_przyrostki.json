@@ -1,0 +1,69 @@
+{
+  "slug": "przedrostki-i-przyrostki",
+  "title": "Przedrostki i przyrostki",
+  "summary": "{des-}, {re-}, {-inho}, {-mente} — jak z jednego słowa zrobić pięć",
+  "level": "A2",
+  "part": "Budowa zdania i słów",
+  "blocks": [
+    {"type": "p", "text": "Słowa portugalskie budowane są z cegiełek — tak jak polskie. Znając kilkanaście przedrostków i przyrostków, rozpoznasz znaczenie słów, których nigdy wcześniej nie widziałeś."},
+
+    {"type": "h", "text": "Przedrostki — na początku słowa"},
+    {"type": "table", "head": ["przedrostek", "znaczenie", "przykłady"],
+     "rows": [
+       ["{des-}", "odwrotność, cofnięcie — jak „roz-”, „od-”", "{ligar → desligar} (wyłączyć), {fazer → desfazer} (rozpakować, cofnąć), {conhecido → desconhecido} (nieznany)"],
+       ["{in-}, {im-}, {i-}", "nie- (zaprzeczenie)", "{possível → impossível}, {útil → inútil}, {lógico → ilógico}"],
+       ["{re-}", "ponownie — jak „prze-”, „od-”", "{começar → recomeçar} (zacząć od nowa), {ver → rever} (przejrzeć ponownie)"],
+       ["{pré-}", "przed-", "{pré-pago} (na kartę, przedpłacony), {pré-aviso} (uprzedzenie)"],
+       ["{sub-}", "pod-", "{sublinhar} (podkreślić), {subterrâneo} (podziemny)"],
+       ["{sobre-}", "nad-, ponad", "{sobreviver} (przeżyć), {sobremesa} (deser — dosłownie „na stół”)"],
+       ["{ex-}", "były", "{ex-namorado} (były chłopak), {ex-presidente}"],
+       ["{auto-}", "samo-", "{autocarro} (autobus), {autoestrada} (autostrada)"],
+       ["{anti-}", "przeciw-", "{anti-inflamatório} (przeciwzapalny), {antivírus}"]
+     ]},
+    {"type": "examples", "items": [
+      {"pt": "Pode desligar o telemóvel?", "pl": "Może pan wyłączyć komórkę?"},
+      {"pt": "É impossível estacionar aqui.", "pl": "Tu nie da się zaparkować."},
+      {"pt": "Quer sobremesa?", "pl": "Podać deser?"}
+    ]},
+    {"type": "tip", "tone": "info", "title": "in- zmienia się przed niektórymi literami",
+     "text": "Przed {p} i {b} staje się {im-} ({impossível}), przed {l} i {r} — samym {i-} ({ilógico}, {irregular})."},
+
+    {"type": "h", "text": "Przyrostki — na końcu słowa"},
+    {"type": "table", "head": ["przyrostek", "co robi", "przykłady"],
+     "rows": [
+       ["{-inho}, {-inha}", "zdrobnienie, czułość, „trochę”", "{café → cafezinho}, {casa → casinha}, {devagar → devagarinho} (powolutku)"],
+       ["{-ão}", "zgrubienie — coś dużego", "{casa → casarão} (wielki dom), {carro → carrão}"],
+       ["{-mente}", "przysłówek od przymiotnika — jak „-nie”, „-o”", "{rápido → rapidamente}, {fácil → facilmente}, {feliz → felizmente} (na szczęście)"],
+       ["{-ção}", "czynność od czasownika — jak „-anie”, „-acja”", "{explicar → explicação}, {organizar → organização}"],
+       ["{-dade}", "cecha — jak „-ość”", "{possível → possibilidade}, {feliz → felicidade}"],
+       ["{-eiro}, {-eira}", "zawód; drzewo; pojemnik", "{pão → padeiro} (piekarz), {carta → carteiro} (listonosz), {laranja → laranjeira} (drzewo pomarańczowe), {açúcar → açucareiro} (cukiernica)"],
+       ["{-ista}", "zawód, zwolennik", "{dente → dentista}, {táxi → taxista}"],
+       ["{-ável}, {-ível}", "dający się — jak „-alny”", "{lavar → lavável} (zmywalny), {comer → comestível} (jadalny)"],
+       ["{-aria}, {-eria}", "sklep, miejsce — jak „-arnia”", "{pão → padaria} (piekarnia), {livro → livraria} (księgarnia), {pastel → pastelaria} (cukiernia)"]
+     ]},
+    {"type": "tip", "tone": "info", "title": "-mente dokleja się do formy żeńskiej",
+     "text": "{rápido} → {rápida} → {rapidamente}, {lento} → {lenta} → {lentamente}. Akcent z przymiotnika znika, bo słowo się wydłuża."},
+    {"type": "examples", "items": [
+      {"pt": "Fale devagarinho, por favor.", "pl": "Proszę mówić powolutku."},
+      {"pt": "Felizmente, o comboio chegou a horas.", "pl": "Na szczęście pociąg przyjechał na czas."},
+      {"pt": "A padaria abre às sete.", "pl": "Piekarnia otwiera się o siódmej."},
+      {"pt": "Um momentinho, por favor.", "pl": "Chwileczkę, proszę."}
+    ]},
+    {"type": "tip", "tone": "pt", "title": "Zdrobnienia są w Portugalii wszędzie",
+     "text": "I rzadko znaczą „mały”. {Um cafezinho} to po prostu kawa powiedziana ciepło, a kelner rzuci {Um momentinho!} — „chwileczkę!”. Usłyszysz nawet {obrigadinho}."},
+    {"type": "tip", "tone": "trap", "title": "Livraria to nie biblioteka",
+     "text": "{Livraria} to księgarnia, a biblioteka to {biblioteca}. Fałszywy przyjaciel, w którego wpada prawie każdy."}
+  ],
+  "check": [
+    {"q": "{desligar} znaczy:", "options": ["włączyć", "wyłączyć", "połączyć ponownie"], "answer": 1,
+     "why": "{Des-} odwraca znaczenie: {ligar} to „włączyć, połączyć”, {desligar} — „wyłączyć, rozłączyć”."},
+    {"q": "{impossível} znaczy:", "options": ["niemożliwy", "możliwy", "bardzo możliwy"], "answer": 0,
+     "why": "{Im-} to przeczenie, jak polskie „nie-”."},
+    {"q": "Kto pracuje w {padaria}?", "options": ["{o padeiro}", "{o carteiro}", "{o dentista}"], "answer": 0,
+     "why": "Ten sam rdzeń {pão}: {padaria} — piekarnia, {padeiro} — piekarz."},
+    {"q": "{livraria} to:", "options": ["biblioteka", "księgarnia"], "answer": 1,
+     "why": "Biblioteka to {biblioteca}. {Livraria} to sklep z książkami."},
+    {"q": "Przysłówek od {rápido}:", "options": ["{rapidomente}", "{rapidamente}", "{rápidomente}"], "answer": 1,
+     "why": "{-mente} dokleja się do formy żeńskiej ({rápida}), a akcent znika."}
+  ]
+}
