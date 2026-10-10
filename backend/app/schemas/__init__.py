@@ -222,6 +222,9 @@ class CatchUpOut(BaseModel):
 class QueueSummaryOut(BaseModel):
     due: int
     new_available: int
+    # Znane już pozycje odłożone przy obecnym nastawieniu — dłuższe zwroty przy
+    # nauce słów. Nie liczą się do „due”, ale nie zniknęły.
+    set_aside: int = 0
     done_today: int
     goal: int
     streak: int

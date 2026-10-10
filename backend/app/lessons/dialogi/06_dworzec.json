@@ -1,0 +1,41 @@
+{
+  "slug": "dialog-dworzec",
+  "title": "Na dworcu",
+  "summary": "Bilet do Porto, tam i z powrotem",
+  "level": "A1",
+  "part": "Dialogi",
+  "blocks": [
+    {"type": "p", "text": "Jesteś w kasie biletowej na dworcu w Lizbonie i chcesz pojechać pociągiem do Porto."},
+    {"type": "dialogue", "lines": [
+      {"who": "Ty", "pt": "Bom dia. Um bilhete para o Porto, por favor.", "pl": "Dzień dobry. Poproszę bilet do Porto."},
+      {"who": "Kasjerka", "pt": "Só ida ou ida e volta?", "pl": "W jedną stronę czy tam i z powrotem?"},
+      {"who": "Ty", "pt": "Ida e volta. A que horas parte o próximo comboio?", "pl": "Tam i z powrotem. O której odjeżdża najbliższy pociąg?"},
+      {"who": "Kasjerka", "pt": "Às dez e meia, da linha três.", "pl": "O wpół do jedenastej, z toru trzeciego."},
+      {"who": "Ty", "pt": "E quanto tempo demora a viagem?", "pl": "A ile trwa podróż?"},
+      {"who": "Kasjerka", "pt": "Cerca de três horas.", "pl": "Około trzech godzin."},
+      {"who": "Ty", "pt": "Está bem. Quanto é?", "pl": "Dobrze. Ile płacę?"},
+      {"who": "Kasjerka", "pt": "São quarenta e oito euros.", "pl": "Czterdzieści osiem euro."}
+    ]},
+    {"type": "table", "head": ["słowo", "znaczenie"], "pt_cols": [0],
+     "rows": [
+       ["o bilhete", "bilet"],
+       ["só ida", "w jedną stronę"],
+       ["ida e volta", "tam i z powrotem"],
+       ["o comboio", "pociąg"],
+       ["a linha", "tor, peron"],
+       ["demorar", "trwać"]
+     ]},
+    {"type": "tip", "tone": "pt", "title": "Comboio i linha",
+     "text": "Pociąg to w Portugalii {comboio}. Na tablicy odjazdów i w zapowiedziach usłyszysz {linha} — numer toru, z którego odjeżdża pociąg."}
+  ],
+  "check": [
+    {"q": "Dokąd jedzie Paweł?", "options": ["do Porto", "do Lizbony", "do Faro"], "answer": 0,
+     "why": "{Um bilhete para o Porto}."},
+    {"q": "Jaki bilet kupuje?", "options": ["w jedną stronę", "tam i z powrotem"], "answer": 1,
+     "why": "{Ida e volta} — tam i z powrotem."},
+    {"q": "O której odjeżdża pociąg?", "options": ["10:00", "3:00", "10:30"], "answer": 2,
+     "why": "{Às dez e meia} — o wpół do jedenastej."},
+    {"q": "{Quanto tempo demora?} to pytanie o:", "options": ["cenę", "czas podróży", "numer toru"], "answer": 1,
+     "why": "{Demorar} — trwać. Pytanie o cenę to {Quanto é?}"}
+  ]
+}

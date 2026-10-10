@@ -1,12 +1,13 @@
-"""Lekcje gramatyki — treść statyczna, wersjonowana razem z kodem.
+"""Lekcje — gramatyka i dialogi. Treść statyczna, wersjonowana razem z kodem.
 
 Lekcje nie mieszkają w bazie. Nikt ich nie edytuje w aplikacji, nie mają
 stanu per użytkownik, a każda poprawka i tak przechodzi przez przegląd w
 repozytorium — tabela w bazie dołożyłaby tylko migrację i krok seedowania, w
 którym coś może się rozjechać z plikiem.
 
-Każda lekcja to jeden plik JSON w `lekcje/`, z numerem na początku nazwy, który
-wyznacza kolejność. Treść pisana jest po polsku z dwoma znacznikami w tekście:
+Każda lekcja to jeden plik JSON w katalogu swojego rodzaju — `gramatyka/` albo
+`dialogi/` — z numerem na początku nazwy, który wyznacza kolejność w obrębie
+rodzaju. Treść pisana jest po polsku z dwoma znacznikami w tekście:
 
 - `{...}` — wstawka po portugalsku, składana krojem portugalskim,
 - `**...**` — wyróżnienie.
@@ -24,7 +25,11 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, model_validator
 
-LESSONS_DIR = Path(__file__).parent / "lekcje"
+LESSONS_DIR = Path(__file__).parent
+# Rodzaje lekcji w kolejności, w jakiej pokazuje je spis. Dialogi pierwsze:
+# to od nich zaczyna się mówienie, a gramatyka tłumaczy, co się w nich dzieje.
+KINDS = ("dialogi", "gramatyka")
+Kind = Literal["dialogi", "gramatyka"]
 
 
 class Example(BaseModel):
@@ -80,7 +85,28 @@ class Tip(BaseModel):
     text: str = Field(min_length=1)
 
 
-Block = Annotated[Paragraph | Heading | Table | Examples | Tip, Field(discriminator="type")]
+class Line(BaseModel):
+    # Kto mówi, po polsku. „Ty" to kwestie ucznia — ekran pozwala je zasłonić
+    # i ćwiczyć swoją rolę.
+    who: str = Field(min_length=1)
+    pt: str = Field(min_length=1)
+    pl: str = Field(min_length=1)
+
+
+class Dialogue(BaseModel):
+    type: Literal["dialogue"]
+    lines: list[Line] = Field(min_length=2)
+
+    @model_validator(mode="after")
+    def _two_voices(self) -> Dialogue:
+        if len({line.who for line in self.lines}) < 2:
+            raise ValueError("dialog z jedną osobą to monolog")
+        return self
+
+
+Block = Annotated[
+    Paragraph | Heading | Table | Examples | Tip | Dialogue, Field(discriminator="type")
+]
 
 
 class Question(BaseModel):
@@ -100,6 +126,7 @@ class Question(BaseModel):
 
 class Lesson(BaseModel):
     slug: str = Field(pattern=r"^[a-z0-9-]+$")
+    kind: Kind
     title: str
     summary: str
     level: Literal["A1", "A2", "B1"]
@@ -108,25 +135,37 @@ class Lesson(BaseModel):
     check: list[Question] = Field(min_length=3)
     position: int = 0
 
-    def examples(self) -> list[Example]:
-        return [ex for block in self.blocks if isinstance(block, Examples) for ex in block.items]
+    def spoken(self) -> list[str]:
+        """Wszystko, co w tej lekcji da się odsłuchać: przykłady i kwestie dialogu."""
+        out: list[str] = []
+        for block in self.blocks:
+            if isinstance(block, Examples):
+                out += [example.pt for example in block.items]
+            elif isinstance(block, Dialogue):
+                out += [line.pt for line in block.lines]
+        return out
 
 
 @lru_cache(maxsize=1)
 def lessons() -> tuple[Lesson, ...]:
-    """Wszystkie lekcje w kolejności z nazw plików."""
+    """Wszystkie lekcje: rodzaje w kolejności `KINDS`, w obrębie rodzaju — z nazw plików."""
     found: list[Lesson] = []
-    for position, path in enumerate(sorted(LESSONS_DIR.glob("*.json")), start=1):
-        data = json.loads(path.read_text(encoding="utf-8"))
-        try:
-            lesson = Lesson.model_validate({**data, "position": position})
-        except ValueError as exc:
-            raise ValueError(f"{path.name}: {exc}") from exc
-        found.append(lesson)
+    for kind in KINDS:
+        for position, path in enumerate(sorted((LESSONS_DIR / kind).glob("*.json")), start=1):
+            data = json.loads(path.read_text(encoding="utf-8"))
+            try:
+                lesson = Lesson.model_validate({**data, "kind": kind, "position": position})
+            except ValueError as exc:
+                raise ValueError(f"{kind}/{path.name}: {exc}") from exc
+            found.append(lesson)
     slugs = [lesson.slug for lesson in found]
     if len(set(slugs)) != len(slugs):
         raise ValueError(f"powtórzony slug lekcji: {slugs}")
     return tuple(found)
+
+
+def of_kind(kind: str) -> tuple[Lesson, ...]:
+    return tuple(lesson for lesson in lessons() if lesson.kind == kind)
 
 
 def by_slug(slug: str) -> Lesson | None:
@@ -134,12 +173,12 @@ def by_slug(slug: str) -> Lesson | None:
 
 
 def spoken_texts() -> list[str]:
-    """Zdania przykładowe ze wszystkich lekcji — to, co w gramatyce brzmi.
+    """Wszystko, co w lekcjach brzmi — przykłady i kwestie dialogów.
 
     Czyta z tego biblioteka nagrań, żeby „Nagraj brakujące" obejmowało też
-    lekcje. Bez tego przykłady odzywałyby się głosem telefonu, a nie tym
+    lekcje. Bez tego zdania odzywałyby się głosem telefonu, a nie tym
     wybranym w ustawieniach — dokładnie ten błąd był już raz z odpowiedziami
     rozmówcy i zostawił po sobie zasadę: odtwarzanie i lista do nagrania
     czytają z jednego miejsca.
     """
-    return [example.pt for lesson in lessons() for example in lesson.examples()]
+    return [text for lesson in lessons() for text in lesson.spoken()]

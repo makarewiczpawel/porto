@@ -127,3 +127,55 @@ export function onVoicesReady(callback: () => void): () => void {
   window.speechSynthesis.addEventListener?.("voiceschanged", handler);
   return () => window.speechSynthesis.removeEventListener?.("voiceschanged", handler);
 }
+
+/**
+ * Jak `say`, ale obietnica spełnia się dopiero, gdy dźwięk ucichnie.
+ *
+ * `say` kończy się w chwili, gdy nagranie *ruszy* — przy jednym przycisku
+ * głośnika tak ma być. Odtwarzanie całego dialogu kwestia po kwestii
+ * potrzebuje czegoś innego: następna kwestia ma zacząć się po poprzedniej,
+ * a nie w jej połowie.
+ *
+ * Kończy się też, gdy dźwięk zostanie przerwany (`stop`) albo się nie wczyta —
+ * odtwarzanie dialogu sprawdza wtedy własną flagę i decyduje, czy grać dalej.
+ * Bezpiecznik czasowy chroni przed przeglądarką, która nie zgłosi końca wcale.
+ */
+export function sayToEnd(text: string, url?: string | null): Promise<void> {
+  return new Promise((resolve) => {
+    let settled = false;
+    const done = () => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(guard);
+      resolve();
+    };
+    const guard = window.setTimeout(done, 20_000);
+
+    if (url) {
+      void playRecording(url).then(() => {
+        const audio = current;
+        if (!audio || audio.ended || audio.paused || audio.error) {
+          done();
+          return;
+        }
+        audio.addEventListener("ended", done, { once: true });
+        audio.addEventListener("pause", done, { once: true });
+        audio.addEventListener("error", done, { once: true });
+      });
+      return;
+    }
+
+    const voice = portugueseVoice();
+    if (!voice) {
+      done();
+      return;
+    }
+    stop();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.voice = voice;
+    utterance.lang = "pt-PT";
+    utterance.onend = done;
+    utterance.onerror = done;
+    window.speechSynthesis.speak(utterance);
+  });
+}

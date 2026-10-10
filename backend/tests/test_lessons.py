@@ -1,23 +1,23 @@
-"""Lekcje gramatyki: treść, która się nie rozjeżdża, i przykłady, które brzmią.
+"""Lekcje — gramatyka i dialogi: treść, która się nie rozjeżdża, i zdania, które brzmią.
 
 Lekcje to statyczna treść pisana ręcznie, więc testy pilnują tego, czego
 oko przy przeglądzie nie wyłapie: niedomkniętej klamry, która wyrenderuje się
-jako surowy znak, brazylizmu wśród przykładów i zdania, które aplikacja chce
-odtworzyć, a którego nikt nie nagra.
+jako surowy znak, brazylizmu wśród przykładów i kwestii dialogów, i zdania,
+które aplikacja chce odtworzyć, a którego nikt nie nagra.
 """
 
 import re
 
 import pytest
 
-from app import grammar
+from app import lessons
 from app.models import AudioAsset
 from app.services import ai, tts, voice_library
 
-LESSONS = grammar.lessons()
+LESSONS = lessons.lessons()
 
 
-def _texts(lesson: grammar.Lesson):
+def _texts(lesson: lessons.Lesson):
     """Każdy napis lekcji, z informacją, czy wolno w nim brazylizmów."""
     yield lesson.title, False
     yield lesson.summary, False
@@ -36,13 +36,18 @@ def _texts(lesson: grammar.Lesson):
             for example in block.items:
                 yield example.pt, False
                 yield example.pl, False
+        elif block.type == "dialogue":
+            for line in block.lines:
+                yield line.who, False
+                yield line.pt, False
+                yield line.pl, False
     for question in lesson.check:
         yield question.q, False
         yield from ((option, False) for option in question.options)
         yield question.why, False
 
 
-def _portuguese(lesson: grammar.Lesson):
+def _portuguese(lesson: lessons.Lesson):
     """Portugalski, który lekcja przedstawia jako poprawny.
 
     Poza zasięgiem są wskazówki, objaśnienia i złe odpowiedzi w quizie — tam
@@ -53,6 +58,8 @@ def _portuguese(lesson: grammar.Lesson):
     for block in lesson.blocks:
         if block.type == "examples":
             yield from (example.pt for example in block.items)
+        elif block.type == "dialogue":
+            yield from (line.pt for line in block.lines)
         elif block.type in ("p", "h"):
             yield from re.findall(r"\{([^}]*)\}", block.text)
         elif block.type == "table":
@@ -68,9 +75,23 @@ def _portuguese(lesson: grammar.Lesson):
 
 
 def test_there_is_a_real_course_not_a_stub():
-    assert len(LESSONS) >= 12
-    parts = {lesson.part for lesson in LESSONS}
-    assert {"Zaimki", "Czasowniki"} <= parts
+    grammar = lessons.of_kind("gramatyka")
+    dialogues = lessons.of_kind("dialogi")
+    assert len(grammar) >= 12
+    assert len(dialogues) >= 8
+    assert {"Zaimki", "Czasowniki"} <= {lesson.part for lesson in grammar}
+
+
+def test_every_dialogue_gives_the_learner_a_part_to_play():
+    """Kwestie „Ty” to rola ucznia — ekran pozwala je zasłonić i ćwiczyć.
+    Dialog bez nich byłby tylko czytanką."""
+    for lesson in lessons.of_kind("dialogi"):
+        lines = [line for block in lesson.blocks if block.type == "dialogue" for line in block.lines]
+        assert lines, lesson.slug
+        assert any(line.who == "Ty" for line in lines), lesson.slug
+        # Dwie kwestie ucznia pod rząd brzmią sztucznie — rozmowa to wymiana.
+        whos = [line.who for line in lines]
+        assert all(a != b or a != "Ty" for a, b in zip(whos, whos[1:], strict=False)), lesson.slug
 
 
 @pytest.mark.parametrize("lesson", LESSONS, ids=lambda lesson: lesson.slug)
@@ -114,7 +135,7 @@ def test_the_contrast_column_is_actually_brazilian():
 
 @pytest.mark.parametrize("lesson", LESSONS, ids=lambda lesson: lesson.slug)
 def test_every_lesson_teaches_by_example_and_checks_itself(lesson):
-    assert len(lesson.examples()) >= 3, "lekcja bez przykładów to wykład"
+    assert len(lesson.spoken()) >= 3, "lekcja bez przykładów to wykład"
     assert len(lesson.check) >= 4
     answers = [question.answer for question in lesson.check]
     # Wszystkie poprawne odpowiedzi pod pierwszą opcją to test, który
@@ -124,23 +145,27 @@ def test_every_lesson_teaches_by_example_and_checks_itself(lesson):
 
 def test_slugs_are_unique_and_positions_follow_the_files():
     assert len({lesson.slug for lesson in LESSONS}) == len(LESSONS)
-    assert [lesson.position for lesson in LESSONS] == list(range(1, len(LESSONS) + 1))
+    for kind in lessons.KINDS:
+        of_kind = lessons.of_kind(kind)
+        assert [lesson.position for lesson in of_kind] == list(range(1, len(of_kind) + 1))
 
 
 def test_a_broken_lesson_file_stops_the_app_instead_of_rendering_half(tmp_path, monkeypatch):
-    (tmp_path / "01_zla.json").write_text(
+    (tmp_path / "gramatyka").mkdir()
+    (tmp_path / "dialogi").mkdir()
+    (tmp_path / "gramatyka" / "01_zla.json").write_text(
         '{"slug": "zla", "title": "x", "summary": "x", "level": "A1", "part": "x",'
         ' "blocks": [{"type": "p", "text": "x"}],'
         ' "check": [{"q": "?", "options": ["a", "b"], "answer": 5, "why": "x"}]}',
         encoding="utf-8",
     )
-    monkeypatch.setattr(grammar, "LESSONS_DIR", tmp_path)
-    grammar.lessons.cache_clear()
+    monkeypatch.setattr(lessons, "LESSONS_DIR", tmp_path)
+    lessons.lessons.cache_clear()
     try:
-        with pytest.raises(ValueError, match="01_zla.json"):
-            grammar.lessons()
+        with pytest.raises(ValueError, match="gramatyka/01_zla.json"):
+            lessons.lessons()
     finally:
-        grammar.lessons.cache_clear()
+        lessons.lessons.cache_clear()
 
 
 # ── nagrania ──────────────────────────────────────────────────────────────
@@ -150,33 +175,38 @@ def test_lesson_examples_are_on_the_recording_list(db):
     Gdy kiedyś się rozeszły, odpowiedzi rozmówcy odzywały się głosem telefonu
     i żadne „Nagraj brakujące” nie mogło tego naprawić."""
     planned = {text for text, _speed in voice_library.planned(db)}
-    missing = [text for text in grammar.spoken_texts() if tts.normalize_text(text) not in planned]
+    missing = [text for text in lessons.spoken_texts() if tts.normalize_text(text) not in planned]
     assert missing == []
 
 
 # ── API ───────────────────────────────────────────────────────────────────
 def test_the_list_needs_a_login(client):
-    assert client.get("/api/grammar").status_code == 401
+    assert client.get("/api/lessons").status_code == 401
 
 
 def test_the_list_comes_in_course_order(client, registered):
-    body = client.get("/api/grammar").json()
+    body = client.get("/api/lessons").json()
     assert [entry["slug"] for entry in body["lessons"]] == [lesson.slug for lesson in LESSONS]
-    assert body["lessons"][0]["examples"] > 0
+    assert body["lessons"][0]["kind"] == "dialogi"
+    assert body["lessons"][0]["spoken"] > 0
 
 
 def test_unknown_lesson_is_404(client, registered):
-    response = client.get("/api/grammar/nie-ma-takiej")
+    response = client.get("/api/lessons/nie-ma-takiej")
     assert response.status_code == 404
     assert response.json()["error"]["code"] == "LESSON_NOT_FOUND"
 
 
-def test_a_lesson_knows_its_neighbours(client, registered):
-    first = client.get(f"/api/grammar/{LESSONS[0].slug}").json()
-    second = client.get(f"/api/grammar/{LESSONS[1].slug}").json()
+def test_a_lesson_knows_its_neighbours_within_its_kind(client, registered):
+    dialogues = lessons.of_kind("dialogi")
+    grammar = lessons.of_kind("gramatyka")
+    first = client.get(f"/api/lessons/{dialogues[0].slug}").json()
     assert first["previous"] is None
-    assert first["next"]["slug"] == LESSONS[1].slug
-    assert second["previous"]["slug"] == LESSONS[0].slug
+    assert first["next"]["slug"] == dialogues[1].slug
+    # Po ostatnim dialogu „następna” nie przeskakuje do gramatyki.
+    last = client.get(f"/api/lessons/{dialogues[-1].slug}").json()
+    assert last["next"] is None
+    assert client.get(f"/api/lessons/{grammar[0].slug}").json()["previous"] is None
 
 
 def _record(db, text: str, voice: str):
@@ -196,22 +226,23 @@ def _record(db, text: str, voice: str):
     db.commit()
 
 
-def test_examples_point_at_recordings_in_the_users_voice(client, registered, db):
-    lesson = LESSONS[0]
+@pytest.mark.parametrize("kind,block_type,key", [("gramatyka", "examples", "items"), ("dialogi", "dialogue", "lines")])
+def test_spoken_lines_point_at_recordings_in_the_users_voice(client, registered, db, kind, block_type, key):
+    lesson = lessons.of_kind(kind)[0]
     voice = client.get("/api/auth/me").json()["settings"]["tts_voice"]
-    recorded = lesson.examples()[0].pt
+    recorded, other = lesson.spoken()[0], lesson.spoken()[1]
     _record(db, recorded, voice)
-    _record(db, lesson.examples()[1].pt, "pt-PT-Inny-Glos")
+    _record(db, other, "pt-PT-Inny-Glos")
 
-    body = client.get(f"/api/grammar/{lesson.slug}").json()
+    body = client.get(f"/api/lessons/{lesson.slug}").json()
     audio = {
-        item["pt"]: item["audio"]
+        entry["pt"]: entry["audio"]
         for block in body["blocks"]
-        if block["type"] == "examples"
-        for item in block["items"]
+        if block["type"] == block_type
+        for entry in block[key]
     }
     assert audio[recorded] == tts.audio_url(tts.cache_key(recorded, voice, 1.0))
-    assert audio[lesson.examples()[1].pt] is None, "nagranie innym głosem to nie nagranie"
+    assert audio[other] is None, "nagranie innym głosem to nie nagranie"
 
 
 def test_missing_recordings_are_ordered_and_announced(client, registered, monkeypatch):
@@ -225,18 +256,18 @@ def test_missing_recordings_are_ordered_and_announced(client, registered, monkey
         lambda batch, texts, voice, limit=0: ordered.append((batch, list(texts), voice)),
     )
     lesson = LESSONS[0]
-    body = client.get(f"/api/grammar/{lesson.slug}").json()
+    body = client.get(f"/api/lessons/{lesson.slug}").json()
 
     assert body["audio_pending"] is True
     assert len(ordered) == 1
     batch, texts, _voice = ordered[0]
     assert batch == f"lekcja:{lesson.slug}"
-    assert set(texts) == {example.pt for example in lesson.examples()}
+    assert set(texts) == set(lesson.spoken())
 
 
 def test_without_a_tts_key_nothing_is_promised(client, registered, monkeypatch):
     monkeypatch.setattr(tts, "is_configured", lambda: False)
-    body = client.get(f"/api/grammar/{LESSONS[0].slug}").json()
+    body = client.get(f"/api/lessons/{LESSONS[0].slug}").json()
     assert body["audio_pending"] is False
 
 

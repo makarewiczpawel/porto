@@ -20,7 +20,7 @@ from dataclasses import dataclass
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from app import grammar
+from app import lessons
 from app.db import SessionLocal
 from app.models import Item
 from app.services import tts
@@ -105,9 +105,10 @@ def planned(db: Session) -> list[tuple[str, float]]:
                 continue
             seen.add((clean, speed))
             wanted.append((clean, speed))
-    # Zdania z lekcji gramatyki. Tylko w zwykłym tempie — wolniejsze podejście
-    # jest pod przytrzymanie głośnika przy haśle, a tu nie ma hasła.
-    for text in grammar.spoken_texts():
+    # Zdania z lekcji — przykłady gramatyki i kwestie dialogów. Tylko w zwykłym
+    # tempie: wolniejsze podejście jest pod przytrzymanie głośnika przy haśle,
+    # a tu nie ma hasła.
+    for text in lessons.spoken_texts():
         clean = tts.normalize_text(text)
         if clean and (clean, 1.0) not in seen:
             seen.add((clean, 1.0))

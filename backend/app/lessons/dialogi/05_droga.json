@@ -1,0 +1,40 @@
+{
+  "slug": "dialog-droga",
+  "title": "Pytanie o drogę",
+  "summary": "Prosto, w prawo i „może pan powtórzyć wolniej?”",
+  "level": "A1",
+  "part": "Dialogi",
+  "blocks": [
+    {"type": "p", "text": "Szukasz stacji metra. Zaczepiasz starszego pana na chodniku — do obcej osoby mówisz grzecznie, w trzeciej osobie."},
+    {"type": "dialogue", "lines": [
+      {"who": "Ty", "pt": "Desculpe, sabe onde fica a estação de metro?", "pl": "Przepraszam, wie pan, gdzie jest stacja metra?"},
+      {"who": "Przechodzień", "pt": "Sei, sim. Siga sempre em frente e depois vire à direita.", "pl": "Wiem. Proszę iść cały czas prosto, a potem skręcić w prawo."},
+      {"who": "Ty", "pt": "É longe?", "pl": "Daleko?"},
+      {"who": "Przechodzień", "pt": "Não, fica a cinco minutos a pé.", "pl": "Nie, pięć minut pieszo."},
+      {"who": "Ty", "pt": "Desculpe, pode repetir mais devagar?", "pl": "Przepraszam, może pan powtórzyć wolniej?"},
+      {"who": "Przechodzień", "pt": "Claro. Em frente e depois à direita.", "pl": "Oczywiście. Prosto, a potem w prawo."},
+      {"who": "Ty", "pt": "Muito obrigado!", "pl": "Bardzo dziękuję!"},
+      {"who": "Przechodzień", "pt": "De nada. Bom dia!", "pl": "Nie ma za co. Miłego dnia!"}
+    ]},
+    {"type": "table", "head": ["słowo", "znaczenie"], "pt_cols": [0],
+     "rows": [
+       ["sempre em frente", "cały czas prosto"],
+       ["à direita, à esquerda", "w prawo, w lewo"],
+       ["longe, perto", "daleko, blisko"],
+       ["a pé", "pieszo"],
+       ["mais devagar", "wolniej"]
+     ]},
+    {"type": "tip", "tone": "info", "title": "Najprzydatniejsze zdanie na start",
+     "text": "{Pode repetir mais devagar?} — „może pan powtórzyć wolniej?”. Portugalczycy mówią szybko i połykają samogłoski, a na tę prośbę zawsze reagują życzliwie."}
+  ],
+  "check": [
+    {"q": "Dokąd chce dojść Paweł?", "options": ["na dworzec kolejowy", "do apteki", "do stacji metra"], "answer": 2,
+     "why": "{A estação de metro} — stacja metra."},
+    {"q": "W którą stronę ma skręcić?", "options": ["w prawo", "w lewo", "nigdzie, cały czas prosto"], "answer": 0,
+     "why": "{Vire à direita} — proszę skręcić w prawo."},
+    {"q": "Ile minut idzie się pieszo?", "options": ["piętnaście", "pięć", "pięćdziesiąt"], "answer": 1,
+     "why": "{A cinco minutos a pé}."},
+    {"q": "{Longe} znaczy:", "options": ["blisko", "prosto", "daleko"], "answer": 2,
+     "why": "{Longe} — daleko, {perto} — blisko."}
+  ]
+}

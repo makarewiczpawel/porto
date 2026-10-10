@@ -8,12 +8,13 @@ import type {
   AudioCoverage,
   AudioUsage,
   Mode,
+  QueueSummary,
   Settings,
   SynthesizeBatch,
   Voice,
 } from "@/api/types";
 import { playRecording, unlockAudio } from "@/api/speech";
-import { Button, Card, Label, Spinner } from "@/components/ui";
+import { Button, Card, Label, Spinner, plural } from "@/components/ui";
 import { useAuth } from "@/store/auth";
 
 /** Every mode the app can ask a question in, with what it actually drills. */
@@ -38,6 +39,11 @@ export function SettingsPage() {
   const queryClient = useQueryClient();
 
   const query = useQuery({ queryKey: ["settings"], queryFn: () => api.get<Settings>("/api/settings") });
+  const summary = useQuery({
+    queryKey: ["queue-summary"],
+    queryFn: () => api.get<QueueSummary>("/api/study/queue/summary"),
+  });
+  const setAside = summary.data?.set_aside ?? 0;
 
   async function patch(body: Partial<Settings>) {
     await api.patch<Settings>("/api/settings", body);
@@ -98,18 +104,18 @@ export function SettingsPage() {
         />
       </Card>
 
-      <Label className="mb-2">Czego się uczyć</Label>
+      <Label className="mb-2 mt-5">Czego się uczyć</Label>
       <Card className="grid gap-2">
         <p className="text-[12.5px] text-ink-2">
-          Kolejka dobiera nowy materiał według tego ustawienia. Nic nie znika z bazy — zmienia
-          się tylko kolejność, w jakiej poznajesz materiał.
+          Kolejka dobiera materiał według tego ustawienia. Nic nie znika z bazy ani z Twojego
+          postępu — zmienia się tylko to, co trafia do nauki.
         </p>
         <div className="grid gap-2">
           {(
             [
-              ["phrases", "Gotowe zwroty", "całe zdania do powiedzenia od razu"],
-              ["mixed", "Po równo", "zwroty i słowa w kolejności talii"],
-              ["words", "Pojedyncze słowa", "budowanie słownika, jak dawniej"],
+              ["words", "Pojedyncze słowa", "słowa i krótkie zwroty do trzech słów; dłuższe czekają odłożone"],
+              ["mixed", "Po równo", "słowa i wszystkie zwroty w kolejności talii"],
+              ["phrases", "Gotowe zwroty", "najpierw całe zdania do powiedzenia od razu"],
             ] as const
           ).map(([id, title, hint]) => {
             const on = settings.content_focus === id;
@@ -140,6 +146,15 @@ export function SettingsPage() {
             );
           })}
         </div>
+        {settings.content_focus === "words" && setAside > 0 && (
+          // Odłożone zwroty nie mogą wyglądać na skasowane. Po miesiącu nauki
+          // to kilkaset kart z postępem — warto wiedzieć, że czekają.
+          <p className="text-[12px] text-ink-3">
+            Odłożone na później: <b className="text-ink-2 tnum">{setAside}</b>{" "}
+            {plural(setAside, "dłuższy zwrot", "dłuższe zwroty", "dłuższych zwrotów")} z Twoim postępem.
+            Wrócą po wybraniu „Po równo” albo „Gotowe zwroty”.
+          </p>
+        )}
       </Card>
 
       <Label className="mb-2 mt-5">Tryby ćwiczeń</Label>

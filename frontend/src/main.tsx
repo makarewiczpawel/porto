@@ -1,7 +1,7 @@
 import { StrictMode, Suspense, lazy, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useParams } from "react-router-dom";
 
 import { AppLayout, FullScreenLayout } from "@/components/Layout";
 import { Spinner } from "@/components/ui";
@@ -42,8 +42,8 @@ const SettingsPage = lazy(() =>
 );
 const StudyPage = lazy(() => import("@/pages/Study").then((m) => ({ default: m.StudyPage })));
 const SummaryPage = lazy(() => import("@/pages/Summary").then((m) => ({ default: m.SummaryPage })));
-const GrammarPage = lazy(() => import("@/pages/Grammar").then((m) => ({ default: m.GrammarPage })));
-const LessonPage = lazy(() => import("@/pages/Grammar").then((m) => ({ default: m.LessonPage })));
+const LessonsPage = lazy(() => import("@/pages/Lessons").then((m) => ({ default: m.LessonsPage })));
+const LessonPage = lazy(() => import("@/pages/Lessons").then((m) => ({ default: m.LessonPage })));
 import { AuthProvider, useAuth } from "@/store/auth";
 import { watchConnection } from "@/store/session";
 import "./index.css";
@@ -66,6 +66,11 @@ const queryClient = new QueryClient({
 function dropPoisonedAudioCache() {
   if (typeof caches === "undefined") return;
   void caches.delete("porto-audio");
+}
+
+function GrammarRedirect() {
+  const { slug } = useParams();
+  return <Navigate to={`/lekcje/${slug ?? ""}`} replace />;
 }
 
 function Shell() {
@@ -96,8 +101,12 @@ function Shell() {
         <Route path="/slownik/:itemId" element={<ItemDetailPage />} />
         <Route path="/talie" element={<DecksPage />} />
         <Route path="/talie/:deckId" element={<DeckDetailPage />} />
-        <Route path="/gramatyka" element={<GrammarPage />} />
-        <Route path="/gramatyka/:slug" element={<LessonPage />} />
+        <Route path="/lekcje" element={<LessonsPage />} />
+        <Route path="/lekcje/:slug" element={<LessonPage />} />
+        {/* Stare adresy z czasów samej gramatyki — zakładki i historia na
+            telefonie wciąż mogą do nich prowadzić. */}
+        <Route path="/gramatyka" element={<Navigate to="/lekcje?dzial=gramatyka" replace />} />
+        <Route path="/gramatyka/:slug" element={<GrammarRedirect />} />
         <Route path="/quizy" element={<QuizzesPage />} />
         <Route path="/postep" element={<ProgressPage />} />
         <Route path="/ustawienia" element={<SettingsPage />} />

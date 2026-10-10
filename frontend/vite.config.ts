@@ -66,15 +66,15 @@ export default defineConfig({
             },
           },
           {
-            // Lekcje gramatyki to ściąga, do której wraca się w drodze — także
-            // bez zasięgu. Najpierw sieć, bo odpowiedź niesie adresy nagrań,
-            // które dogrywają się w tle; pamięć podręczna jest tylko na wypadek,
-            // gdy sieci nie ma. Odwrotna kolejność zamroziłaby lekcję na
-            // pierwszej wersji, z głosem telefonu zamiast nagrań.
-            urlPattern: ({ url }) => /^\/api\/grammar(\/[a-z0-9-]+)?$/.test(url.pathname),
+            // Lekcje — gramatyka i dialogi — to ściąga, do której wraca się w
+            // drodze, także bez zasięgu. Najpierw sieć, bo odpowiedź niesie
+            // adresy nagrań, które dogrywają się w tle; pamięć podręczna jest
+            // tylko na wypadek, gdy sieci nie ma. Odwrotna kolejność zamroziłaby
+            // lekcję na pierwszej wersji, z głosem telefonu zamiast nagrań.
+            urlPattern: ({ url }) => /^\/api\/lessons(\/[a-z0-9-]+)?$/.test(url.pathname),
             handler: "NetworkFirst",
             options: {
-              cacheName: "porto-grammar-v1",
+              cacheName: "porto-lessons-v1",
               networkTimeoutSeconds: 4,
               expiration: { maxEntries: 40 },
               cacheableResponse: { statuses: [200] },

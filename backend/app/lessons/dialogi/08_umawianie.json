@@ -1,0 +1,41 @@
+{
+  "slug": "dialog-umawianie",
+  "title": "Umawianie się",
+  "summary": "Kolacja ze znajomymi w sobotę",
+  "level": "A1",
+  "part": "Dialogi",
+  "blocks": [
+    {"type": "p", "text": "Rita, twoja sąsiadka, dzwoni z propozycją na weekend."},
+    {"type": "dialogue", "lines": [
+      {"who": "Rita", "pt": "Olá! Estás livre no sábado?", "pl": "Cześć! Masz czas w sobotę?"},
+      {"who": "Ty", "pt": "Estou. Porquê?", "pl": "Mam. A co?"},
+      {"who": "Rita", "pt": "Vamos jantar fora com uns amigos. Queres vir?", "pl": "Idziemy ze znajomymi na kolację. Chcesz przyjść?"},
+      {"who": "Ty", "pt": "Quero, claro! A que horas?", "pl": "Jasne, że chcę! O której?"},
+      {"who": "Rita", "pt": "Às oito, no restaurante ao pé do rio.", "pl": "O ósmej, w restauracji przy rzece."},
+      {"who": "Ty", "pt": "Combinado. Levo alguma coisa?", "pl": "Umowa stoi. Przynieść coś?"},
+      {"who": "Rita", "pt": "Não é preciso. Até sábado!", "pl": "Nie trzeba. Do soboty!"},
+      {"who": "Ty", "pt": "Até sábado!", "pl": "Do soboty!"}
+    ]},
+    {"type": "table", "head": ["słowo", "znaczenie"], "pt_cols": [0],
+     "rows": [
+       ["livre", "wolny"],
+       ["o sábado", "sobota"],
+       ["jantar fora", "zjeść na mieście"],
+       ["ao pé de", "przy, obok"],
+       ["combinado", "umowa stoi"],
+       ["não é preciso", "nie trzeba"]
+     ]},
+    {"type": "tip", "tone": "pt", "title": "Combinado!",
+     "text": "„Umowa stoi” — tym słowem w Portugalii zamyka się ustalanie planów. Usłyszysz je też w pracy, gdy ktoś potwierdza termin."}
+  ],
+  "check": [
+    {"q": "Kiedy jest kolacja?", "options": ["w niedzielę o ósmej", "w sobotę w południe", "w sobotę o ósmej"], "answer": 2,
+     "why": "{No sábado}, {às oito}."},
+    {"q": "Gdzie?", "options": ["w restauracji przy rzece", "u Rity w domu", "w kawiarni"], "answer": 0,
+     "why": "{No restaurante ao pé do rio}."},
+    {"q": "Czy Paweł ma coś przynieść?", "options": ["tak, wino", "nie, nie trzeba", "tak, deser"], "answer": 1,
+     "why": "{Não é preciso} — nie trzeba."},
+    {"q": "{Estás livre?} znaczy:", "options": ["Masz czas? / Jesteś wolny?", "Jesteś zmęczony?", "Gdzie jesteś?"], "answer": 0,
+     "why": "{Livre} — wolny. Z {estar}, bo chodzi o to, jak jest teraz."}
+  ]
+}

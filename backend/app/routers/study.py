@@ -52,6 +52,7 @@ def queue_summary(user: User = Depends(get_current_user), db: Session = Depends(
     return QueueSummaryOut(
         due=counts["due"],
         new_available=counts["new_available"],
+        set_aside=counts["set_aside"],
         done_today=today.reviews_count if today else 0,
         goal=user.settings.daily_goal,
         goal_met=bool(today and today.goal_met),

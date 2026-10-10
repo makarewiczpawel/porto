@@ -1,0 +1,42 @@
+{
+  "slug": "dialog-apteka",
+  "title": "W aptece",
+  "summary": "Boli cię głowa — co i jak często brać",
+  "level": "A2",
+  "part": "Dialogi",
+  "blocks": [
+    {"type": "p", "text": "Od wczoraj boli cię głowa. W Portugalii z drobnymi dolegliwościami idzie się najpierw do apteki — farmaceuta doradzi."},
+    {"type": "dialogue", "lines": [
+      {"who": "Farmaceutka", "pt": "Boa tarde. Em que posso ajudar?", "pl": "Dzień dobry. W czym mogę pomóc?"},
+      {"who": "Ty", "pt": "Boa tarde. Dói-me a cabeça desde ontem.", "pl": "Dzień dobry. Od wczoraj boli mnie głowa."},
+      {"who": "Farmaceutka", "pt": "Tem febre?", "pl": "Ma pan gorączkę?"},
+      {"who": "Ty", "pt": "Não, acho que não.", "pl": "Nie, chyba nie."},
+      {"who": "Farmaceutka", "pt": "Então leve este. Um comprimido de oito em oito horas.", "pl": "To proszę wziąć te. Jedna tabletka co osiem godzin."},
+      {"who": "Ty", "pt": "Posso tomar com o estômago vazio?", "pl": "Mogę brać na pusty żołądek?"},
+      {"who": "Farmaceutka", "pt": "É melhor tomar depois de comer.", "pl": "Lepiej po jedzeniu."},
+      {"who": "Ty", "pt": "Obrigado. Quanto custa?", "pl": "Dziękuję. Ile kosztuje?"},
+      {"who": "Farmaceutka", "pt": "São três euros e quarenta.", "pl": "Trzy euro czterdzieści."}
+    ]},
+    {"type": "table", "head": ["słowo", "znaczenie"], "pt_cols": [0],
+     "rows": [
+       ["dói-me", "boli mnie"],
+       ["a cabeça", "głowa"],
+       ["a febre", "gorączka"],
+       ["o comprimido", "tabletka"],
+       ["de oito em oito horas", "co osiem godzin"],
+       ["depois de comer", "po jedzeniu"]
+     ]},
+    {"type": "tip", "tone": "pt", "title": "Dói-me — jak polskie „boli mnie”",
+     "text": "Zaimek stoi po czasowniku, jak zawsze w Portugalii. Gdy boli coś w liczbie mnogiej, czasownik też idzie w mnogą: {Doem-me as costas} — „bolą mnie plecy”."}
+  ],
+  "check": [
+    {"q": "Co dolega Pawłowi?", "options": ["ma gorączkę", "boli go głowa", "boli go brzuch"], "answer": 1,
+     "why": "{Dói-me a cabeça} — boli mnie głowa. Gorączki nie ma."},
+    {"q": "Jak często brać tabletkę?", "options": ["co osiem godzin", "osiem razy dziennie", "raz dziennie"], "answer": 0,
+     "why": "{De oito em oito horas} — co osiem godzin."},
+    {"q": "Kiedy najlepiej ją brać?", "options": ["na pusty żołądek", "przed snem", "po jedzeniu"], "answer": 2,
+     "why": "{É melhor tomar depois de comer}."},
+    {"q": "{O comprimido} to:", "options": ["tabletka", "recepta", "syrop"], "answer": 0,
+     "why": "Recepta to {a receita}, syrop — {o xarope}."}
+  ]
+}

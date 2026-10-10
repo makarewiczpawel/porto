@@ -1,0 +1,41 @@
+{
+  "slug": "dialog-weekend",
+  "title": "Jak minął weekend?",
+  "summary": "Poniedziałkowa rozmowa w pracy — plaża, upał i deszcz",
+  "level": "A2",
+  "part": "Dialogi",
+  "blocks": [
+    {"type": "p", "text": "Poniedziałek rano. Kolega z pracy pyta, jak ci minął weekend. Tu pojawia się czas przeszły — zajrzyj do lekcji o {pretérito perfeito}, jeśli formy wyglądają obco."},
+    {"type": "dialogue", "lines": [
+      {"who": "Kolega", "pt": "Então, como foi o fim de semana?", "pl": "No i jak minął weekend?"},
+      {"who": "Ty", "pt": "Foi ótimo! Fui à praia em Cascais.", "pl": "Świetnie! Byłem na plaży w Cascais."},
+      {"who": "Kolega", "pt": "Com este calor, fizeste bem!", "pl": "Przy tym upale dobrze zrobiłeś!"},
+      {"who": "Ty", "pt": "E tu? O que fizeste?", "pl": "A ty? Co robiłeś?"},
+      {"who": "Kolega", "pt": "Fiquei em casa. Estava muito cansado.", "pl": "Zostałem w domu. Byłem bardzo zmęczony."},
+      {"who": "Ty", "pt": "Às vezes também é bom descansar.", "pl": "Czasem dobrze też odpocząć."},
+      {"who": "Kolega", "pt": "Pois é. Amanhã dizem que vai chover.", "pl": "No właśnie. Mówią, że jutro będzie padać."},
+      {"who": "Ty", "pt": "Que pena! Gosto mais de sol.", "pl": "Szkoda! Wolę słońce."}
+    ]},
+    {"type": "table", "head": ["słowo", "znaczenie"], "pt_cols": [0],
+     "rows": [
+       ["o fim de semana", "weekend"],
+       ["ótimo", "świetny, świetnie"],
+       ["a praia", "plaża"],
+       ["o calor", "upał"],
+       ["descansar", "odpoczywać"],
+       ["às vezes", "czasem"]
+     ]},
+    {"type": "tip", "tone": "pt", "title": "Pois é",
+     "text": "„No właśnie” — usłyszysz w każdej rozmowie. Potwierdza, podtrzymuje rozmowę i do niczego nie zobowiązuje. Warto mieć je w odruchu."}
+  ],
+  "check": [
+    {"q": "Gdzie Paweł spędził weekend?", "options": ["w domu", "na plaży w Cascais", "w Porto"], "answer": 1,
+     "why": "{Fui à praia em Cascais}."},
+    {"q": "Dlaczego kolega został w domu?", "options": ["był zmęczony", "padało", "pracował"], "answer": 0,
+     "why": "{Estava muito cansado} — był bardzo zmęczony."},
+    {"q": "Jaka ma być jutro pogoda?", "options": ["upał", "śnieg", "deszcz"], "answer": 2,
+     "why": "{Amanhã dizem que vai chover} — mówią, że jutro będzie padać."},
+    {"q": "{Fui à praia} to:", "options": ["byłem na plaży", "idę na plażę", "pójdę na plażę"], "answer": 0,
+     "why": "{Fui} — czas przeszły od {ir}."}
+  ]
+}

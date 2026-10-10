@@ -138,6 +138,8 @@ export interface CatchUp {
 export interface QueueSummary {
   due: number;
   new_available: number;
+  /** Znane już dłuższe zwroty odłożone przy nauce słów — nie liczą się do `due`. */
+  set_aside: number;
   done_today: number;
   goal: number;
   streak: number;

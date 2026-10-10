@@ -1,0 +1,42 @@
+{
+  "slug": "dialog-kawiarnia",
+  "title": "W kawiarni",
+  "summary": "Kawa i {pastel de nata} przy ladzie",
+  "level": "A1",
+  "part": "Dialogi",
+  "blocks": [
+    {"type": "p", "text": "Rano wchodzisz do małej kawiarni przy ulicy. Zamawia się przy ladzie, a ekspedientka mówi do klientów w trzeciej osobie — grzecznie, ale bez ceregieli."},
+    {"type": "dialogue", "lines": [
+      {"who": "Ekspedientka", "pt": "Bom dia! O que vai ser?", "pl": "Dzień dobry! Co podać?"},
+      {"who": "Ty", "pt": "Bom dia. Queria um café e um pastel de nata, se faz favor.", "pl": "Dzień dobry. Poproszę kawę i pastel de nata."},
+      {"who": "Ekspedientka", "pt": "É para comer aqui ou para levar?", "pl": "Na miejscu czy na wynos?"},
+      {"who": "Ty", "pt": "Para comer aqui.", "pl": "Na miejscu."},
+      {"who": "Ekspedientka", "pt": "Mais alguma coisa?", "pl": "Coś jeszcze?"},
+      {"who": "Ty", "pt": "Não, é só isso. Quanto é?", "pl": "Nie, to wszystko. Ile płacę?"},
+      {"who": "Ekspedientka", "pt": "São dois euros e dez.", "pl": "Dwa euro dziesięć."},
+      {"who": "Ty", "pt": "Posso pagar com cartão?", "pl": "Mogę zapłacić kartą?"},
+      {"who": "Ekspedientka", "pt": "Pode, claro.", "pl": "Oczywiście."}
+    ]},
+    {"type": "table", "head": ["słowo", "znaczenie"], "pt_cols": [0],
+     "rows": [
+       ["um café", "espresso, mała czarna"],
+       ["o pastel de nata", "babeczka z kremem"],
+       ["para levar", "na wynos"],
+       ["mais alguma coisa?", "coś jeszcze?"],
+       ["é só isso", "to wszystko"],
+       ["o cartão", "karta (płatnicza)"]
+     ]},
+    {"type": "tip", "tone": "pt", "title": "Café to w Portugalii espresso",
+     "text": "{Um café} to małe, mocne espresso. Kawa z mlekiem to {um galão} (w wysokiej szklance) albo {uma meia de leite} (w filiżance). Na północy espresso nazywa się też {um cimbalino}."}
+  ],
+  "check": [
+    {"q": "Co zamawia Paweł?", "options": ["herbatę i ciastko", "kawę i pastel de nata", "dwie kawy"], "answer": 1,
+     "why": "{Queria um café e um pastel de nata}."},
+    {"q": "Ile płaci?", "options": ["2,10 €", "1,20 €", "10 €"], "answer": 0,
+     "why": "{São dois euros e dez} — dwa euro dziesięć."},
+    {"q": "{Para levar} to:", "options": ["na miejscu", "do picia", "na wynos"], "answer": 2,
+     "why": "{Levar} to „zabrać”. „Na miejscu” to {para comer aqui}."},
+    {"q": "Jak płaci?", "options": ["kartą", "gotówką"], "answer": 0,
+     "why": "{Posso pagar com cartão?} — {Pode, claro}."}
+  ]
+}

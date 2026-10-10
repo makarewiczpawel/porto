@@ -32,8 +32,8 @@ const TABS = [
     ),
   },
   {
-    to: "/gramatyka",
-    label: "Gramatyka",
+    to: "/lekcje",
+    label: "Lekcje",
     icon: (
       <>
         <path d="M12 6.5C10.3 5 7.6 4.5 4 4.5v13c3.6 0 6.3.5 8 2 1.7-1.5 4.4-2 8-2v-13c-3.6 0-6.3.5-8 2z" />
