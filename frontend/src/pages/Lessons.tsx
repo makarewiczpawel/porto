@@ -1,18 +1,45 @@
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 
 import { api } from "@/api/client";
-import type { Lesson, LessonBlock, LessonQuestion, LessonSummary } from "@/api/grammar";
+import type {
+  DialogueLine,
+  Lesson,
+  LessonBlock,
+  LessonKind,
+  LessonQuestion,
+  LessonSummary,
+} from "@/api/lessons";
+import { sayToEnd, stop, unlockAudio } from "@/api/speech";
 import { RichText } from "@/components/RichText";
 import { SpeakButton } from "@/components/SpeakButton";
 import { EmptyState, Label, Pill, Spinner, cx, plural } from "@/components/ui";
 
 // ── spis lekcji ───────────────────────────────────────────────────────────
-export function GrammarPage() {
+const SECTIONS: { kind: LessonKind; label: string; hint: string }[] = [
+  {
+    kind: "dialogi",
+    label: "Dialogi",
+    hint: "Krótkie rozmowy z życia — do odsłuchania i przećwiczenia swojej roli.",
+  },
+  {
+    kind: "gramatyka",
+    label: "Gramatyka",
+    hint: "Zasady po polsku, z przykładami i sprawdzianem na koniec.",
+  },
+];
+
+export function LessonsPage() {
+  const [params, setParams] = useSearchParams();
+  // Dział w adresie, nie w stanie komponentu: powrót z lekcji gramatyki ma
+  // trafić na gramatykę, a nie zawsze na pierwszą zakładkę.
+  const kind: LessonKind = params.get("dzial") === "gramatyka" ? "gramatyka" : "dialogi";
+  const section = SECTIONS.find((entry) => entry.kind === kind) ?? SECTIONS[0];
+
   const query = useQuery({
-    queryKey: ["grammar"],
-    queryFn: () => api.get<{ lessons: LessonSummary[] }>("/api/grammar"),
+    queryKey: ["lessons"],
+    queryFn: () => api.get<{ lessons: LessonSummary[] }>("/api/lessons"),
   });
 
   // Części w kolejności pierwszego pojawienia się — tak, jak ułożone są pliki
@@ -20,35 +47,57 @@ export function GrammarPage() {
   const parts = useMemo(() => {
     const grouped = new Map<string, LessonSummary[]>();
     for (const lesson of query.data?.lessons ?? []) {
+      if (lesson.kind !== kind) continue;
       grouped.set(lesson.part, [...(grouped.get(lesson.part) ?? []), lesson]);
     }
     return [...grouped.entries()];
-  }, [query.data]);
+  }, [query.data, kind]);
 
   if (query.isLoading) return <Spinner />;
   if (!query.data?.lessons.length) {
-    return <EmptyState title="Brak lekcji" hint="Lekcje gramatyki jeszcze się nie wczytały." />;
+    return <EmptyState title="Brak lekcji" hint="Lekcje jeszcze się nie wczytały." />;
   }
-
-  const count = query.data.lessons.length;
 
   return (
     <div className="px-4 pt-4">
-      <h1 className="pt text-2xl">Gramatyka</h1>
-      <p className="mb-5 mt-1 text-[13.5px] text-ink-2">
-        {count} {plural(count, "lekcja", "lekcje", "lekcji")} po polsku — każda z przykładami do
-        odsłuchania i krótkim sprawdzianem na koniec.
-      </p>
+      <h1 className="pt text-2xl">Lekcje</h1>
+
+      <div
+        role="tablist"
+        aria-label="Rodzaj lekcji"
+        className="mt-3 grid grid-cols-2 gap-1 rounded-xl border border-line bg-surface-2 p-1"
+      >
+        {SECTIONS.map((entry) => {
+          const on = entry.kind === kind;
+          return (
+            <button
+              key={entry.kind}
+              type="button"
+              role="tab"
+              aria-selected={on}
+              onClick={() => setParams(entry.kind === "dialogi" ? {} : { dzial: entry.kind }, { replace: true })}
+              className={cx(
+                "rounded-lg py-2 text-[14px] font-semibold transition",
+                on ? "bg-surface text-accent shadow-sm" : "text-ink-3",
+              )}
+            >
+              {entry.label}
+            </button>
+          );
+        })}
+      </div>
+      <p className="mb-5 mt-2 text-[13px] text-ink-2">{section.hint}</p>
 
       <div className="grid gap-6">
         {parts.map(([part, lessons]) => (
           <section key={part}>
-            <Label className="mb-2">{part}</Label>
+            {/* Dialogi mają jedną część — jej nazwa powtarzałaby tylko zakładkę. */}
+            {kind === "gramatyka" && <Label className="mb-2">{part}</Label>}
             <div className="grid gap-2">
               {lessons.map((lesson) => (
                 <Link
                   key={lesson.slug}
-                  to={`/gramatyka/${lesson.slug}`}
+                  to={`/lekcje/${lesson.slug}`}
                   className="flex items-start gap-3 rounded-2xl border border-line bg-surface p-3.5 transition hover:border-accent-line active:bg-surface-2"
                 >
                   <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-accent-soft text-[14px] font-bold text-accent tnum">
@@ -85,8 +134,8 @@ const AUDIO_POLLS = 6;
 export function LessonPage() {
   const { slug } = useParams();
   const query = useQuery({
-    queryKey: ["grammar", slug],
-    queryFn: () => api.get<Lesson>(`/api/grammar/${slug}`),
+    queryKey: ["lessons", slug],
+    queryFn: () => api.get<Lesson>(`/api/lessons/${slug}`),
     enabled: Boolean(slug),
     refetchInterval: (q) =>
       q.state.data?.audio_pending && q.state.dataUpdateCount <= AUDIO_POLLS ? 3000 : false,
@@ -96,22 +145,24 @@ export function LessonPage() {
   const lesson = query.data;
   if (!lesson) {
     return (
-      <EmptyState
-        title="Nie ma takiej lekcji"
-        action={{ label: "Wróć do gramatyki", to: "/gramatyka" }}
-      />
+      <EmptyState title="Nie ma takiej lekcji" action={{ label: "Wróć do lekcji", to: "/lekcje" }} />
     );
   }
 
   return (
     <article className="px-4 pb-6 pt-4" key={lesson.slug}>
-      <Link to="/gramatyka" className="mb-4 inline-flex items-center gap-1.5 text-sm text-ink-2">
-        <span aria-hidden="true">←</span> Gramatyka
+      <Link
+        to={lesson.kind === "gramatyka" ? "/lekcje?dzial=gramatyka" : "/lekcje"}
+        className="mb-4 inline-flex items-center gap-1.5 text-sm text-ink-2"
+      >
+        <span aria-hidden="true">←</span> {lesson.kind === "gramatyka" ? "Gramatyka" : "Dialogi"}
       </Link>
 
       <header className="mb-5">
         <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-accent">
-          Lekcja {lesson.position} · {lesson.part}
+          {lesson.kind === "dialogi"
+            ? `Dialog ${lesson.position}`
+            : `Lekcja ${lesson.position} · ${lesson.part}`}
         </div>
         <h1 className="pt mt-1.5 text-[28px] leading-tight">{lesson.title}</h1>
         <p className="mt-1.5 text-[14px] text-ink-2">
@@ -120,7 +171,10 @@ export function LessonPage() {
         <div className="mt-3 flex flex-wrap gap-1.5">
           <Pill tone="accent">{lesson.level}</Pill>
           <Pill>
-            {lesson.examples} {plural(lesson.examples, "przykład", "przykłady", "przykładów")}
+            {lesson.spoken}{" "}
+            {lesson.kind === "dialogi"
+              ? plural(lesson.spoken, "kwestia", "kwestie", "kwestii")
+              : plural(lesson.spoken, "przykład", "przykłady", "przykładów")}
           </Pill>
           <Pill>
             {lesson.questions} {plural(lesson.questions, "pytanie", "pytania", "pytań")} na koniec
@@ -128,7 +182,7 @@ export function LessonPage() {
         </div>
         {lesson.audio_pending && (
           <p className="mt-3 text-[12px] text-ink-3">
-            Nagrania przykładów dogrywają się — za chwilę zabrzmią głosem wybranym w ustawieniach.
+            Nagrania dogrywają się — za chwilę zabrzmią głosem wybranym w ustawieniach.
           </p>
         )}
       </header>
@@ -183,6 +237,8 @@ function LessonBlockView({ block }: { block: LessonBlock }) {
       );
     case "tip":
       return <Tip tone={block.tone} title={block.title} text={block.text} />;
+    case "dialogue":
+      return <DialogueView lines={block.lines} />;
   }
 }
 
@@ -252,6 +308,155 @@ function LessonTable({ block }: { block: Extract<LessonBlock, { type: "table" }>
   );
 }
 
+// ── dialog ────────────────────────────────────────────────────────────────
+const LEARNER = "Ty";
+
+/**
+ * Dialog jako rozmowa: kwestie ucznia po prawej, rozmówcy po lewej.
+ *
+ * Dwie rzeczy odróżniają go od listy przykładów. „Odtwórz całość” gra kwestię
+ * po kwestii, podświetlając tę, która właśnie brzmi — rozmowę słyszy się jako
+ * całość, z rytmem wymiany, a nie zdanie po zdaniu na żądanie. „Zasłoń moje
+ * kwestie” zostawia z twoich kwestii samo polskie znaczenie: najpierw
+ * próbujesz powiedzieć sam, potem odsłaniasz i porównujesz. Czytanie dialogu
+ * uczy mniej niż granie w nim swojej roli.
+ */
+function DialogueView({ lines }: { lines: DialogueLine[] }) {
+  const [playing, setPlaying] = useState<number | null>(null);
+  const [hideMine, setHideMine] = useState(false);
+  const [shown, setShown] = useState<Set<number>>(new Set());
+  const cancelled = useRef(false);
+  const refs = useRef<(HTMLDivElement | null)[]>([]);
+
+  // Wyjście z lekcji w trakcie odtwarzania ma uciszyć dialog, a nie zostawić
+  // go grającego na innym ekranie.
+  useEffect(
+    () => () => {
+      cancelled.current = true;
+      stop();
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (playing === null) return;
+    refs.current[playing]?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [playing]);
+
+  async function playAll() {
+    unlockAudio();
+    cancelled.current = false;
+    for (let i = 0; i < lines.length; i++) {
+      if (cancelled.current) break;
+      setPlaying(i);
+      await sayToEnd(lines[i].pt, lines[i].audio);
+      // Krótki oddech między kwestiami — rozmówcy nie wchodzą sobie w słowo.
+      await new Promise((resolve) => window.setTimeout(resolve, 350));
+    }
+    setPlaying(null);
+  }
+
+  function halt() {
+    cancelled.current = true;
+    stop();
+    setPlaying(null);
+  }
+
+  return (
+    <div className="grid gap-2.5">
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => (playing === null ? void playAll() : halt())}
+          className="inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-[13.5px] font-semibold text-accent-ink"
+        >
+          <span aria-hidden="true">{playing === null ? "▶" : "■"}</span>
+          {playing === null ? "Odtwórz całość" : "Zatrzymaj"}
+        </button>
+        <button
+          type="button"
+          aria-pressed={hideMine}
+          onClick={() => {
+            setHideMine((value) => !value);
+            setShown(new Set());
+          }}
+          className={cx(
+            "rounded-full border px-3.5 py-2 text-[13px] font-semibold transition",
+            hideMine
+              ? "border-accent-line bg-accent-soft text-accent"
+              : "border-line-strong bg-surface text-ink-2",
+          )}
+        >
+          {hideMine ? "Pokaż moje kwestie" : "Zasłoń moje kwestie"}
+        </button>
+      </div>
+      {hideMine && (
+        <p className="text-[12.5px] text-ink-3">
+          Przy swoich kwestiach widzisz samo znaczenie. Powiedz je na głos po portugalsku, potem
+          stuknij, żeby sprawdzić.
+        </p>
+      )}
+
+      <div className="grid gap-2">
+        {lines.map((line, index) => {
+          const mine = line.who === LEARNER;
+          const veiled = mine && hideMine && !shown.has(index);
+          return (
+            <div
+              key={index}
+              ref={(node) => {
+                refs.current[index] = node;
+              }}
+              // `justify-self`, nie `self`: w siatce `self-end` wyrównuje w pionie i
+              // kwestie ucznia kończyły się w trzech czwartych szerokości.
+              className={cx(
+                "flex max-w-[88%] flex-col",
+                mine ? "items-end justify-self-end" : "items-start justify-self-start",
+              )}
+            >
+              <span className={cx("mb-0.5 px-1 text-[11px] font-semibold", mine ? "text-accent" : "text-ink-3")}>
+                {line.who}
+              </span>
+              <div
+                className={cx(
+                  "flex items-start gap-2 rounded-2xl border px-3 py-2 transition",
+                  mine
+                    ? "rounded-br-md border-accent-line bg-accent-soft"
+                    : "rounded-bl-md border-line bg-surface",
+                  playing === index && "ring-2 ring-accent ring-offset-2 ring-offset-surface",
+                )}
+              >
+                <div className="min-w-0">
+                  {veiled ? (
+                    <button
+                      type="button"
+                      onClick={() => setShown((prev) => new Set(prev).add(index))}
+                      className="text-left"
+                    >
+                      <span className="block text-[14.5px] leading-snug text-ink">{line.pl}</span>
+                      <span className="mt-0.5 block text-[11.5px] font-semibold text-accent">
+                        Powiedz po portugalsku — stuknij, żeby sprawdzić
+                      </span>
+                    </button>
+                  ) : (
+                    <>
+                      <div lang="pt-PT" className="pt text-[16.5px] leading-snug">
+                        {line.pt}
+                      </div>
+                      <div className="mt-0.5 text-[12.5px] leading-snug text-ink-2">{line.pl}</div>
+                    </>
+                  )}
+                </div>
+                {!veiled && <SpeakButton text={line.pt} url={line.audio} size="sm" />}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 const TIP_STYLE = {
   trap: { box: "border-warm/40 bg-warm/10", title: "text-warm", icon: "⚠" },
   pt: { box: "border-accent-line bg-accent-soft", title: "text-accent", icon: "🇵🇹" },
@@ -284,7 +489,7 @@ function Neighbour({
 }) {
   return (
     <Link
-      to={`/gramatyka/${lesson.slug}`}
+      to={`/lekcje/${lesson.slug}`}
       className={cx(
         "grid gap-0.5 rounded-2xl border border-line bg-surface p-3 hover:border-accent-line",
         align === "right" && "text-right",

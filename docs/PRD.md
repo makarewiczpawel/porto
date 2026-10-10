@@ -444,8 +444,8 @@ Kody: `400` błędne żądanie, `401` brak/wygasły token, `403` cudzy zasób, `
 | POST | `/api/ai/jobs/{id}/approve` | `{accepted_items: [...], deck_name?}` → tworzy pozycje i talię, kolejkuje audio | ✓ |
 | POST | `/api/ai/jobs/{id}/reject` | Odrzuca job | ✓ |
 | POST | `/api/ai/examples` | `{item_id, count}` → zdania przykładowe PT-PT dla istniejącej pozycji | ✓ |
-| GET | `/api/grammar` | Spis lekcji gramatyki w kolejności kursu | ✓ |
-| GET | `/api/grammar/{slug}` | Lekcja z adresami nagrań przykładów dla głosu użytkownika; `audio_pending`, gdy brakujące dogrywają się w tle | ✓ |
+| GET | `/api/lessons` | Spis lekcji — dialogi, potem gramatyka — w kolejności kursu | ✓ |
+| GET | `/api/lessons/{slug}` | Lekcja z adresami nagrań przykładów i kwestii dla głosu użytkownika; `audio_pending`, gdy brakujące dogrywają się w tle | ✓ |
 | POST | `/api/ai/breakdown` | `{item_id, text}` → rozbiór zwrotu na słowa: znaczenie w kontekście, forma podstawowa, opis formy, dosłowne tłumaczenie całości. `text` musi należeć do pozycji | ✓ |
 | POST | `/api/ai/explain` | `{item_id, user_answer}` → krótkie wyjaśnienie po polsku, dlaczego odpowiedź jest błędna | ✓ |
 | POST | `/api/ai/grade-translation` | `{example_id, user_answer}` → `{score 0-100, feedback, corrected}` dla tłumaczenia zdania PL→PT | ✓ |

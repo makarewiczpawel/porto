@@ -44,6 +44,33 @@ SLOW_SPEED = voice_library.SLOW_SPEED
 # Typy pozycji, które są gotowym zwrotem do powiedzenia, a nie cegiełką do
 # zbudowania zdania. Decydują o doborze trybów i o kolejności nowego materiału.
 SPEAKABLE_TYPES = ("phrase", "sentence")
+# Najdłuższy zwrot, który przy nastawieniu na słowa jeszcze wchodzi do nauki.
+# Trzy słowa mieszczą „quanto custa?” i „a sério?”; od czterech zaczyna się już
+# zdanie do ułożenia, a nie coś do zapamiętania — i właśnie takie zwroty
+# okazały się za trudne, gdy kolejka podawała je jako pierwsze.
+SHORT_PHRASE_MAX_WORDS = 3
+
+
+def word_count():
+    """Liczba słów pozycji, policzona w bazie — po odstępach w portugalskiej stronie.
+
+    Myślnik nie dzieli: „chamo-me” to jedno słowo, tak jak w rozbiorze zwrotu.
+    """
+    return func.array_length(func.regexp_split_to_array(func.trim(Item.pt), r"\s+"), 1)
+
+
+def set_aside(focus: str):
+    """Warunek na pozycje odłożone przy tym nastawieniu — albo None, gdy nic nie jest.
+
+    Przy nastawieniu na słowa dłuższe zwroty schodzą z kolejki całkiem: nie
+    przychodzą jako nowe i nie wracają w powtórkach. Nic nie jest kasowane —
+    postęp w FSRS zostaje, a po przełączeniu na „po równo” albo „zwroty” karty
+    wracają tam, gdzie były. Jeden warunek dla wszystkich zapytań, żeby licznik
+    „powtórek na dziś” mówił dokładnie to, co potem dostaje sesja.
+    """
+    if focus == "words":
+        return word_count() > SHORT_PHRASE_MAX_WORDS
+    return None
 # Co w aplikacji brzmi — definicja mieszka przy bibliotece nagrań, żeby
 # odtwarzanie i lista „do nagrania" nie mogły się rozejść.
 spoken_texts = voice_library.spoken_texts
@@ -503,6 +530,9 @@ def due_states(
             Item.verified.is_(True),
         )
     )
+    hidden = set_aside(user.settings.content_focus)
+    if hidden is not None:
+        query = query.where(~hidden)
     if deck_ids:
         query = query.join(DeckItem, DeckItem.item_id == Item.id).where(DeckItem.deck_id.in_(deck_ids))
     query = query.order_by(UserItemState.due.asc()).limit(limit)
@@ -540,6 +570,10 @@ def new_items(
     )
     if deck_ids:
         query = query.where(DeckItem.deck_id.in_(deck_ids))
+
+    hidden = set_aside(focus)
+    if hidden is not None:
+        query = query.where(~hidden)
 
     if focus == "phrases":
         speakable_first = case((Item.type.in_(SPEAKABLE_TYPES), 0), else_=1)
@@ -866,6 +900,18 @@ def queue_counts(
             or_(Deck.is_shared.is_(True), Deck.owner_id == user.id),
         )
     )
+    hidden = set_aside(user.settings.content_focus)
+    put_aside = 0
+    if hidden is not None:
+        due_q = due_q.where(~hidden)
+        new_q = new_q.where(~hidden)
+        # Ile znanych już pozycji czeka odłożonych — żeby ustawienia mogły
+        # powiedzieć wprost, że zwroty nie zniknęły, tylko poczekają.
+        put_aside = db.execute(
+            select(func.count(func.distinct(UserItemState.item_id)))
+            .join(Item, Item.id == UserItemState.item_id)
+            .where(UserItemState.user_id == user.id, UserItemState.suspended.is_(False), hidden)
+        ).scalar_one()
     next_due = db.execute(
         select(func.min(UserItemState.due)).where(
             UserItemState.user_id == user.id,
@@ -878,6 +924,7 @@ def queue_counts(
     return {
         "due": due_count,
         "new_available": db.execute(new_q).scalar_one(),
+        "set_aside": put_aside,
         "next_due_at": next_due,
         # Dzień liczony w strefie użytkownika, tak samo jak seria i dzienny cel:
         # plan nadrabiania ma się domykać wtedy, kiedy dla niego kończy się dzień.
@@ -894,21 +941,24 @@ def deck_counts(db: Session, user: User, now: datetime) -> dict[uuid.UUID, dict]
             select(DeckItem.deck_id, func.count(func.distinct(DeckItem.item_id))).group_by(DeckItem.deck_id)
         ).all()
     )
-    due = dict(
-        db.execute(
-            select(DeckItem.deck_id, func.count(func.distinct(DeckItem.item_id)))
-            .join(
-                UserItemState,
-                and_(
-                    UserItemState.item_id == DeckItem.item_id,
-                    UserItemState.user_id == user.id,
-                    UserItemState.suspended.is_(False),
-                    UserItemState.due <= now,
-                ),
-            )
-            .group_by(DeckItem.deck_id)
-        ).all()
+    due_q = (
+        select(DeckItem.deck_id, func.count(func.distinct(DeckItem.item_id)))
+        .join(
+            UserItemState,
+            and_(
+                UserItemState.item_id == DeckItem.item_id,
+                UserItemState.user_id == user.id,
+                UserItemState.suspended.is_(False),
+                UserItemState.due <= now,
+            ),
+        )
+        .join(Item, Item.id == DeckItem.item_id)
+        .group_by(DeckItem.deck_id)
     )
+    hidden = set_aside(user.settings.content_focus)
+    if hidden is not None:
+        due_q = due_q.where(~hidden)
+    due = dict(db.execute(due_q).all())
     learned = dict(
         db.execute(
             select(DeckItem.deck_id, func.count(func.distinct(DeckItem.item_id)))

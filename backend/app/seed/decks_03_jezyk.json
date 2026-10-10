@@ -4,7 +4,7 @@
     "name": "Ciało i zdrowie",
     "icon": "🩺",
     "cefr_level": "A2",
-    "position": 31,
+    "position": 11,
     "description": "U lekarza i w aptece — plus najgroźniejsze fałszywe przyjaźnie.",
     "items": [
       {
@@ -232,7 +232,7 @@
     "name": "Czasowniki podstawowe",
     "icon": "⚡",
     "cefr_level": "A1",
-    "position": 32,
+    "position": 12,
     "description": "Dwadzieścia czasowników, na których stoi cała reszta.",
     "items": [
       {
@@ -433,7 +433,7 @@
     "name": "Odmiana: ser, estar, ter, ir",
     "icon": "🔀",
     "cefr_level": "A1",
-    "position": 33,
+    "position": 13,
     "description": "Formy czasu teraźniejszego czterech najważniejszych czasowników.",
     "items": [
       {
@@ -599,7 +599,7 @@
     "name": "Przyimki i spójniki",
     "icon": "🔗",
     "cefr_level": "A1",
-    "position": 34,
+    "position": 14,
     "description": "Klej, który spina zdanie.",
     "items": [
       {
@@ -751,7 +751,7 @@
     "name": "Przysłówki i miary",
     "icon": "📏",
     "cefr_level": "A1",
-    "position": 35,
+    "position": 15,
     "description": "Ile, jak i kiedy.",
     "items": [
       {

@@ -75,11 +75,15 @@ class UserSettings(Base):
     tts_speed: Mapped[float] = mapped_column(Numeric(3, 2), nullable=False, default=1.00)
     autoplay_audio: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     accent_strict: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    # Czego dokłada kolejka, gdy sięga po nowy materiał. „phrases" to całe
-    # zwroty gotowe do użycia, „words" to pojedyncze słowa, „mixed" po równo.
-    # Domyślnie zwroty: szybciej dają się powiedzieć na głos komuś obcemu, a o
-    # to w nauce języka chodzi wcześniej niż o rozmiar słownika.
-    content_focus: Mapped[str] = mapped_column(String(8), nullable=False, default="phrases")
+    # Czego uczy kolejka. „words" to pojedyncze słowa i krótkie zwroty (do
+    # trzech słów), a dłuższe zwroty czekają odłożone; „mixed" — wszystko po
+    # równo; „phrases" — najpierw zwroty.
+    #
+    # Domyślnie słowa. Przez miesiąc domyślne były zwroty — szybciej dają się
+    # powiedzieć komuś obcemu — ale w praktyce okazały się za trudne do
+    # zapamiętania jako pierwszy materiał: zdanie z pięciu słów to pięć słów
+    # naraz, a nie jedno.
+    content_focus: Mapped[str] = mapped_column(String(8), nullable=False, default="words")
     # Plan nadrabiania po przerwie: dzień, na który ma być czysto, i wysokość
     # nawisu, gdy plan ruszał. Bez tych dwóch liczb komunikat „w 7 dni wrócisz
     # na bieżąco" powtarzał się codziennie tak samo — obietnica liczona od nowa

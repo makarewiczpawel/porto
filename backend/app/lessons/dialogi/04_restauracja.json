@@ -1,0 +1,45 @@
+{
+  "slug": "dialog-restauracja",
+  "title": "W restauracji",
+  "summary": "Stolik dla dwojga, danie dnia i rachunek",
+  "level": "A1",
+  "part": "Dialogi",
+  "blocks": [
+    {"type": "p", "text": "Wieczorem idziecie we dwoje na kolację. Kelner wita was w drzwiach."},
+    {"type": "dialogue", "lines": [
+      {"who": "Kelner", "pt": "Boa noite. Quantas pessoas?", "pl": "Dobry wieczór. Ile osób?"},
+      {"who": "Ty", "pt": "Boa noite. Somos dois.", "pl": "Dobry wieczór. Jest nas dwoje."},
+      {"who": "Kelner", "pt": "Façam favor, sentem-se aqui.", "pl": "Zapraszam, proszę tutaj."},
+      {"who": "Ty", "pt": "Pode trazer a ementa, por favor?", "pl": "Może pan przynieść kartę?"},
+      {"who": "Kelner", "pt": "Com certeza. O prato do dia é bacalhau à brás.", "pl": "Oczywiście. Danie dnia to bacalhau à brás."},
+      {"who": "Ty", "pt": "Então, dois pratos do dia e uma garrafa de água.", "pl": "To poproszę dwa dania dnia i butelkę wody."},
+      {"who": "Kelner", "pt": "Água fresca ou natural?", "pl": "Zimna czy niechłodzona?"},
+      {"who": "Ty", "pt": "Fresca, por favor.", "pl": "Zimna, poproszę."},
+      {"who": "Kelner", "pt": "Muito bem. Bom apetite!", "pl": "Bardzo dobrze. Smacznego!"},
+      {"who": "Ty", "pt": "A conta, por favor.", "pl": "Poproszę rachunek. (po posiłku)"},
+      {"who": "Kelner", "pt": "Com certeza, já trago.", "pl": "Oczywiście, zaraz przyniosę."}
+    ]},
+    {"type": "table", "head": ["słowo", "znaczenie"], "pt_cols": [0],
+     "rows": [
+       ["a ementa", "karta, menu"],
+       ["o prato do dia", "danie dnia"],
+       ["a garrafa", "butelka"],
+       ["fresca, natural", "zimna, niechłodzona"],
+       ["a conta", "rachunek"]
+     ]},
+    {"type": "tip", "tone": "pt", "title": "Couvert nie jest za darmo",
+     "text": "Pieczywo, oliwki i masło, które lądują na stole bez zamawiania, to {couvert} — w Portugalii płatne. Jeśli ich nie chcesz, wystarczy powiedzieć {Não, obrigado} i kelner je zabierze."},
+    {"type": "tip", "tone": "info", "title": "Bacalhau à brás",
+     "text": "Dorsz z jajkiem, cebulą i cienkimi frytkami — jedno z najpopularniejszych dań w kraju. {Bacalhau} usłyszysz w każdej restauracji."}
+  ],
+  "check": [
+    {"q": "Ile osób przyszło na kolację?", "options": ["jedna", "dwie", "trzy"], "answer": 1,
+     "why": "{Somos dois} — jest nas dwoje."},
+    {"q": "Czym jest {a ementa}?", "options": ["karta, menu", "rachunek", "stolik"], "answer": 0,
+     "why": "{A ementa} to karta. Rachunek to {a conta}."},
+    {"q": "{Água natural} to woda:", "options": ["gazowana", "niechłodzona", "z kranu"], "answer": 1,
+     "why": "{Fresca} — z lodówki, {natural} — w temperaturze pokojowej."},
+    {"q": "Jak poprosisz o rachunek?", "options": ["{A ementa, por favor.}", "{A conta, por favor.}", "{O prato, por favor.}"], "answer": 1,
+     "why": "{A conta} — rachunek."}
+  ]
+}

@@ -436,6 +436,15 @@ Słowa zostają w bazie — zmienia się to, co kolejka podaje jako pierwsze.
       `backend/app/grammar/lekcje/`, walidowana schematem; osobna zakładka
       w nawigacji; dostępne bez zasięgu (NetworkFirst w service workerze)
 
+- [x] Zwrot kursu: nauka zaczyna od słów. Domyślne nastawienie „słowa”,
+      konta z domyślnymi „zwrotami” przestawione migracją. Zwroty dłuższe niż
+      trzy słowa czekają odłożone (nowe i powtórki), z nietkniętym postępem;
+      ustawienia pokazują, ile ich czeka. Jednowyrazowe „zwroty” przepisane na
+      słowa, talie słownikowe na czele listy
+- [x] Dialogi: 10 rozmów jako osobny dział lekcji, z odtwarzaniem całości,
+      zasłanianiem własnych kwestii, słówkami i pytaniami o zrozumienie.
+      Zakładka „Gramatyka” → „Lekcje” (stare adresy przekierowują)
+
 ### Definition of Done — Faza 6
 - [x] Nowe konto zaczyna od „bom dia, faz favor", nie od rzeczownika
 - [x] Zwroty z odpowiedzią pokazują ją przy ocenie i mają własne nagranie

@@ -1,0 +1,40 @@
+{
+  "slug": "dialog-pierwsze-spotkanie",
+  "title": "Nowy sąsiad",
+  "summary": "Przedstawiasz się sąsiadce na klatce schodowej",
+  "level": "A1",
+  "part": "Dialogi",
+  "blocks": [
+    {"type": "p", "text": "Wprowadziłeś się do nowego mieszkania. Na klatce zaczepia cię sąsiadka — Rita. Jesteście w podobnym wieku, więc od razu mówi do ciebie na ty."},
+    {"type": "dialogue", "lines": [
+      {"who": "Rita", "pt": "Olá! Tu és o novo vizinho?", "pl": "Cześć! Ty jesteś tym nowym sąsiadem?"},
+      {"who": "Ty", "pt": "Sou, sim. Chamo-me Paweł.", "pl": "Tak. Mam na imię Paweł."},
+      {"who": "Rita", "pt": "Muito prazer! Eu sou a Rita. De onde és?", "pl": "Bardzo mi miło! Jestem Rita. Skąd jesteś?"},
+      {"who": "Ty", "pt": "Sou da Polónia, de Varsóvia.", "pl": "Jestem z Polski, z Warszawy."},
+      {"who": "Rita", "pt": "E falas muito bem português!", "pl": "I świetnie mówisz po portugalsku!"},
+      {"who": "Ty", "pt": "Obrigado, mas ainda estou a aprender.", "pl": "Dziękuję, ale wciąż się uczę."},
+      {"who": "Rita", "pt": "Eu moro no terceiro andar. Qualquer coisa, é só dizer.", "pl": "Mieszkam na trzecim piętrze. Gdyby co, wystarczy powiedzieć."},
+      {"who": "Ty", "pt": "Obrigado, Rita. Até logo!", "pl": "Dzięki, Rita. Na razie!"}
+    ]},
+    {"type": "table", "head": ["słowo", "znaczenie"], "pt_cols": [0],
+     "rows": [
+       ["o vizinho, a vizinha", "sąsiad, sąsiadka"],
+       ["muito prazer", "bardzo mi miło"],
+       ["ainda", "jeszcze, wciąż"],
+       ["o andar", "piętro"],
+       ["até logo", "na razie, do zobaczenia"]
+     ]},
+    {"type": "tip", "tone": "pt", "title": "Sou, sim — odpowiedź czasownikiem",
+     "text": "Na pytanie {Tu és o novo vizinho?} Portugalczyk rzadko odpowie samym {sim}. Powtarza czasownik w swojej osobie: {Sou, sim} — „jestem, tak”. Brzmi to naturalnie i uprzejmie."}
+  ],
+  "check": [
+    {"q": "Skąd jest Paweł?", "options": ["z Warszawy", "z Lizbony", "z Porto"], "answer": 0,
+     "why": "{Sou da Polónia, de Varsóvia} — z Polski, z Warszawy."},
+    {"q": "Gdzie mieszka Rita?", "options": ["na pierwszym piętrze", "na trzecim piętrze", "w innym bloku"], "answer": 1,
+     "why": "{Eu moro no terceiro andar} — mieszkam na trzecim piętrze."},
+    {"q": "{Ainda estou a aprender} znaczy:", "options": ["już wszystko umiem", "wciąż się uczę", "zacznę się uczyć"], "answer": 1,
+     "why": "{Ainda} to „jeszcze, wciąż”, a {estou a aprender} — „uczę się (teraz)”."},
+    {"q": "Jak Paweł odpowiada „tak” na pytanie, czy jest nowym sąsiadem?", "options": ["{Sim, és.}", "{Está, sim.}", "{Sou, sim.}"], "answer": 2,
+     "why": "Powtarza czasownik w swojej osobie: {sou} — „jestem”."}
+  ]
+}

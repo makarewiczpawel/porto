@@ -1,0 +1,40 @@
+{
+  "slug": "dialog-hotel",
+  "title": "W hotelu",
+  "summary": "Rezerwacja, śniadanie i hasło do wi-fi",
+  "level": "A1",
+  "part": "Dialogi",
+  "blocks": [
+    {"type": "p", "text": "Przyjeżdżasz do hotelu w Porto i podchodzisz do recepcji."},
+    {"type": "dialogue", "lines": [
+      {"who": "Recepcjonistka", "pt": "Boa tarde, bem-vindo. Em que posso ajudar?", "pl": "Dzień dobry, witamy. W czym mogę pomóc?"},
+      {"who": "Ty", "pt": "Boa tarde. Tenho uma reserva em nome de Kowalski.", "pl": "Dzień dobry. Mam rezerwację na nazwisko Kowalski."},
+      {"who": "Recepcjonistka", "pt": "Um momento. Sim, um quarto duplo, três noites. Pode dar-me o seu passaporte?", "pl": "Chwileczkę. Tak, pokój dwuosobowy, trzy noce. Może mi pan dać paszport?"},
+      {"who": "Ty", "pt": "Aqui está. A que horas é o pequeno-almoço?", "pl": "Proszę. O której jest śniadanie?"},
+      {"who": "Recepcjonistka", "pt": "Das sete às dez, no primeiro andar.", "pl": "Od siódmej do dziesiątej, na pierwszym piętrze."},
+      {"who": "Ty", "pt": "E qual é a palavra-passe do wi-fi?", "pl": "A jakie jest hasło do wi-fi?"},
+      {"who": "Recepcjonistka", "pt": "Está aqui no cartão. O seu quarto é o trezentos e cinco. Boa estadia!", "pl": "Jest tutaj na karcie. Pana pokój to trzysta pięć. Miłego pobytu!"}
+    ]},
+    {"type": "table", "head": ["słowo", "znaczenie"], "pt_cols": [0],
+     "rows": [
+       ["a reserva", "rezerwacja"],
+       ["em nome de", "na nazwisko"],
+       ["o quarto duplo", "pokój dwuosobowy"],
+       ["o pequeno-almoço", "śniadanie"],
+       ["a palavra-passe", "hasło"],
+       ["boa estadia", "miłego pobytu"]
+     ]},
+    {"type": "tip", "tone": "pt", "title": "Pequeno-almoço, almoço, jantar",
+     "text": "Śniadanie to w Portugalii {pequeno-almoço} — dosłownie „mały obiad”. {Almoço} to obiad w południe, {jantar} — kolacja."}
+  ],
+  "check": [
+    {"q": "Na ile nocy jest rezerwacja?", "options": ["dwie", "trzy", "pięć"], "answer": 1,
+     "why": "{Três noites} — trzy noce."},
+    {"q": "Gdzie jest śniadanie?", "options": ["na pierwszym piętrze", "w pokoju", "na parterze"], "answer": 0,
+     "why": "{No primeiro andar}."},
+    {"q": "Jaki numer ma pokój?", "options": ["350", "503", "305"], "answer": 2,
+     "why": "{Trezentos e cinco} — trzysta pięć."},
+    {"q": "{O pequeno-almoço} to:", "options": ["obiad", "śniadanie", "kolacja"], "answer": 1,
+     "why": "Dosłownie „mały obiad”. Obiad to {almoço}, kolacja — {jantar}."}
+  ]
+}

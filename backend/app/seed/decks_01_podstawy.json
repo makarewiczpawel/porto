@@ -4,7 +4,7 @@
     "name": "Powitania i uprzejmości",
     "icon": "👋",
     "cefr_level": "A1",
-    "position": 21,
+    "position": 1,
     "description": "Pierwsze zdania, które wypowiesz w Portugalii.",
     "items": [
       {
@@ -39,14 +39,14 @@
       {
         "pt": "olá",
         "pl": "cześć",
-        "type": "phrase",
+        "type": "word",
         "pos": "expr",
         "level": "A1"
       },
       {
         "pt": "adeus",
         "pl": "do widzenia",
-        "type": "phrase",
+        "type": "word",
         "pos": "expr",
         "level": "A1",
         "notes": "Brzmi ostatecznie. Na co dzień częściej usłyszysz „até logo”."
@@ -68,7 +68,7 @@
       {
         "pt": "obrigado",
         "pl": "dziękuję (mówi mężczyzna)",
-        "type": "phrase",
+        "type": "word",
         "pos": "expr",
         "level": "A1",
         "notes": "Forma zależy od płci MÓWIĄCEGO, nie od tego, komu dziękujesz.",
@@ -82,7 +82,7 @@
       {
         "pt": "obrigada",
         "pl": "dziękuję (mówi kobieta)",
-        "type": "phrase",
+        "type": "word",
         "pos": "expr",
         "level": "A1",
         "notes": "Kobieta zawsze mówi „obrigada”, nawet dziękując mężczyźnie."
@@ -119,7 +119,7 @@
       {
         "pt": "desculpe",
         "pl": "przepraszam (przepraszając)",
-        "type": "phrase",
+        "type": "word",
         "pos": "expr",
         "level": "A1",
         "ex": [
@@ -170,7 +170,7 @@
       {
         "pt": "chamo-me",
         "pl": "nazywam się",
-        "type": "phrase",
+        "type": "word",
         "pos": "expr",
         "level": "A1",
         "notes": "Zaimek doczepiany na końcu czasownika — typowa cecha portugalskiego europejskiego.",
@@ -209,7 +209,7 @@
     "name": "Liczby, czas i daty",
     "icon": "🕐",
     "cefr_level": "A1",
-    "position": 22,
+    "position": 2,
     "description": "Godziny, dni tygodnia i liczenie.",
     "items": [
       {
@@ -471,7 +471,7 @@
     "name": "Rodzina i ludzie",
     "icon": "👨‍👩‍👧",
     "cefr_level": "A1",
-    "position": 23,
+    "position": 3,
     "description": "Bliscy, znajomi i formy grzecznościowe.",
     "items": [
       {
@@ -722,7 +722,7 @@
     "name": "Jedzenie i restauracja",
     "icon": "🍽",
     "cefr_level": "A1",
-    "position": 24,
+    "position": 4,
     "description": "Zamawianie, jedzenie i płacenie.",
     "items": [
       {
@@ -1026,7 +1026,7 @@
     "name": "Zakupy i pieniądze",
     "icon": "🛒",
     "cefr_level": "A1",
-    "position": 25,
+    "position": 5,
     "description": "Sklep, ceny i płacenie.",
     "items": [
       {

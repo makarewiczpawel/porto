@@ -1,0 +1,41 @@
+{
+  "slug": "dialog-targ",
+  "title": "Na targu",
+  "summary": "Owoce i warzywa na kilogramy",
+  "level": "A1",
+  "part": "Dialogi",
+  "blocks": [
+    {"type": "p", "text": "Sobotni targ. Przy straganie z owocami sprzedawczyni zaprasza cię do zamówienia jednym słowem."},
+    {"type": "dialogue", "lines": [
+      {"who": "Sprzedawczyni", "pt": "Bom dia! Diga.", "pl": "Dzień dobry! Słucham."},
+      {"who": "Ty", "pt": "Bom dia. Queria um quilo de laranjas.", "pl": "Dzień dobry. Poproszę kilo pomarańczy."},
+      {"who": "Sprzedawczyni", "pt": "Um quilo. Mais alguma coisa?", "pl": "Kilo. Coś jeszcze?"},
+      {"who": "Ty", "pt": "Sim, meio quilo de tomates. Quanto custam as maçãs?", "pl": "Tak, pół kilo pomidorów. Ile kosztują jabłka?"},
+      {"who": "Sprzedawczyni", "pt": "Um euro e cinquenta o quilo.", "pl": "Półtora euro za kilo."},
+      {"who": "Ty", "pt": "Então, também um quilo de maçãs.", "pl": "To poproszę też kilo jabłek."},
+      {"who": "Sprzedawczyni", "pt": "São cinco euros e vinte. Quer saco?", "pl": "Pięć euro dwadzieścia. Potrzebuje pan torby?"},
+      {"who": "Ty", "pt": "Não, obrigado. Tenho saco.", "pl": "Nie, dziękuję. Mam torbę."}
+    ]},
+    {"type": "table", "head": ["słowo", "znaczenie"], "pt_cols": [0],
+     "rows": [
+       ["um quilo, meio quilo", "kilo, pół kilo"],
+       ["as laranjas", "pomarańcze"],
+       ["os tomates", "pomidory"],
+       ["as maçãs", "jabłka"],
+       ["então", "to w takim razie"],
+       ["o saco", "torba, reklamówka"]
+     ]},
+    {"type": "tip", "tone": "pt", "title": "Diga! — słucham",
+     "text": "{Diga} dosłownie znaczy „niech pan powie”. Tak sprzedawca zaprasza do zamówienia, tak też odbiera się telefon: {Estou? Diga!}"}
+  ],
+  "check": [
+    {"q": "Ile kosztuje kilo jabłek?", "options": ["5,20 €", "1,50 €", "0,50 €"], "answer": 1,
+     "why": "{Um euro e cinquenta o quilo}."},
+    {"q": "Czego Paweł kupuje pół kilo?", "options": ["pomidorów", "pomarańczy", "jabłek"], "answer": 0,
+     "why": "{Meio quilo de tomates}."},
+    {"q": "{Quer saco?} znaczy:", "options": ["Coś jeszcze?", "Ile kosztuje?", "Potrzebuje pan torby?"], "answer": 2,
+     "why": "{O saco} to torba. Przy kasie w Portugalii to pytanie pada zawsze."},
+    {"q": "Sprzedawczyni mówi {Diga!}, żeby:", "options": ["zaprosić do zamówienia", "się pożegnać", "poprosić o zapłatę"], "answer": 0,
+     "why": "{Diga} — „słucham, proszę mówić”."}
+  ]
+}

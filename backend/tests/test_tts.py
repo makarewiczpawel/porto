@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 import httpx
 import pytest
 
-from app import grammar
+from app import lessons
 from app.config import settings
 from app.models import AudioAsset, Example, Item, UserItemState
 from app.services import task_builder as tb
@@ -11,8 +11,8 @@ from app.services import tts
 from app.services import voice_library as vl
 from tests.conftest import make_items
 
-# Ile zdań dokładają lekcje gramatyki do biblioteki nagrań.
-LESSON_TEXTS = len({tts.normalize_text(text) for text in grammar.spoken_texts()})
+# Ile zdań dokładają lekcje (gramatyka i dialogi) do biblioteki nagrań.
+LESSON_TEXTS = len({tts.normalize_text(text) for text in lessons.spoken_texts()})
 
 
 class FakeProvider:
@@ -351,7 +351,7 @@ def test_coverage_counts_what_is_missing_for_this_voice(db, registered, client):
     body = client.get("/api/audio/coverage").json()
 
     # trzy hasła × (normalne + wolne) + trzy zdania przykładowe — i wszystkie
-    # zdania z lekcji gramatyki, bo one też brzmią wybranym głosem
+    # zdania z lekcji, bo one też brzmią wybranym głosem
     expected = 9 + LESSON_TEXTS
     assert body["planned"] == expected
     assert body["present"] == 0

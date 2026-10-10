@@ -81,17 +81,27 @@ def test_focus_mixed_keeps_the_deck_order(db, user):
     assert [item.type for item in fresh] == ["word", "phrase", "word", "phrase"]
 
 
-def test_setting_reaches_the_session(client, registered, db, user):
+def test_a_new_account_starts_with_words(client, registered, db, user):
+    """Domyślne nastawienie to słowa: zwroty jako pierwszy materiał okazały
+    się za trudne do zapamiętania."""
     _mixed_deck(db, words=10, phrases=10)
+    session = client.post("/api/study/sessions", json={"new_limit": 5}).json()
+    fronts = [task.get("front") or task.get("pt") for task in session["tasks"]]
+    assert all("palavra" in (front or "") for front in fronts), fronts
+
+
+def test_switching_to_phrases_reaches_the_session(client, registered, db, user):
+    _mixed_deck(db, words=10, phrases=10)
+    client.patch("/api/settings", json={"content_focus": "phrases"})
     session = client.post("/api/study/sessions", json={"new_limit": 5}).json()
     fronts = [task.get("front") or task.get("pt") for task in session["tasks"]]
     assert all("quanto custa" in (front or "") for front in fronts), fronts
 
 
 def test_focus_can_be_changed_and_is_validated(client, registered):
-    assert client.get("/api/settings").json()["content_focus"] == "phrases"
-    assert client.patch("/api/settings", json={"content_focus": "words"}).status_code == 200
     assert client.get("/api/settings").json()["content_focus"] == "words"
+    assert client.patch("/api/settings", json={"content_focus": "phrases"}).status_code == 200
+    assert client.get("/api/settings").json()["content_focus"] == "phrases"
     assert client.patch("/api/settings", json={"content_focus": "cokolwiek"}).status_code == 422
 
 
@@ -148,17 +158,33 @@ def test_a_plain_word_carries_no_reply(db, user):
 
 
 # ── baza startowa ─────────────────────────────────────────────────────────
-def test_situational_decks_lead_the_seed():
-    """Talie sytuacyjne mają być pierwsze — to od nich zaczyna nowe konto."""
+def test_word_decks_lead_the_seed():
+    """Talie ze słowami są pierwsze na liście, krótkie zwroty za nimi,
+    sytuacyjne — z najdłuższymi zwrotami — na końcu."""
     positions = {}
     for path in sorted(SEED_DIR.glob("decks_*.json")):
         for deck in json.loads(path.read_text()):
             positions[deck["name"]] = deck["position"]
 
-    leading = sorted(positions.items(), key=lambda entry: entry[1])[:10]
-    assert all(position <= 10 for _, position in leading)
-    assert "W sklepie" in dict(leading)
-    assert "W restauracji" in dict(leading)
+    order = [name for name, _ in sorted(positions.items(), key=lambda entry: entry[1])]
+    assert order.index("Powitania i uprzejmości") < order.index("Jednym słowem")
+    assert order.index("Jednym słowem") < order.index("W sklepie")
+    assert order[-1] == "Załatwianie spraw"
+
+
+def test_a_single_word_is_never_filed_as_a_phrase():
+    """„Obrigado”, „claro”, „talvez” to słowa. Zapisane jako zwroty czekałyby
+    przy nauce słów na koniec kolejki, za kilkuset rzeczownikami."""
+    from app.services.ai import words_in
+
+    misfiled = [
+        item["pt"]
+        for path in sorted(SEED_DIR.glob("decks_*.json"))
+        for deck in json.loads(path.read_text())
+        for item in deck["items"]
+        if item.get("type") == "phrase" and len(words_in(item["pt"])) == 1
+    ]
+    assert misfiled == []
 
 
 def test_the_seed_is_now_mostly_phrases():

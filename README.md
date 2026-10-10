@@ -44,21 +44,28 @@ przesuwa żadnej karty. Pomyłki można jednym kliknięciem dorzucić do jutrzej
 
 ## Podejście do nauki
 
-Materiałem są **gotowe zwroty**, nie pojedyncze słowa. Powód jest praktyczny:
-„quanto custa?" da się powiedzieć obcej osobie tego samego dnia, a „cena" nie da
-się użyć do niczego, dopóki nie obrośnie zdaniem. Baza startowa zaczyna się od
-dziesięciu talii sytuacyjnych — sklep, restauracja, kawiarnia, ulica, transport,
-praca, telefon, rozmowa, apteka, załatwianie spraw.
+Kolejka zaczyna od **pojedynczych słów**, a ze zwrotów bierze tylko krótkie — do
+trzech słów, jak „quanto custa?” czy „a sério?”. Przez pierwszy miesiąc było
+odwrotnie: zwroty szły pierwsze, bo „quanto custa?” da się powiedzieć obcej
+osobie tego samego dnia. W praktyce okazały się za trudne do zapamiętania —
+zdanie z pięciu słów to pięć słów naraz, a nie jedno.
+
+Dłuższe zwroty (102 w bazie startowej) nie zniknęły. Przy nastawieniu na słowa
+czekają odłożone: nie przychodzą jako nowe i nie wracają w powtórkach, ale ich
+postęp w FSRS zostaje nietknięty. Po przestawieniu `Ustawienia → Czego się
+uczyć` na „po równo” albo „gotowe zwroty” wracają tam, gdzie były, a ustawienia
+pokazują, ile ich czeka. Jeden warunek (`task_builder.set_aside`) obsługuje
+nowe karty, powtórki i wszystkie liczniki — licznik „powtórek na dziś” mówi
+dokładnie to, co potem dostaje sesja.
+
+Zwroty mają też swoje miejsce poza fiszkami: w **dialogach** (zakładka
+„Lekcje”), gdzie słyszy się je w rozmowie, z rytmem wymiany, i można
+przećwiczyć swoją rolę.
 
 Każdy zwrot niesie trzy rzeczy: co powiedzieć, **kiedy i do kogo** się tego
 używa, oraz **co usłyszysz w odpowiedzi**. Ta ostatnia jest połową umiejętności —
-„Quanto custa?" nic nie daje, jeśli „São dois e cinquenta" odbija się od ucha,
+„Quanto custa?” nic nie daje, jeśli „São dois e cinquenta” odbija się od ucha,
 dlatego odpowiedzi też mają nagraną wymowę.
-
-Talie słownikowe zostają w bazie i wracają po przestawieniu
-`Ustawienia → Czego się uczyć` na „pojedyncze słowa". Zmiana ustawienia nie
-kasuje żadnego postępu — przestawia tylko kolejność, w jakiej poznaje się
-materiał.
 
 ### Kolejność kart w sesji
 
@@ -92,27 +99,36 @@ planu po pięćdziesiąt. Dzień opuszczony lekko podnosi porcję; tydzień prze
 opuszczony tydzień. Nic z tego nie rusza terminów w bazie — FSRS ma prawo
 uważać, że te karty są na dziś, i ma rację; opóźnienie jest częścią odpowiedzi.
 
-### Lekcje gramatyki
+### Lekcje — dialogi i gramatyka
 
-Zakładka „Gramatyka" to 16 lekcji po polsku, od rodzajników po przedrostki,
-ułożonych w cztery części: rzeczowniki i opisywanie, zaimki, czasowniki, budowa
-zdania i słów. Każda ma tabele odmiany, przykłady do odsłuchania, wskazówki —
-pułapki dla Polaka i to, czym Portugalia różni się od Brazylii — oraz krótkie
-„Sprawdź się" na koniec, z wyjaśnieniem przy każdej odpowiedzi.
+Zakładka „Lekcje” ma dwa działy.
 
-Treść mieszka w `backend/app/grammar/lekcje/*.json`, nie w bazie: nikt jej nie
-edytuje w aplikacji, a każda poprawka i tak przechodzi przez przegląd w
-repozytorium. Plik jest walidowany schematem przy starcie — literówka ma
-zatrzymać aplikację i testy, a nie wyrenderować pół lekcji. W tekście działają
+**Dialogi** — 10 krótkich rozmów z życia w Portugalii: sąsiadka na klatce,
+kawiarnia, targ, restauracja, pytanie o drogę, dworzec, apteka, umawianie się,
+hotel, poniedziałkowa rozmowa w pracy. Kwestie wyglądają jak rozmowa na
+czacie, każda z nagraniem. „Odtwórz całość” gra kwestię po kwestii, podświetlając
+tę, która brzmi. „Zasłoń moje kwestie” zostawia z kwestii ucznia („Ty”) samo
+polskie znaczenie: najpierw mówisz sam, potem odsłaniasz i porównujesz. Pod
+dialogiem są słówka z rozmowy, wskazówka i kilka pytań o zrozumienie.
+
+**Gramatyka** — 16 lekcji po polsku, od rodzajników po przedrostki, w czterech
+częściach: rzeczowniki i opisywanie, zaimki, czasowniki, budowa zdania i słów.
+Tabele odmiany, przykłady do odsłuchania, wskazówki — pułapki dla Polaka i to,
+czym Portugalia różni się od Brazylii — oraz „Sprawdź się” na koniec.
+
+Treść mieszka w `backend/app/lessons/{dialogi,gramatyka}/*.json`, nie w bazie:
+nikt jej nie edytuje w aplikacji, a każda poprawka i tak przechodzi przez
+przegląd w repozytorium. Pliki walidowane są schematem przy starcie — literówka
+ma zatrzymać aplikację i testy, a nie wyrenderować pół lekcji. W tekście działają
 dwa znaczniki: `{...}` dla wstawki po portugalsku i `**...**` dla wyróżnienia.
 
-Przykłady brzmią głosem wybranym w ustawieniach, tak jak fiszki — biblioteka
-nagrań zna je z tego samego źródła co ekran, więc „Nagraj brakujące" obejmuje
-też lekcje. Brakujące nagrania dogrywają się w tle przy pierwszym otwarciu
-lekcji, a ekran mówi o tym wprost i podmienia głos telefonu na właściwy, gdy
-tylko nagrania są gotowe.
+Przykłady i kwestie dialogów brzmią głosem wybranym w ustawieniach, tak jak
+fiszki — biblioteka nagrań zna je z tego samego źródła co ekran, więc „Nagraj
+brakujące” obejmuje też lekcje. Brakujące nagrania dogrywają się w tle przy
+pierwszym otwarciu lekcji, a ekran mówi o tym wprost i podmienia głos telefonu
+na właściwy, gdy tylko nagrania są gotowe.
 
-Testy pilnują, że żaden przykład ani forma podana jako poprawna nie jest
+Testy pilnują, że żaden przykład, kwestia ani forma podana jako poprawna nie jest
 brazylijska. Formy brazylijskie wolno pokazać tylko w kolumnie tabeli
 oznaczonej jako kontrast (`br_cols`), wyciszonej na ekranie.
 
