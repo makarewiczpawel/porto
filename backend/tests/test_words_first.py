@@ -41,7 +41,7 @@ ENTRIES = [
     ("é só isto, obrigado", "phrase"),      # 4 słowa — odłożony
     ("casa", "word"),
     ("quanto custa?", "phrase"),            # 2 słowa — zostaje
-    ("queria isto, se faz favor", "phrase"),  # 5 słów — odłożony
+    ("queria isto, por favor", "phrase"),    # 4 słowa — odłożony
     ("chamo-me Ana", "phrase"),             # 2 słowa: myślnik nie dzieli
     ("livro", "word"),
 ]
@@ -75,7 +75,7 @@ def test_long_phrases_leave_the_reviews_too(db, user):
     _review_all(db, user, items)
     due = tb.due_states(db, user, datetime.now(timezone.utc), 50, None)
     shown = {db.get(Item, state.item_id).pt for state in due}
-    assert "queria isto, se faz favor" not in shown
+    assert "queria isto, por favor" not in shown
     assert "é só isto, obrigado" not in shown
     assert "quanto custa?" in shown
 

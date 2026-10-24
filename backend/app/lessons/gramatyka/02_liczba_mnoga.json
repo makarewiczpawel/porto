@@ -16,7 +16,7 @@
        ["{-ão}", "{-ões}, {-ães} albo {-ãos}", "{a estação → as estações}, {o pão → os pães}, {a mão → as mãos}"]
      ]},
     {"type": "examples", "items": [
-      {"pt": "Dois cafés, se faz favor.", "pl": "Dwie kawy, poproszę."},
+      {"pt": "Dois cafés, por favor.", "pl": "Dwie kawy, poproszę."},
       {"pt": "Os comboios estão atrasados.", "pl": "Pociągi są opóźnione."},
       {"pt": "Os hotéis aqui são caros.", "pl": "Hotele tutaj są drogie."},
       {"pt": "Quantos pães quer?", "pl": "Ile bułek pan chce?"}

@@ -8,7 +8,7 @@
     {"type": "p", "text": "Rano wchodzisz do małej kawiarni przy ulicy. Zamawia się przy ladzie, a ekspedientka mówi do klientów w trzeciej osobie — grzecznie, ale bez ceregieli."},
     {"type": "dialogue", "lines": [
       {"who": "Ekspedientka", "pt": "Bom dia! O que vai ser?", "pl": "Dzień dobry! Co podać?"},
-      {"who": "Ty", "pt": "Bom dia. Queria um café e um pastel de nata, se faz favor.", "pl": "Dzień dobry. Poproszę kawę i pastel de nata."},
+      {"who": "Ty", "pt": "Bom dia. Queria um café e um pastel de nata, por favor.", "pl": "Dzień dobry. Poproszę kawę i pastel de nata."},
       {"who": "Ekspedientka", "pt": "É para comer aqui ou para levar?", "pl": "Na miejscu czy na wynos?"},
       {"who": "Ty", "pt": "Para comer aqui.", "pl": "Na miejscu."},
       {"who": "Ekspedientka", "pt": "Mais alguma coisa?", "pl": "Coś jeszcze?"},

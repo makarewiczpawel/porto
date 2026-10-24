@@ -227,7 +227,7 @@
         "level": "A1",
         "ex": [
           [
-            "Dois pastéis de nata, se faz favor.",
+            "Dois pastéis de nata, por favor.",
             "Poproszę dwa pastéis de nata."
           ]
         ]
@@ -643,7 +643,7 @@
         "level": "A2",
         "ex": [
           [
-            "Um bilhete de ida e volta, se faz favor.",
+            "Um bilhete de ida e volta, por favor.",
             "Poproszę bilet w obie strony."
           ]
         ]
@@ -762,7 +762,7 @@
         "level": "A2"
       },
       {
-        "pt": "fala devagar, se faz favor",
+        "pt": "fala devagar, por favor",
         "pl": "proszę mówić wolniej",
         "type": "sentence",
         "pos": "expr",

@@ -467,7 +467,7 @@ def test_new_material_is_recorded_in_the_voice_you_chose(db, monkeypatch):
     monkeypatch.setattr(tts, "get_provider", lambda: provider)
     monkeypatch.setattr(settings, "google_tts_api_key", "test-key")
 
-    item = Item(pt="a conta, se faz favor", pl="poproszę rachunek", type="phrase",
+    item = Item(pt="a conta, por favor", pl="poproszę rachunek", type="phrase",
                 cefr_level="A1", source="seed", verified=True,
                 reply_pt="Já trago.", reply_pl="Już przynoszę.")
     db.add(item)

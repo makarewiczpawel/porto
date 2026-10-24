@@ -107,12 +107,12 @@ def test_focus_can_be_changed_and_is_validated(client, registered):
 
 # ── jak się ćwiczy zwrot ──────────────────────────────────────────────────
 def test_a_phrase_is_rebuilt_from_bricks_not_retyped(db, user):
-    """Przy zwrocie uczy się szyku — „se faz favor" na końcu to też szyk."""
+    """Przy zwrocie uczy się szyku — „por favor" na końcu to też szyk."""
     from datetime import datetime, timezone
 
     from app.models import UserItemState
 
-    phrase = Item(pt="queria isto se faz favor", pl="poproszę to", type="phrase",
+    phrase = Item(pt="queria isto por favor", pl="poproszę to", type="phrase",
                   cefr_level="A1", source="seed")
     db.add(phrase)
     db.commit()

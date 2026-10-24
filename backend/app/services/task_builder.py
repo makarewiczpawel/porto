@@ -150,7 +150,7 @@ def choose_mode(
 
     # Cały zwrot wart jest ułożenia z klocków, nie przepisania: uczy się tu
     # szyku, a to jedyny tryb, który go ćwiczy. Dotyczy zwrotów tak samo jak
-    # zdań — „se faz favor" na końcu to też szyk, którego trzeba się nauczyć.
+    # zdań — „por favor" na końcu to też szyk, którego trzeba się nauczyć.
     if (
         direction == "production"
         and item.type in SPEAKABLE_TYPES

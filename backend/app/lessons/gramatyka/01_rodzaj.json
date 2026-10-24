@@ -22,7 +22,7 @@
     {"type": "table", "head": ["", "męski", "żeński"], "pt_cols": [1, 2],
      "rows": [["liczba pojedyncza", "um", "uma"], ["liczba mnoga", "uns", "umas"]]},
     {"type": "examples", "items": [
-      {"pt": "Queria um café, se faz favor.", "pl": "Poproszę kawę."},
+      {"pt": "Queria um café, por favor.", "pl": "Poproszę kawę."},
       {"pt": "Tenho uma pergunta.", "pl": "Mam pytanie."},
       {"pt": "Comprei umas laranjas.", "pl": "Kupiłem kilka pomarańczy."}
     ]},

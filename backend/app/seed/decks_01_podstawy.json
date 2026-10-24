@@ -95,26 +95,17 @@
         "level": "A1"
       },
       {
-        "pt": "se faz favor",
-        "pl": "proszę (prosząc o coś)",
-        "type": "phrase",
-        "pos": "expr",
-        "level": "A1",
-        "notes": "Typowo portugalskie. W Brazylii mówi się wyłącznie „por favor”.",
-        "ex": [
-          [
-            "Um café, se faz favor.",
-            "Poproszę kawę."
-          ]
-        ]
-      },
-      {
         "pt": "por favor",
         "pl": "proszę",
         "type": "phrase",
         "pos": "expr",
         "level": "A1",
-        "notes": "Też poprawne w Portugalii, choć „se faz favor” brzmi bardziej miejscowo."
+        "ex": [
+          [
+            "Um café, por favor.",
+            "Poproszę kawę."
+          ]
+        ]
       },
       {
         "pt": "desculpe",
@@ -736,7 +727,7 @@
         "notes": "W Brazylii „o cardápio”.",
         "ex": [
           [
-            "Pode trazer a ementa, se faz favor?",
+            "Pode trazer a ementa, por favor?",
             "Czy może pan przynieść kartę, proszę?"
           ]
         ]
@@ -751,7 +742,7 @@
         "level": "A1",
         "ex": [
           [
-            "A conta, se faz favor.",
+            "A conta, por favor.",
             "Poproszę rachunek."
           ]
         ]
@@ -801,7 +792,7 @@
         "level": "A1",
         "ex": [
           [
-            "Uma água sem gás, se faz favor.",
+            "Uma água sem gás, por favor.",
             "Poproszę wodę niegazowaną."
           ]
         ]
@@ -1014,7 +1005,7 @@
         "level": "A2",
         "ex": [
           [
-            "Um café para levar, se faz favor.",
+            "Um café para levar, por favor.",
             "Poproszę kawę na wynos."
           ]
         ]
