@@ -44,7 +44,7 @@
     {"type": "h", "text": "Grzeczne prośby"},
     {"type": "p", "text": "W Portugalii imperfeito to także **forma grzecznościowa**. {Queria um café} brzmi dużo milej niż {Quero um café} — tak jak polskie „chciałbym” zamiast „chcę”. Tak samo {Podia…?} — „Mógłby pan…?”."},
     {"type": "examples", "items": [
-      {"pt": "Queria uma mesa para dois, se faz favor.", "pl": "Poproszę stolik dla dwóch osób."},
+      {"pt": "Queria uma mesa para dois, por favor.", "pl": "Poproszę stolik dla dwóch osób."},
       {"pt": "Podia falar mais devagar?", "pl": "Mógłby pan mówić wolniej?"}
     ]},
     {"type": "tip", "tone": "pt", "title": "Queria słyszysz w Portugalii na każdym kroku",

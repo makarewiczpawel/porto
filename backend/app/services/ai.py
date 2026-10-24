@@ -214,7 +214,8 @@ Zasady gramatyczne obowiązujące w Portugalii:
 - Czas teraźniejszy ciągły to „estar a + bezokolicznik" („estou a comer"), nigdy „estar + gerúndio" („estou comendo").
 - Zaimek nieakcentowany stoi po czasowniku z łącznikiem w zdaniu twierdzącym: „dá-me", „chamo-me", nigdy „me dá".
 - Do osoby, którą się tyka, mówi się przez „tu" i drugą osobę liczby pojedynczej; grzecznościowo przez „o senhor / a senhora" albo trzecią osobę, nie przez „você".
-- Formy grzecznościowe: „se faz favor", „faz favor", „obrigado" (mężczyzna) / „obrigada" (kobieta), „bom dia / boa tarde / boa noite".
+- Nie używaj „se faz favor" — brzmi przestarzale; pisz „por favor".
+- Formy grzecznościowe: „por favor", „faz favor", „obrigado" (mężczyzna) / „obrigada" (kobieta), „bom dia / boa tarde / boa noite".
 - Pisownia po reformie ortograficznej z 1990 r., w wariancie używanym w Portugalii.
 
 Ortografia portugalska jest częścią hasła: „avó" i „avô" to dwa różne słowa. Znaki diakrytyczne stawiaj zawsze."""

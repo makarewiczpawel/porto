@@ -230,7 +230,7 @@ def test_cloze_needs_an_example_that_actually_contains_the_word(db):
     db.add(
         Example(
             item_id=with_example.id,
-            pt="Pode trazer a conta, se faz favor?",
+            pt="Pode trazer a conta, por favor?",
             pl="Czy może pan przynieść rachunek?",
         )
     )

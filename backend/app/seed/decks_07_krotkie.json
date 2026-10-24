@@ -132,7 +132,7 @@
       {"pt": "mais tarde", "pl": "później", "type": "phrase", "pos": "expr", "level": "A1"},
       {"pt": "não, obrigado", "pl": "nie, dziękuję", "type": "phrase", "pos": "expr", "level": "A1",
        "notes": "Grzeczna odmowa. Kobieta: „não, obrigada”."},
-      {"pt": "sim, se faz favor", "pl": "tak, poproszę", "type": "phrase", "pos": "expr", "level": "A1"},
+      {"pt": "sim, por favor", "pl": "tak, poproszę", "type": "phrase", "pos": "expr", "level": "A1"},
       {"pt": "nem por isso", "pl": "niespecjalnie", "type": "phrase", "pos": "expr", "level": "A2",
        "notes": "Delikatne „nie bardzo”. Bardzo portugalskie."},
       {"pt": "por mim, tudo bem", "pl": "dla mnie w porządku", "type": "phrase", "pos": "expr", "level": "A2"},

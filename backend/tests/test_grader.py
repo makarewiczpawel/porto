@@ -28,7 +28,7 @@ def test_exact_answers_ignore_case_and_punctuation(given):
 
 
 def test_alternatives_count_as_exact():
-    result = grade("por favor", "se faz favor", alternatives=["por favor"])
+    result = grade("por favor", "faz favor", alternatives=["por favor"])
     assert result.is_correct
     assert result.match is Match.EXACT
 
